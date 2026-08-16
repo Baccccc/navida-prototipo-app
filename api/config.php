@@ -27,7 +27,8 @@ declare(strict_types=1);
 header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-store');
 
-$cfg = require __DIR__ . '/impostazioni.php';
+$cfg = require __DIR__ . '/carica-impostazioni.php';
+require_once __DIR__ . '/magazzino.php';
 
 /* ==========================================================================
    MAGAZZINO — database se configurato, altrimenti file
@@ -124,18 +125,7 @@ function tabella(array $cfg): string
 
 function cartella(array $cfg): string
 {
-    $dir = $cfg['cartella_dati'];
-    if (!is_dir($dir)) {
-        @mkdir($dir, 0755, true);
-    }
-    // se non si riesce a creare la cartella esterna, si ripiega su api/dati
-    if (!is_dir($dir) || !is_writable($dir)) {
-        $dir = __DIR__ . '/dati';
-        if (!is_dir($dir)) {
-            @mkdir($dir, 0755, true);
-        }
-    }
-    return $dir;
+    return magazzinoCartella($cfg)['dir'];
 }
 
 /* ==========================================================================

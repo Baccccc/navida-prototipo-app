@@ -3,7 +3,11 @@
 # ==========================================================================
 
 # Credenziali del database e parola d'ordine del team.
-# Vive solo sul server: non deve mai finire nel repository.
+# Vive SOLO sul server. Su git c'e' solo il modello: impostazioni.esempio.php
+#
+# Se lo hai gia' committato per sbaglio, non basta questa riga: serve
+#     git rm --cached api/impostazioni.php
+# altrimenti ogni pull continua a sovrascrivere la versione del server.
 api/impostazioni.php
 
 # Dati salvati dal prototipo (se non si usa il database)

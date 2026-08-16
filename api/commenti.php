@@ -23,7 +23,8 @@ declare(strict_types=1);
 header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-store');
 
-$cfg = require __DIR__ . '/impostazioni.php';
+$cfg = require __DIR__ . '/carica-impostazioni.php';
+require_once __DIR__ . '/magazzino.php';
 
 const TABELLA = 'navida_commenti';
 
@@ -80,17 +81,7 @@ function pdo(array $cfg): PDO
 
 function fileCommenti(array $cfg): string
 {
-    $dir = $cfg['cartella_dati'];
-    if (!is_dir($dir)) {
-        @mkdir($dir, 0755, true);
-    }
-    if (!is_dir($dir) || !is_writable($dir)) {
-        $dir = __DIR__ . '/dati';
-        if (!is_dir($dir)) {
-            @mkdir($dir, 0755, true);
-        }
-    }
-    return $dir . '/commenti.json';
+    return magazzinoCartella($cfg)['dir'] . '/commenti.json';
 }
 
 function leggiFile(array $cfg): array
@@ -109,6 +100,46 @@ function scriviFile(array $cfg, array $lista): bool
         json_encode($lista, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
         LOCK_EX
     ) !== false;
+}
+
+/**
+ * Se i commenti erano finiti in un file (database non collegato) e ora il
+ * database risponde, li porta dentro e mette il file da parte.
+ * Così non si perde niente quando si sistema la configurazione.
+ */
+function travasaSeServe(array $cfg): int
+{
+    if (!conDatabase($cfg)) {
+        return 0;
+    }
+    $f = fileCommenti($cfg);
+    if (!file_exists($f)) {
+        return 0;
+    }
+    $lista = json_decode((string) file_get_contents($f), true);
+    if (!is_array($lista) || !$lista) {
+        @rename($f, $f . '.importato');
+        return 0;
+    }
+    $t = TABELLA;
+    $q = pdo($cfg)->prepare(
+        "INSERT INTO `$t` (schermata, autore, testo, risolto, creato_il) VALUES (?, ?, ?, ?, ?)"
+    );
+    $n = 0;
+    foreach ($lista as $c) {
+        $quando = $c['quando'] ?? gmdate('c');
+        $ts = date('Y-m-d H:i:s', strtotime($quando) ?: time());
+        $q->execute([
+            substr((string) ($c['schermata'] ?? ''), 0, 64),
+            substr((string) ($c['autore'] ?? ''), 0, 80),
+            (string) ($c['testo'] ?? ''),
+            !empty($c['risolto']) ? 1 : 0,
+            $ts,
+        ]);
+        $n++;
+    }
+    @rename($f, $f . '.importato');
+    return $n;
 }
 
 /* ==========================================================================
@@ -224,6 +255,21 @@ function cancella(array $cfg, int $id): array
 $metodo = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 
 if ($metodo === 'GET') {
+    try {
+        travasaSeServe($cfg);
+    } catch (Throwable $e) { /* non deve mai bloccare la lettura */ }
+
+    if (isset($_GET['stato'])) {
+        $mag = magazzinoCartella($cfg);
+        echo json_encode([
+            'modo'   => conDatabase($cfg) ? 'database' : 'file',
+            'dove'   => conDatabase($cfg) ? 'database' : $mag['dir'],
+            'sicuro' => conDatabase($cfg) ? true : $mag['sicura'],
+            'nota'   => conDatabase($cfg) ? '' : $mag['motivo'],
+        ]);
+        exit;
+    }
+
     $schermata = isset($_GET['schermata']) ? (string) $_GET['schermata'] : null;
     echo json_encode(['commenti' => elenco($cfg, $schermata)]);
     exit;

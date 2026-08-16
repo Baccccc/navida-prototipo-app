@@ -53,6 +53,16 @@
       }
     },
 
+    /** Chiede al server dove finiscono i commenti. */
+    chiediStato: function () {
+      var C = this;
+      if (typeof fetch !== 'function') return;
+      fetch(URL_API + '?stato=1', { cache: 'no-store' })
+        .then(function (r) { return r.json(); })
+        .then(function (j) { C.info = j; if (window.NavidaEditor) window.NavidaEditor.paint(); })
+        .catch(function () {});
+    },
+
     /** Scarica i commenti dal server, o li legge dal browser. */
     carica: function (poi) {
       var C = this;
@@ -71,6 +81,7 @@
         .then(function (j) {
           C.disponibile = true;
           C.lista = j.commenti || [];
+          C.chiediStato();
         })
         .catch(function () {
           C.disponibile = false;
@@ -286,9 +297,18 @@
         })));
       }
 
+      var info = this.info || {};
       p.appendChild(h('p', { class: 'ed-hint', text: this.disponibile
-        ? 'I commenti li vedono tutti.'
+        ? 'I commenti li vedono tutti' + (info.modo ? ' · salvati ' + (info.modo === 'database' ? 'nel database' : 'in un file') : '') + '.'
         : 'Server non attivo: restano solo su questo browser.' }));
+
+      if (info.sicuro === false) {
+        p.appendChild(h('div', { class: 'ed-allarme' }, [
+          h('div', { class: 'ed-allarme__testa' }, [icon('lightbulb', 13), 'I commenti non sono al sicuro']),
+          h('p', { class: 'ed-allarme__testo', text: info.nota || '' }),
+          h('p', { class: 'ed-allarme__testo', text: 'Apri api/diagnostica.php per i dettagli.' })
+        ]));
+      }
     },
 
     /** Quanti commenti aperti ci sono in tutto: serve al pallino sulla scheda. */
