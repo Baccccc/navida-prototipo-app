@@ -33,9 +33,58 @@ $cfg = require __DIR__ . '/impostazioni.php';
    MAGAZZINO — database se configurato, altrimenti file
    ========================================================================== */
 
+/**
+ * Il database si usa solo se è configurato E se risponde davvero.
+ * Se non risponde si passa al file, senza che il prototipo si rompa:
+ * meglio salvare da qualche parte che non salvare affatto.
+ */
 function usaDatabase(array $cfg): bool
 {
-    return !empty($cfg['db']['host']) && !empty($cfg['db']['nome']);
+    static $esito = null;
+    if ($esito !== null) {
+        return $esito;
+    }
+    if (empty($cfg['db']['host']) || empty($cfg['db']['nome'])) {
+        return $esito = false;
+    }
+    try {
+        db($cfg);
+        return $esito = true;
+    } catch (Throwable $e) {
+        problemaDb($e->getMessage());
+        return $esito = false;
+    }
+}
+
+/** Tiene da parte il motivo per cui il database non va, per la diagnostica. */
+function problemaDb(?string $msg = null): ?string
+{
+    static $ultimo = null;
+    if ($msg !== null) {
+        $ultimo = $msg;
+    }
+    return $ultimo;
+}
+
+/** Traduce gli errori più comuni in qualcosa di leggibile. */
+function spiegaErroreDb(?string $msg): string
+{
+    if (!$msg) {
+        return '';
+    }
+    if (str_contains($msg, 'using password: NO')) {
+        return 'Manca la password del database: aprire api/impostazioni.php e compilare il campo password.';
+    }
+    if (str_contains($msg, 'Access denied')) {
+        return 'Utente o password del database sbagliati (api/impostazioni.php).';
+    }
+    if (str_contains($msg, 'Unknown database')) {
+        return 'Il nome del database non esiste: controllare api/impostazioni.php.';
+    }
+    if (str_contains($msg, 'Connection refused') || str_contains($msg, 'getaddrinfo')) {
+        return 'Il server del database non risponde: controllare il campo host.';
+    }
+    return $msg;
 }
 
 /* --- database ----------------------------------------------------------- */
@@ -230,26 +279,29 @@ $metodo = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 if ($metodo === 'GET') {
 
     if (isset($_GET['stato'])) {
-        $dove = usaDatabase($cfg) ? 'database' : cartella($cfg);
-        $ok   = true;
-        $nota = '';
-        if (usaDatabase($cfg)) {
-            try {
-                db($cfg);
-            } catch (Throwable $e) {
-                $ok = false;
-                $nota = 'database non raggiungibile';
+        $conDb = usaDatabase($cfg);          // prova davvero la connessione
+        $dove  = $conDb ? 'database' : cartella($cfg);
+        $ok    = true;
+        $nota  = '';
+
+        if (!$conDb) {
+            $problema = spiegaErroreDb(problemaDb());
+            if ($problema) {
+                // il database era configurato ma non risponde: si salva su file
+                $nota = 'Database non disponibile, uso il file. ' . $problema;
             }
-        } elseif (!is_writable(cartella($cfg))) {
-            $ok = false;
-            $nota = 'cartella non scrivibile';
+            if (!is_writable(cartella($cfg))) {
+                $ok   = false;
+                $nota = trim($nota . ' Anche la cartella ' . cartella($cfg) . ' non è scrivibile (permessi 755).');
+            }
         }
+
         echo json_encode([
-            'ok'        => $ok,
-            'modo'      => usaDatabase($cfg) ? 'database' : 'file',
-            'dove'      => $dove,
-            'nota'      => $nota,
-            'versioni'  => count(elencoStorico($cfg)),
+            'ok'       => $ok,
+            'modo'     => $conDb ? 'database' : 'file',
+            'dove'     => $dove,
+            'nota'     => $nota,
+            'versioni' => count(elencoStorico($cfg)),
         ]);
         exit;
     }

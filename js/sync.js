@@ -95,6 +95,12 @@
              (d.versioni ? ' · ' + d.versioni + ' versioni conservate' : '');
     },
 
+    /** Se qualcosa non va, la spiegazione da mostrare in evidenza. */
+    problema: function () {
+      var d = this.info || {};
+      return d.nota || '';
+    },
+
     /** Chiede al server come sta messo il salvataggio. */
     chiediStato: function (poi) {
       if (!this.disponibile || typeof fetch !== 'function') return poi && poi();

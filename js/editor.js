@@ -241,11 +241,17 @@
       return p;
     },
 
-    /* --- Versione ----------------------------------------------------- */
+    /* --- Versione ------------------------------------------------------
+       In cima le versioni della schermata intera, poi tutti gli elementi
+       che si possono cambiare su questa schermata: stile delle risposte,
+       come si presenta la domanda, barra di avanzamento, e così via. */
     panelVersione: function (p, screen) {
+
+      /* 1 · versioni della schermata */
       var def = PAGEVAR[screen.id];
       if (!def) {
-        p.appendChild(h('div', { class: 'ed-empty', text: 'Questa schermata ha una sola versione.' }));
+        p.appendChild(h('div', { class: 'ed-label', text: 'Versione della schermata' }));
+        p.appendChild(h('p', { class: 'ed-hint', text: 'Questa schermata ha una sola versione.' }));
       } else {
         p.appendChild(h('div', { class: 'ed-label', text: def.etichetta }));
         var cur = S.pageVariant(screen.id, def.predefinita);
@@ -262,21 +268,91 @@
         })));
       }
 
+      /* 2 · elementi presenti su questa schermata */
+      var presenti = [];
+      document.querySelectorAll('.screen [data-varname]').forEach(function (n) {
+        var nome = n.getAttribute('data-varname');
+        if (presenti.indexOf(nome) === -1 && VAR[nome]) presenti.push(nome);
+      });
+
+      if (presenti.length) {
+        p.appendChild(h('div', { class: 'ed-sep' }));
+
+        presenti.forEach(function (nome) {
+          var d = VAR[nome];
+          var base = (nome === 'answerList' && screen.listStyle) ? screen.listStyle : d.predefinita;
+          var attuale = S.variant(screen.id, nome, base);
+
+          var titolo = h('div', {
+            class: 'ed-label ed-label--puntabile',
+            text: d.etichetta
+          });
+          // passandoci sopra, l'elemento si illumina nello schermo
+          titolo.addEventListener('mouseenter', function () { Editor.illumina(nome, true); });
+          titolo.addEventListener('mouseleave', function () { Editor.illumina(nome, false); });
+          p.appendChild(titolo);
+
+          p.appendChild(h('div', { class: 'ed-seg' }, d.options.map(function (o) {
+            var b = h('button', {
+              class: 'ed-chip' + (attuale === o.value ? ' is-active' : ''),
+              text: o.label,
+              onclick: function () {
+                S.setVariant(screen.id, nome, o.value);
+                window.NavidaApp.render();
+                Editor.paint();
+              }
+            });
+            b.addEventListener('mouseenter', function () { Editor.illumina(nome, true); });
+            b.addEventListener('mouseleave', function () { Editor.illumina(nome, false); });
+            return b;
+          })));
+
+          if (attuale !== base) {
+            p.appendChild(h('div', { class: 'ed-actions' }, [
+              h('button', {
+                class: 'ed-btn',
+                onclick: function () {
+                  S.setVariantGlobal(nome, attuale);
+                  window.NavidaApp.render();
+                  Editor.paint();
+                  window.NavidaRender.toast('Applicato a tutte le schermate.');
+                }
+              }, [icon('copy', 13), 'Usa questo ovunque'])
+            ]));
+          }
+        });
+      }
+
       var n = Object.keys(S.overrides.text).length + Object.keys(S.overrides.colors).length +
               Object.keys(S.overrides.order).length + Object.keys(S.overrides.variants).length +
               Object.keys(S.overrides.page).length;
 
-      p.appendChild(h('div', { class: 'ed-label', text: 'Copie di sicurezza' }));
-      p.appendChild(h('div', { class: 'ed-actions' }, [
+      p.appendChild(h('div', { class: 'ed-sep' }));
+      p.appendChild(h('div', { class: 'ed-label', text: 'Stato' }));
+      p.appendChild(h('p', { class: 'ed-hint', text: n ? (n + ' modifiche applicate.') : 'Nessuna modifica applicata.' }));
+      p.appendChild(h('p', { class: 'ed-hint', text: window.NavidaSync.stato() }));
+
+      var problema = window.NavidaSync.problema();
+      if (problema) {
+        p.appendChild(h('div', { class: 'ed-allarme' }, [
+          h('div', { class: 'ed-allarme__testa' }, [icon('lightbulb', 13), 'Da sistemare sul server']),
+          h('p', { class: 'ed-allarme__testo', text: problema })
+        ]));
+      }
+
+      /* copie di sicurezza: in fondo, fuori dai piedi */
+      p.appendChild(h('div', { class: 'ed-minirow' }, [
         h('button', {
-          class: 'ed-btn',
+          class: 'ed-mini',
+          title: 'Scarica un file con tutte le modifiche applicate',
           onclick: function () {
             window.NavidaSync.scarica(S.overrides);
             window.NavidaRender.toast('Copia scaricata.');
           }
-        }, [icon('download', 13), 'Scarica una copia']),
+        }, [icon('download', 12), 'Scarica copia']),
         h('button', {
-          class: 'ed-btn',
+          class: 'ed-mini',
+          title: 'Rimetti le modifiche da un file scaricato prima',
           onclick: function () {
             window.NavidaSync.ripristina(S, function () {
               window.NavidaSync.push(S.overrides);
@@ -285,47 +361,13 @@
               window.NavidaRender.toast('Copia ripristinata.');
             });
           }
-        }, [icon('upload', 13), 'Ripristina da una copia'])
-      ]));
-
-      /* versioni conservate sul server */
-      if (window.NavidaSync.disponibile) {
-        var box = h('div', { class: 'ed-versioni' }, [
-          h('p', { class: 'ed-hint', text: 'Carico le versioni…' })
-        ]);
-        p.appendChild(h('div', { class: 'ed-label', text: 'Versioni sul server' }));
-        p.appendChild(box);
-
-        window.NavidaSync.storico(function (lista) {
-          box.innerHTML = '';
-          if (!lista.length) {
-            box.appendChild(h('p', { class: 'ed-hint', text: 'Ancora nessuna versione salvata.' }));
-            return;
-          }
-          lista.slice(0, 8).forEach(function (v) {
-            var quando = new Date(v.quando);
-            var etichetta = isNaN(quando) ? String(v.quando)
-              : quando.toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit' }) +
-                ' · ' + quando.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
-            box.appendChild(h('button', {
-              class: 'ed-jumpItem',
-              text: etichetta + (v.autore ? ' · ' + v.autore : ''),
-              onclick: function () {
-                if (!confirm('Tornare a questa versione? Quella attuale resta nello storico.')) return;
-                window.NavidaSync.riprendi(v.id, S, function () {
-                  window.NavidaApp.render();
-                  Editor.paint();
-                  window.NavidaRender.toast('Versione ripristinata.');
-                });
-              }
-            }));
-          });
-        });
-      }
-
-      p.appendChild(h('div', { class: 'ed-label', text: 'Stato' }));
-      p.appendChild(h('p', { class: 'ed-hint', text: n ? (n + ' modifiche applicate.') : 'Nessuna modifica applicata.' }));
-      p.appendChild(h('p', { class: 'ed-hint', text: window.NavidaSync.stato() }));
+        }, [icon('upload', 12), 'Ripristina']),
+        window.NavidaSync.disponibile ? h('button', {
+          class: 'ed-mini',
+          title: 'Torna a una versione salvata sul server',
+          onclick: function () { Editor.mostraStorico(); }
+        }, [icon('rotate-ccw', 12), 'Versioni']) : null
+      ].filter(Boolean)));
     },
 
     /* --- Testi -------------------------------------------------------- */
@@ -496,6 +538,40 @@
     markPicked: function () {
       document.querySelectorAll('.screen [data-varname]').forEach(function (n) {
         n.classList.toggle('is-picked', n.getAttribute('data-varname') === S.picked);
+      });
+    },
+
+    /** Illumina nello schermo l'elemento a cui si riferisce una voce. */
+    illumina: function (nome, si) {
+      document.querySelectorAll('.screen [data-varname="' + nome + '"]').forEach(function (n) {
+        n.classList.toggle('is-evidenziato', !!si);
+      });
+    },
+
+    /** Elenco delle versioni salvate sul server, in una finestrella. */
+    mostraStorico: function () {
+      window.NavidaSync.storico(function (lista) {
+        if (!lista.length) {
+          window.NavidaRender.toast('Ancora nessuna versione salvata.');
+          return;
+        }
+        var righe = lista.slice(0, 10).map(function (v, i) {
+          var d = new Date(v.quando);
+          var q = isNaN(d) ? String(v.quando)
+            : d.toLocaleDateString('it-IT') + ' ' + d.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
+          return (i + 1) + ') ' + q + (v.autore ? ' — ' + v.autore : '');
+        });
+        var scelta = prompt(
+          'Versioni salvate sul server:\n\n' + righe.join('\n') +
+          '\n\nScrivi il numero della versione da ripristinare (o annulla).'
+        );
+        var n = parseInt(scelta, 10);
+        if (!n || n < 1 || n > lista.length) return;
+        window.NavidaSync.riprendi(lista[n - 1].id, S, function () {
+          window.NavidaApp.render();
+          Editor.paint();
+          window.NavidaRender.toast('Versione ripristinata.');
+        });
       });
     },
 

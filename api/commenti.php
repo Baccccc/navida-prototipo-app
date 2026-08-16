@@ -15,7 +15,7 @@
    GET  api/commenti.php?schermata=id    solo quelli di una schermata
    POST {azione:'nuovo', schermata, autore, testo}
    POST {azione:'risolvi', id}           segna come risolto (o lo riapre)
-   POST {azione:'cancella', id, password}
+   POST {azione:'cancella', id}
    ========================================================================== */
 
 declare(strict_types=1);
@@ -27,9 +27,25 @@ $cfg = require __DIR__ . '/impostazioni.php';
 
 const TABELLA = 'navida_commenti';
 
+/**
+ * Il database si usa solo se configurato E se risponde davvero.
+ * Se non risponde si ripiega sul file: i commenti si salvano comunque.
+ */
 function conDatabase(array $cfg): bool
 {
-    return !empty($cfg['db']['host']) && !empty($cfg['db']['nome']);
+    static $esito = null;
+    if ($esito !== null) {
+        return $esito;
+    }
+    if (empty($cfg['db']['host']) || empty($cfg['db']['nome'])) {
+        return $esito = false;
+    }
+    try {
+        pdo($cfg);
+        return $esito = true;
+    } catch (Throwable $e) {
+        return $esito = false;
+    }
 }
 
 function pdo(array $cfg): PDO
@@ -240,13 +256,6 @@ if ($metodo === 'POST') {
         }
 
         if ($azione === 'cancella') {
-            // cancellare richiede la parola d'ordine: i commenti degli altri
-            // non si buttano via per sbaglio
-            if (!isset($data['password']) || !hash_equals((string) $cfg['password'], (string) $data['password'])) {
-                http_response_code(403);
-                echo json_encode(['errore' => 'Serve la parola d’ordine per eliminare']);
-                exit;
-            }
             echo json_encode(cancella($cfg, (int) ($data['id'] ?? 0)));
             exit;
         }

@@ -14,7 +14,6 @@
 
   var URL_API = 'api/commenti.php';
   var CHIAVE_LOCALE = 'navida-commenti-v1';
-  var CHIAVE_NOME = 'navida-autore';
 
   var h, icon;
 
@@ -37,14 +36,6 @@
     /* ==================================================================
        DATI
        ================================================================== */
-
-    autore: function () {
-      try { return localStorage.getItem(CHIAVE_NOME) || ''; } catch (e) { return ''; }
-    },
-
-    setAutore: function (nome) {
-      try { localStorage.setItem(CHIAVE_NOME, nome); } catch (e) {}
-    },
 
     localiLeggi: function () {
       try { return JSON.parse(localStorage.getItem(CHIAVE_LOCALE) || '[]'); } catch (e) { return []; }
@@ -91,20 +82,12 @@
     aggiungi: function (testo) {
       var C = this;
       var schermata = window.NavidaApp.current().id;
-      var nome = this.autore();
-
-      if (!nome) {
-        nome = (prompt('Come ti chiami? (comparirà accanto ai tuoi commenti)') || '').trim();
-        if (!nome) return;
-        this.setAutore(nome);
-      }
 
       if (!this.disponibile) {
         var lista = this.localiLeggi();
         lista.push({
           id: Date.now(),
           schermata: schermata,
-          autore: nome,
           testo: testo,
           risolto: false,
           quando: new Date().toISOString()
@@ -119,7 +102,7 @@
       fetch(URL_API, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ azione: 'nuovo', schermata: schermata, autore: nome, testo: testo })
+        body: JSON.stringify({ azione: 'nuovo', schermata: schermata, testo: testo })
       })
         .then(function (r) { return r.json(); })
         .then(function (j) {
@@ -160,25 +143,15 @@
         return;
       }
 
-      var pwd = window.NavidaSync._password;
-      if (!pwd) {
-        pwd = prompt('Parola d’ordine per eliminare un commento');
-        if (!pwd) return;
-        window.NavidaSync._password = pwd;
-      }
-
       fetch(URL_API, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ azione: 'cancella', id: id, password: pwd })
+        body: JSON.stringify({ azione: 'cancella', id: id })
       })
         .then(function (r) { return r.json(); })
         .then(function (j) {
           if (j.ok) C.carica();
-          else {
-            window.NavidaSync._password = null;
-            window.NavidaRender.toast(j.errore || 'Non eliminato.');
-          }
+          else window.NavidaRender.toast(j.errore || 'Non eliminato.');
         });
     },
 
@@ -218,7 +191,6 @@
           style: 'animation-delay:' + (i * 60) + 'ms'
         }, [
           h('div', { class: 'cm-nota__testa' }, [
-            h('span', { class: 'cm-nota__autore', text: c.autore }),
             h('span', { class: 'cm-nota__data', text: C.quando(c) })
           ]),
           h('p', { class: 'cm-nota__testo', text: c.testo }),
@@ -262,19 +234,10 @@
         C.aggiungi(t);
       }
 
-      var nome = this.autore();
-
       p.appendChild(h('div', { class: 'ed-label', text: 'Nuovo commento' }));
       p.appendChild(campo);
       p.appendChild(h('div', { class: 'ed-actions' }, [
-        h('button', { class: 'ed-btn ed-btn--primary', onclick: invia }, [icon('arrow-right', 13), 'Invia']),
-        h('button', {
-          class: 'ed-btn',
-          onclick: function () {
-            var n = (prompt('Come ti chiami?', nome) || '').trim();
-            if (n) { C.setAutore(n); window.NavidaEditor.paint(); }
-          }
-        }, [icon('user', 13), nome || 'Metti il tuo nome'])
+        h('button', { class: 'ed-btn ed-btn--primary', onclick: invia }, [icon('arrow-right', 13), 'Invia'])
       ]));
       p.appendChild(h('p', { class: 'ed-hint', text: 'Compare a sinistra dello schermo, sulla schermata corrente.' }));
 
@@ -287,7 +250,6 @@
         miei.forEach(function (c) {
           p.appendChild(h('div', { class: 'ed-commento' + (c.risolto ? ' is-risolto' : '') }, [
             h('div', { class: 'ed-commento__testa' }, [
-              h('span', { class: 'ed-commento__autore', text: c.autore }),
               h('span', { class: 'ed-commento__data', text: C.quando(c) })
             ]),
             h('p', { class: 'ed-commento__testo', text: c.testo }),

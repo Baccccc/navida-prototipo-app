@@ -184,6 +184,51 @@
   text-align: center;
 }
 
+/* separatore fra i blocchi del pannello */
+.ed-sep {
+  height: 1px;
+  background: #ffffff1a;
+  margin: 16px 0 4px;
+}
+
+/* etichetta che illumina l'elemento nello schermo */
+.ed-label--puntabile { cursor: default; }
+.ed-label--puntabile:hover { color: #fff; }
+
+/* riga di pulsantini in fondo */
+.ed-minirow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid #ffffff14;
+}
+
+/* avviso di configurazione del server */
+.ed-allarme {
+  margin-top: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #d27a1c26;
+  border: 1px solid #d27a1c66;
+}
+.ed-allarme__testa {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 10px;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  font-weight: var(--fw-bold);
+  color: #ffc98a;
+  margin-bottom: 6px;
+}
+.ed-allarme__testo {
+  margin: 0;
+  font-size: 11px;
+  line-height: 15px;
+  color: #ffe3c4;
+}
+
 /* barra delle modifiche in attesa di essere applicate */
 .ed-pending {
   flex: 0 0 auto;
