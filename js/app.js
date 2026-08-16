@@ -135,7 +135,7 @@
       wrap.className = 'screen' + (S.direction === 'back' ? ' screen--back' : '');
       wrap.setAttribute('data-screen', screen.id);
 
-      window.NavidaKeyboard.reset();
+      if (window.NavidaKeyboard) window.NavidaKeyboard.reset();
 
       var tipo = screen.type;
       // la schermata di accesso ha anche le vecchie versioni a popup
@@ -168,6 +168,7 @@
 
       if (window.lucide && window.lucide.createIcons) window.lucide.createIcons();
       if (window.NavidaEditor) window.NavidaEditor.afterRender();
+      if (window.NavidaCommenti) window.NavidaCommenti.afterRender();
     },
 
     /* ------------------------------------------------------------------ */
@@ -198,6 +199,8 @@
 
     // 393x852 + 12px di cornice per lato + respiro, meno il pannello laterale
     var sidebar = window.innerWidth >= 901 ? 300 : 0;
+    var commenti = window.innerWidth >= 1241 ? 300 : 0;
+    sidebar += commenti;
     var need = { w: 393 + 24 + 48, h: 852 + 24 + 48 };
     var scale = Math.min(
       1,
@@ -225,8 +228,10 @@
     // prima prova a prendere le modifiche condivise dal server, poi disegna
     window.NavidaSync.pull(S, function () {
       S.applyColors();
-      window.NavidaEditor.init();
+      // ogni pezzo è opzionale: se un file non carica, l'app parte lo stesso
+      if (window.NavidaEditor) window.NavidaEditor.init();
       App.init();
+      if (window.NavidaCommenti) window.NavidaCommenti.init();
       // in secondo piano: come sta messo il salvataggio sul server
       window.NavidaSync.chiediStato(function () { window.NavidaEditor.paint(); });
     });

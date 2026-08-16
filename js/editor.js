@@ -28,7 +28,8 @@
     { id: 'colori',   label: 'Colori',   ico: 'palette' },
     { id: 'ordine',   label: 'Ordine',   ico: 'arrow-up-down' },
     { id: 'elemento', label: 'Elemento', ico: 'mouse-pointer-click' },
-    { id: 'vai',      label: 'Vai a',    ico: 'list' }
+    { id: 'vai',      label: 'Vai a',    ico: 'list' },
+    { id: 'commenti', label: 'Commenti', ico: 'message-square' }
   ];
 
   var COLORI = [
@@ -125,8 +126,15 @@
       // ogni scheda attiva subito la sua modalità
       var MODO = { testi: 'text', ordine: 'order', elemento: 'pick' };
 
-      this.host.appendChild(h('div', { class: 'ed-tabs' }, TABS.map(function (t) {
+      var schede = TABS.filter(function (t) {
+        return t.id !== 'commenti' || !!window.NavidaCommenti;
+      });
+
+      this.host.appendChild(h('div', { class: 'ed-tabs' }, schede.map(function (t) {
         var on = MODO[t.id] && S.mode === MODO[t.id];
+        var aperti = (t.id === 'commenti' && window.NavidaCommenti)
+          ? window.NavidaCommenti.apertiTotali() : 0;
+
         return h('button', {
           class: 'ed-tab' + (Editor.tab === t.id ? ' is-active' : '') + (on ? ' is-on' : ''),
           onclick: function () {
@@ -135,7 +143,13 @@
             if (S.mode !== modo) Editor.setMode(modo);   // render + modalità
             Editor.paint();
           }
-        }, [icon(t.ico, 15), t.label]);
+        }, [
+          h('span', { class: 'ed-tab__ico' }, [
+            icon(t.ico, 15),
+            aperti ? h('span', { class: 'ed-tab__badge', text: String(aperti) }) : null
+          ].filter(Boolean)),
+          t.label
+        ]);
       })));
 
       if (S.mode) {
@@ -223,6 +237,7 @@
       if (this.tab === 'ordine')   this.panelOrdine(p, screen);
       if (this.tab === 'elemento') this.panelElemento(p, screen);
       if (this.tab === 'vai')      this.panelVai(p, screen);
+      if (this.tab === 'commenti' && window.NavidaCommenti) window.NavidaCommenti.pannello(p);
       return p;
     },
 

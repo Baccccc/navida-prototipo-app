@@ -1,0 +1,30 @@
+# ==========================================================================
+# NAVIDA — file da non versionare
+# ==========================================================================
+
+# Credenziali del database e parola d'ordine del team.
+# Vive solo sul server: non deve mai finire nel repository.
+api/impostazioni.php
+
+# Dati salvati dal prototipo (se non si usa il database)
+api/dati/
+api/config.json
+api/config.backup.json
+api/storico/
+navida-dati/
+../navida-dati/
+
+# Copie scaricate dalla barra laterale
+navida-modifiche-*.json
+
+# Roba di sistema
+.DS_Store
+Thumbs.db
+desktop.ini
+*.log
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*~

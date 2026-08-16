@@ -1,0 +1,179 @@
+/* ==========================================================================
+   NAVIDA — Commenti del team
+   ==========================================================================
+   Si scrivono dal pannello di destra, ma compaiono qui: foglietti
+   appoggiati a sinistra dello schermo del telefono.
+   ========================================================================== */
+
+#commenti {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 300px;
+  height: 100%;
+  z-index: 90;
+  padding: 40px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow-y: auto;
+  pointer-events: none;          /* non ruba i clic allo schermo */
+  font-family: var(--font);
+}
+#commenti > * { pointer-events: auto; }
+#commenti.is-vuoto { display: none; }
+
+/* --- il foglietto ---------------------------------------------------- */
+.cm-nota {
+  position: relative;
+  background: #fff8d6;
+  border-radius: 12px;
+  padding: 12px 14px;
+  box-shadow: 0 8px 24px #00000026, 0 1px 2px #0000001a;
+  transform: rotate(-.6deg);
+  animation: cm-in 320ms var(--ease) both;
+}
+.cm-nota:nth-child(even) { transform: rotate(.7deg); background: #ffeede; }
+.cm-nota:nth-child(3n)   { transform: rotate(-.3deg); background: #e6f3ff; }
+
+@keyframes cm-in {
+  from { opacity: 0; transform: translateX(-10px) rotate(-2deg); }
+  to   { opacity: 1; }
+}
+
+/* la punta che indica lo schermo */
+.cm-nota::after {
+  content: '';
+  position: absolute;
+  right: -6px; top: 18px;
+  width: 12px; height: 12px;
+  background: inherit;
+  transform: rotate(45deg);
+}
+
+.cm-nota__testa {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 5px;
+}
+.cm-nota__autore {
+  font-size: 11px;
+  font-weight: var(--fw-bold);
+  color: var(--indigo-950);
+}
+.cm-nota__data {
+  font-size: 10px;
+  color: #00000073;
+  white-space: nowrap;
+}
+.cm-nota__testo {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 17px;
+  color: #1a1a2e;
+  overflow-wrap: anywhere;
+  white-space: pre-line;
+}
+.cm-nota__tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 7px;
+  font-size: 10px;
+  font-weight: var(--fw-bold);
+  color: #1f7a4d;
+}
+.cm-nota.is-risolto {
+  opacity: .55;
+  background: #eef1f4;
+}
+.cm-nota.is-risolto .cm-nota__testo {
+  text-decoration: line-through;
+  text-decoration-color: #00000047;
+}
+
+/* --- sotto i 1240px lo spazio non basta: i foglietti spariscono ------ */
+@media (max-width: 1240px) {
+  #commenti { display: none; }
+}
+
+/* ==========================================================================
+   Pannello di destra — scheda "Commenti"
+   ========================================================================== */
+
+.ed-campo {
+  width: 100%;
+  border: 0;
+  border-radius: 10px;
+  background: #ffffff14;
+  color: #fff;
+  padding: 10px 12px;
+  font-family: var(--font);
+  font-size: 12px;
+  line-height: 17px;
+  resize: vertical;
+  outline: none;
+}
+.ed-campo::placeholder { color: #ffffff70; }
+.ed-campo:focus { background: #ffffff26; }
+
+.ed-commento {
+  background: #ffffff0f;
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin-bottom: 6px;
+}
+.ed-commento.is-risolto { opacity: .5; }
+.ed-commento__testa {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+.ed-commento__autore { font-size: 11px; font-weight: var(--fw-bold); color: #fff; }
+.ed-commento__data { font-size: 9.5px; color: #ffffff70; white-space: nowrap; }
+.ed-commento__testo {
+  margin: 0 0 8px;
+  font-size: 11.5px;
+  line-height: 16px;
+  color: #ffffffd6;
+  overflow-wrap: anywhere;
+  white-space: pre-line;
+}
+.ed-commento.is-risolto .ed-commento__testo { text-decoration: line-through; }
+.ed-commento__azioni { display: flex; gap: 5px; }
+
+.ed-mini {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 9px;
+  border-radius: 7px;
+  background: #ffffff1a;
+  color: #ffffffcc;
+  font-size: 10px;
+  font-weight: var(--fw-semibold);
+}
+.ed-mini:hover { background: #ffffff2e; color: #fff; }
+.ed-mini--danger { background: #b3405420; color: #ff9db0; }
+.ed-mini--danger:hover { background: #b3405438; }
+
+/* --- schede: ora sono sette, servono quattro colonne ----------------- */
+.ed-tabs { grid-template-columns: repeat(4, 1fr); }
+.ed-tab__ico { position: relative; display: inline-grid; place-items: center; }
+.ed-tab__badge {
+  position: absolute;
+  top: -5px; right: -8px;
+  min-width: 14px; height: 14px;
+  padding: 0 3px;
+  border-radius: var(--r-full);
+  background: var(--contrast-2);
+  color: #fff;
+  font-size: 9px;
+  font-weight: var(--fw-bold);
+  display: grid; place-items: center;
+  line-height: 1;
+}

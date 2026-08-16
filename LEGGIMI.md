@@ -91,9 +91,34 @@ può esportare in JSON.
 | **Elemento** | Attiva la selezione, clicca un elemento (lista risposte, titolo, pulsante, barra, mascotte, card…) e scegli una variante di stile. Puoi applicarla solo a quella schermata o a tutte. |
 | **Vai a** | Salta direttamente a una qualsiasi delle 49 schermate. |
 
+| **Commenti** | Lascia un commento sulla schermata che stai guardando. |
+
 Cliccando **Testi**, **Ordine** o **Elemento** la modalità si attiva subito.
 In fondo al pannello ci sono due scorciatoie: **Inizio del questionario** e
 **Fine del questionario** (che compila da sola tutte le risposte).
+
+---
+
+## I commenti del team
+
+Si **scrivono dal pannello di destra**, scheda **Commenti**, e **compaiono a
+sinistra** dello schermo del telefono come foglietti attaccati alla schermata
+a cui si riferiscono.
+
+- La prima volta il prototipo chiede il tuo nome, poi se lo ricorda.
+- Ogni commento resta legato alla sua schermata: cambiando pagina compaiono
+  quelli di quella pagina.
+- **Risolto** lo barra e lo sbiadisce, senza cancellarlo. Si può riaprire.
+- **Elimina** chiede la parola d'ordine, così non si buttano via per sbaglio
+  i commenti degli altri.
+- Sulla scheda c'è un pallino arancione con quanti commenti aperti ci sono in
+  tutto il prototipo, e sotto l'elenco delle altre schermate che ne hanno.
+
+I commenti stanno nella tabella `navida_commenti` del database: come le
+modifiche, non si perdono ricaricando l'app. Sotto i 1240px di larghezza i
+foglietti non compaiono, per non stringere lo schermo del telefono.
+
+---
 
 ### Versioni alternative già pronte
 

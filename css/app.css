@@ -53,6 +53,10 @@ input, textarea { font-family: inherit; }
 @media (min-width: 901px) {
   #stage { --sidebar-w: 300px; }
 }
+/* con i foglietti dei commenti a sinistra, il telefono resta centrato fra i due */
+@media (min-width: 1241px) {
+  #stage { padding-left: 300px; }
+}
 
 .device {
   position: relative;
