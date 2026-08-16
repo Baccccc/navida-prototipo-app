@@ -1,0 +1,303 @@
+/* ==========================================================================
+   NAVIDA — Sezione ludica e tastiera finta
+   ========================================================================== */
+
+/* ==========================================================================
+   ANELLI DI TESTO ROTANTI
+   ========================================================================== */
+
+.dream {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  padding: var(--header-top) var(--gutter) 34px;
+  overflow: hidden;
+}
+
+/* Il contenitore occupa tutto lo schermo e centra i cerchi:
+   così restano centrati davvero, senza risentire dei margini della pagina. */
+.ring {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: var(--indigo-950);
+  pointer-events: none;
+  z-index: 0;
+  transform-origin: center center;
+}
+.ring__layer {
+  grid-area: 1 / 1;
+  width: 560px;
+  height: 560px;
+  animation-name: ring-spin;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  animation-play-state: paused;   /* fermi: si può scrivere */
+}
+.ring__layer svg { width: 100%; height: 100%; display: block; overflow: visible; }
+
+/* entrata decisa: parte piccolo e ruotato, si apre fino a fermarsi */
+.ring--enter { animation: ring-in 1800ms cubic-bezier(.16, .84, .28, 1) both; }
+@keyframes ring-in {
+  0%   { opacity: 0; transform: scale(.45) rotate(-75deg); }
+  55%  { opacity: 1; }
+  100% { opacity: 1; transform: scale(1) rotate(0deg); }
+}
+
+/* dopo Continua: riprendono a girare, prima veloci poi a regime */
+.ring--spin .ring__layer { animation-play-state: running; }
+.ring--spin { animation: ring-kick 900ms var(--ease) both; }
+@keyframes ring-kick {
+  0%   { transform: scale(1) rotate(0); }
+  100% { transform: scale(1.14) rotate(38deg); opacity: .9; }
+}
+
+@keyframes ring-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+@media (max-height: 700px) {
+  .ring__layer { width: 460px; height: 460px; }
+}
+
+.dream__center {
+  position: relative;
+  z-index: 2;
+  margin-top: auto;
+  margin-bottom: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-7);
+  width: 100%;
+}
+.dream__input {
+  width: 100%;
+  max-width: 250px;
+  border: 0;
+  border-bottom: 2px solid var(--main);
+  background: transparent;
+  padding: 6px 0 10px;
+  font-size: var(--fs-2xl);
+  line-height: var(--lh-2xl);
+  font-weight: var(--fw-bold);
+  color: var(--main-2);
+  text-align: center;
+  outline: none;
+  resize: none;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  font-family: inherit;
+}
+.dream__input::placeholder { color: var(--text-dimmed); font-weight: var(--fw-medium); font-size: var(--fs-base); }
+
+.dream__footer {
+  position: relative;
+  z-index: 2;
+  flex: 0 0 auto;
+}
+
+/* ==========================================================================
+   CERCHI CHE COPRONO LO SCHERMO
+   ========================================================================== */
+
+.circles {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: var(--bg);
+  z-index: 5;
+}
+.circles__c {
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 1050px; height: 1050px;
+  margin: -525px 0 0 -525px;
+  border-radius: var(--r-full);
+  display: grid;
+  place-items: center;
+  transform: scale(0);
+  animation: circle-in 2400ms cubic-bezier(.22, .9, .3, 1) both;
+}
+@keyframes circle-in {
+  0%   { transform: scale(0); }
+  40%  { transform: scale(1); }
+  100% { transform: scale(1); }
+}
+.circles__label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-5);
+  font-size: var(--fs-lg);
+  line-height: var(--lh-lg);
+  font-weight: var(--fw-bold);
+  animation: circle-label 2400ms var(--ease) both;
+}
+@keyframes circle-label {
+  0%, 28% { opacity: 0; transform: translateY(8px); }
+  42%     { opacity: 1; transform: none; }
+  88%     { opacity: 1; transform: none; }
+  100%    { opacity: 1; transform: none; }
+}
+/* la scintilla pulsa: dà il senso del caricamento */
+.circles__spark { animation: spark 1200ms var(--ease) infinite; }
+@keyframes spark {
+  0%, 100% { transform: scale(1) rotate(0); opacity: .85; }
+  50%      { transform: scale(1.25) rotate(20deg); opacity: 1; }
+}
+
+/* ==========================================================================
+   DIMOSTRAZIONE DEL RIORDINO
+   ==========================================================================
+   Tre righe finte: la terza sale in cima, in loop, con una manina che
+   la trascina. Serve a spiegare che le risposte si ordinano trascinandole.
+   ========================================================================== */
+
+.rankDemo {
+  position: relative;
+  width: 100%;
+  max-width: 280px;
+  margin: var(--sp-4) auto 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--option-gap);
+}
+.rankDemo__row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  padding: 10px 14px;
+  border-radius: var(--r-md);
+  background: var(--surface);
+  border: 1px solid var(--light-outline);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  color: var(--text);
+}
+.rankDemo__label { flex: 1 1 auto; text-align: left; }
+
+/* la riga 3 sale in cima e le altre due scendono */
+.rankDemo__row[data-i="2"] {
+  animation: demo-up 4s var(--ease) infinite;
+  position: relative;
+  z-index: 2;
+}
+.rankDemo__row[data-i="0"] { animation: demo-down 4s var(--ease) infinite; }
+.rankDemo__row[data-i="1"] { animation: demo-down 4s var(--ease) infinite; }
+
+@keyframes demo-up {
+  0%, 12%   { transform: translateY(0) scale(1); box-shadow: none; }
+  28%       { transform: translateY(0) scale(1.03); box-shadow: var(--shadow-md); border-color: var(--risposte-outline); }
+  55%       { transform: translateY(calc(-200% - 2 * var(--option-gap))) scale(1.03); box-shadow: var(--shadow-md); border-color: var(--risposte-outline); }
+  70%, 100% { transform: translateY(calc(-200% - 2 * var(--option-gap))) scale(1); box-shadow: none; }
+}
+@keyframes demo-down {
+  0%, 28%   { transform: translateY(0); }
+  55%, 100% { transform: translateY(calc(100% + var(--option-gap))); }
+}
+
+.rankDemo__hand {
+  position: absolute;
+  left: 50%; top: 100%;
+  margin-top: -18px;
+  animation: demo-hand 4s var(--ease) infinite;
+  pointer-events: none;
+  z-index: 3;
+  filter: drop-shadow(0 2px 4px #00000024);
+}
+@keyframes demo-hand {
+  0%, 12%   { opacity: 0; transform: translate(-50%, 6px); }
+  22%       { opacity: 1; transform: translate(-50%, 0); }
+  55%       { opacity: 1; transform: translate(-50%, calc(-200% - 2 * var(--option-gap))); }
+  72%       { opacity: 0; transform: translate(-50%, calc(-200% - 2 * var(--option-gap))); }
+  100%      { opacity: 0; transform: translate(-50%, 6px); }
+}
+
+/* ==========================================================================
+   TASTIERA FINTA
+   ========================================================================== */
+
+.kb {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  z-index: 50;
+  background: #d1d3d9;
+  padding: 6px 3px 4px;
+  transform: translateY(100%);
+  transition: transform 280ms var(--ease);
+  user-select: none;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+.kb.is-up { transform: none; }
+
+.kb__suggest {
+  display: flex;
+  align-items: center;
+  height: 42px;
+  margin: -6px -3px 6px;
+  background: #d1d3d9;
+  border-bottom: .5px solid #b0b2b8;
+}
+.kb__sugg {
+  flex: 1;
+  height: 100%;
+  font-size: 15px;
+  color: #000;
+  border-right: .5px solid #b8bac0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: 0 6px;
+}
+.kb__sugg:last-child { border-right: 0; }
+.kb__sugg.is-first { background: #c3c5cb; border-radius: 5px; }
+
+.kb__row {
+  display: flex;
+  gap: 5px;
+  justify-content: center;
+  margin-bottom: 8px;
+}
+.kb__row--2 { padding: 0 18px; }
+.kb__row--last { margin-bottom: 4px; }
+
+.kb__key {
+  flex: 1 1 0;
+  min-width: 0;
+  height: 40px;
+  border-radius: 5px;
+  background: #fff;
+  box-shadow: 0 1px 0 #8b8d92;
+  font-size: 21px;
+  color: #000;
+  display: grid;
+  place-items: center;
+}
+.kb__key:active { background: #d6d7db; }
+.kb__key--mod { flex: 0 0 40px; background: #adb1ba; font-size: 17px; }
+.kb__key--alt { flex: 0 0 58px; background: #adb1ba; font-size: 14px; }
+.kb__key--space { flex: 1 1 auto; font-size: 14px; }
+
+.kb__bar {
+  width: 134px; height: 5px;
+  margin: 8px auto 4px;
+  border-radius: var(--r-full);
+  background: #000;
+  opacity: .5;
+}
+
+/* quando la tastiera è su, il contenuto si stringe */
+.device.kb-open .screen,
+.device.kb-open .dream { padding-bottom: 300px; }
+.device.kb-open .device__home { opacity: 0; }
+
+@media (max-height: 700px) {
+  .kb__key { height: 34px; font-size: 18px; }
+  .kb__suggest { height: 34px; }
+  .device.kb-open .screen,
+  .device.kb-open .dream { padding-bottom: 260px; }
+}

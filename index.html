@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+  <meta name="theme-color" content="#fafbfc">
+  <title>Navida — Prototipo</title>
+  <meta name="description" content="Prototipo interattivo dell'app Navida.">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/app.css">
+  <link rel="stylesheet" href="css/wow.css">
+  <link rel="stylesheet" href="css/editor.css">
+</head>
+<body>
+
+  <!-- Salto rapido: invisibile finché non premi Tab -->
+  <button id="skip" class="skiplink">Salta al questionario</button>
+
+  <div id="stage">
+    <div class="device">
+      <div class="device__notch"></div>
+      <div class="device__status">
+        <span>9:41</span>
+        <span class="status-icons" id="statusIcons"></span>
+      </div>
+
+      <main id="app"></main>
+
+      <div class="device__home"></div>
+    </div>
+  </div>
+
+  <!-- Barra di modifica: pannello laterale, fuori dallo schermo del telefono -->
+  <aside id="editor"></aside>
+
+  <!-- Icone Lucide: geometria incorporata in js/icons.js, così il prototipo
+       funziona anche offline. Il CDN copre le eventuali icone non incorporate. -->
+  <script src="https://unpkg.com/lucide@0.446.0/dist/umd/lucide.min.js"></script>
+
+  <script src="js/icons.js"></script>
+  <script src="js/content.js"></script>
+  <script src="js/data-professioni.js"></script>
+  <script src="js/variants.js"></script>
+  <script src="js/mascotte.js"></script>
+  <script src="js/state.js"></script>
+  <script src="js/sync.js"></script>
+  <script src="js/render.js"></script>
+  <script src="js/keyboard.js"></script>
+  <script src="js/wow.js"></script>
+  <script src="js/editor.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

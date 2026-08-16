@@ -1,0 +1,18 @@
+METTI QUI LE MASCOTTE ESPORTATE DA FIGMA
+
+Nomi esatti richiesti:
+  mascotte-salutare.png
+  mascotte-tablet.png
+  mascotte-saltare.png
+  mascotte-indicare.png
+  mascotte-computer.png
+
+Come esportarle (30 secondi):
+  1. Apri "Prototipo interattivo Navida" -> pagina "Schermate statiche"
+  2. Sezione UI kit -> component set "Mascotte" (5 varianti)
+  3. Seleziona tutte e 5 le varianti
+  4. Pannello destro -> Export -> PNG -> 2x -> Export
+  5. Rinomina i file come sopra e mettili in questa cartella
+
+Se preferisci SVG o WebP, cambia la costante FORMATO in js/mascotte.js.
+Finche' i file non ci sono, l'app mostra un segnaposto tratteggiato.

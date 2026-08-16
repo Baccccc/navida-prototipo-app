@@ -1,0 +1,116 @@
+/* ==========================================================================
+   NAVIDA — Design token
+   Estratti dalle variabili del file Figma "Prototipo interattivo Navida".
+   Modificabili a runtime dalla barra di modifica (pannello Colori).
+   ========================================================================== */
+
+:root {
+  /* --- Brand ------------------------------------------------------ */
+  --main: #4340b3;
+  --main-1: #4085b3;
+  --main-2: #8f40b3;
+  --indigo-950: #1e1a4d;
+  --contrast: #efd22d;
+  --contrast-2: #d27a1c;
+
+  /* --- Superfici -------------------------------------------------- */
+  --bg: #fafbfc;
+  --surface: #ffffff;
+  --risposte-bg: #e3e3f9;
+  --risposte-outline: #392eaa;
+  --light-outline: #ebe9f7;
+  --disabled: #dddded;
+  --passivo: #f3f4f6;
+  --premuto: #314158;
+  --bg-accented: #e2e8f0;
+  --gray-100: #f3f4f6;
+
+  /* --- Progress bar (valori esatti dal componente Figma) ---------- */
+  --progress-track: #1e1a4d;
+  --progress-track-opacity: .12;
+  --progress-from: #8c2895;
+  --progress-to: #3118a0;
+
+  /* --- Testo ------------------------------------------------------ */
+  --text: #314158;
+  --text-toned: #45556c;
+  --text-muted: #62748e;
+  --text-dimmed: #90a1b9;
+  --text-highlighted: #0f172b;
+  --text-on-main: #ffffff;
+  --text-disabled: #a3a3c2;
+
+  /* --- Coppie tematiche ------------------------------------------- */
+  --tema-1-text: #4340b3; --tema-1-bg: #4340b326;
+  --tema-2-text: #8f40b3; --tema-2-bg: #8f40b314;
+  --tema-3-text: #4085b3; --tema-3-bg: #4085b326;
+  --tema-4-text: #d4a91f; --tema-4-bg: #efd22d26;
+  --tema-5-text: #d27a1c; --tema-5-bg: #d27a1c26;
+
+  /* --- Tipografia ------------------------------------------------- */
+  --font: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+
+  --fs-xs: 12px;   --lh-xs: 16px;
+  --fs-sm: 14px;   --lh-sm: 20px;
+  --fs-base: 16px; --lh-base: 24px;
+  --fs-lg: 18px;   --lh-lg: 28px;
+  --fs-xl: 20px;   --lh-xl: 28px;
+  --fs-2xl: 24px;  --lh-2xl: 32px;
+  --fs-3xl: 30px;  --lh-3xl: 36px;
+  --fs-4xl: 36px;  --lh-4xl: 40px;
+
+  --fw-normal: 400;
+  --fw-medium: 500;
+  --fw-semibold: 600;
+  --fw-bold: 700;
+
+  /* --- Spaziature ------------------------------------------------- */
+  --sp-1: 2px;  --sp-2: 4px;  --sp-3: 6px;  --sp-4: 8px;
+  --sp-5: 10px; --sp-6: 12px; --sp-7: 16px; --sp-8: 24px;
+  --sp-9: 32px; --sp-10: 40px; --sp-11: 44px; --sp-12: 80px;
+
+  /* --- Raggi ------------------------------------------------------ */
+  --r-xs: 4px;
+  --r-sm: 6px;
+  --r-md: 12px;
+  --r-lg: 16px;
+  --r-xl: 24px;
+  --r-2xl: 32px;
+  --r-full: 999px;
+  --r-device: 42px;
+
+  /* --- Ombre ------------------------------------------------------ */
+  --shadow-sm: 0 1px 2px #0000000f, 0 1px 3px #0000001a;
+  --shadow-md: 0 4px 16px #5d468e14;
+  --shadow-lg: 0 12px 40px #1e1a4d1f;
+  --shadow-soft: 0 2px 0 #5d468e0d;
+
+  /* --- Layout mobile ---------------------------------------------- */
+  --vw: 393px;
+  --vh: 852px;
+  --gutter: 24px;
+  --content-w: 345px;
+  --header-top: 62px;
+  --btn-h: 52px;          /* variante "Dimensione6" — quella usata nelle schermate */
+  --btn-h-sm: 48px;       /* variante "Full page" */
+  --option-h: 40px;
+  --option-gap: 8px;
+  --option-pad-y: 10px;
+  --option-pad-x: 24px;
+  --progress-w: 185px;
+  --progress-h: 4px;
+  --check-size: 18px;   /* quadrato */
+  --mascotte-w: 152px;
+  --mascotte-h: 210px;
+
+  /* fattore di scala della cornice su desktop, calcolato da JS */
+  --scale: 1;
+
+  /* --- Motion ----------------------------------------------------- */
+  --ease: cubic-bezier(.22, .61, .36, 1);
+  --dur: 260ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root { --dur: 1ms; }
+}
