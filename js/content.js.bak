@@ -36,15 +36,6 @@
    options[].ico       nome icona Lucide (solo con listStyle 'grid')
    options[].chip      etichetta a destra, es. "Coming soon"
    options[].disabled  risposta non selezionabile
-
-   FORMATTAZIONE DEI TESTI (schermate "info")
-   -----------------------------------------
-   body        \n manda a capo (il testo va a capo davvero)
-   lista       elenco puntato con spunta:  ['riga', 'riga']
-   listaNum    elenco numerato 1. 2. 3. con attacco in grassetto:
-                 [{ forte: 'Fai il test.', testo: 'L’abbiamo costruito con…' }]
-   paragrafi   paragrafi con attacco in grassetto (stessa forma di listaNum)
-   Nota: forte e testo restano modificabili uno per uno dal pannello Testi.
    ========================================================================== */
 
 window.NAVIDA_CONTENT = {
@@ -69,9 +60,7 @@ window.NAVIDA_CONTENT = {
     scriviQui: 'Scrivi qui…',
     cercaProfessione: 'Cerca una professione…',
     nessunRisultato: 'Nessun risultato. Puoi scrivere liberamente.',
-    ordinaHint: 'Trascina dalla maniglia. In cima quello che conta di più.',
-    ordinaHintPodio: 'Tocca le risposte per riempire le posizioni, dalla prima all’ultima.',
-    ordinaHintTocca: 'Tocca in ordine di importanza. Tocca di nuovo per togliere.',
+    ordinaHint: 'Trascina le risposte nell’ordine che conta di più per te.',
     sceltaMultiplaHint: 'Scegli tutte le risposte che vuoi'
   },
 
@@ -124,7 +113,7 @@ window.NAVIDA_CONTENT = {
       mascotte: 'salutare',
       obStep: 1,
       title: 'Ciao, siamo Navida',
-      body: 'Uno spazio sicuro per capire davvero dove vuoi arrivare.\nNon siamo l’ennesima app di ricerca di lavoro: costruiamo su di te un percorso di carriera e ti guidiamo, tappa dopo tappa, fino al lavoro dei tuoi sogni.',
+      body: 'Uno spazio privato dove capire dove vuoi arrivare.\nNiente pubblicità, niente dati venduti.',
       cta: 'Continua'
     },
     {
@@ -133,30 +122,18 @@ window.NAVIDA_CONTENT = {
       type: 'info',
       mascotte: 'tablet',
       obStep: 2,
-      title: 'Come funziona?',
-      listaNum: [
-        { forte: 'Rispondi a qualche domanda.', testo: 'Poche e veloci, senza registrarti: avrai già una prima direzione.' },
-        { forte: 'Fai il test.', testo: 'L’abbiamo costruito insieme a psicologi del lavoro.' },
-        { forte: 'Il nostro algoritmo lavora per te.', testo: 'Ha imparato da migliaia di percorsi di carriera veri, e su quelli costruisce il tuo.' }
-      ],
+      title: 'Come funziona',
+      body: 'Qualche domanda, un test costruito con psicologi del lavoro, e la tua linea di carriera.',
       cta: 'Continua'
     },
     {
       id: 'ob3',
       chapter: 'intro',
       type: 'info',
-      /* niente mascotte: qui l'illustrazione e' il percorso che si disegna.
-         Risponde al commento "va messa l'animazione della linea di carriera". */
+      mascotte: 'saltare',
       obStep: 3,
       title: 'Da dove sei a dove vuoi arrivare',
       body: 'Ti mostriamo il percorso, tappa dopo tappa.',
-      percorso: [
-        { nome: 'Oggi' },
-        { nome: 'Formazione' },
-        { nome: 'Esperienza' },
-        { nome: 'Il lavoro che sogni' }
-      ],
-      percorsoAttiva: 0,
       cta: 'Continua'
     },
     {
@@ -165,11 +142,8 @@ window.NAVIDA_CONTENT = {
       type: 'info',
       mascotte: 'ok',
       obStep: 4,
-      title: 'Quanto costa?',
-      paragrafi: [
-        { forte: 'Navida è gratis e senza pubblicità.', testo: 'Il test, la costruzione del tuo percorso e tutte le opportunità che trovi lungo le tappe non si pagano.' },
-        { forte: 'A pagamento c’è solo la consulenza.', testo: 'Se a un certo punto vuoi parlare con qualcuno — un coach, uno psicologo del lavoro, un commercialista — lo trovi nell’area Consulenza.' }
-      ],
+      title: 'Scoprirlo è gratis',
+      body: 'Consulenze e accompagnamento sono le uniche funzioni a pagamento.',
       cta: 'Iniziamo'
     },
 
@@ -178,7 +152,7 @@ window.NAVIDA_CONTENT = {
       id: 'nome',
       chapter: 'scoperta',
       type: 'text',
-      title: 'Prima di tutto, qual è il tuo nome?',
+      title: 'Come vuoi essere chiamato?',
       placeholder: 'Il tuo nome',
       field: 'nome',
       cta: 'Continua'
@@ -189,7 +163,7 @@ window.NAVIDA_CONTENT = {
       type: 'info',
       mascotte: 'salutare',
       title: 'Piacere, {nome}!',
-      body: 'Iniziamo con genere ed età. Ci servono per confrontare il tuo percorso con quelli di chi è partito da una situazione simile alla tua.',
+      body: 'Da qui in poi facciamo sul serio.',
       cta: 'Continua'
     },
     {
@@ -213,17 +187,6 @@ window.NAVIDA_CONTENT = {
       title: 'Quanti anni hai?',
       placeholder: 'Età',
       field: 'eta',
-      cta: 'Continua'
-    },
-
-    /* 1C.2 · Intro alle domande — testo nuovo (FigJam v2) */
-    {
-      id: 'introDomande',
-      chapter: 'scoperta',
-      type: 'info',
-      mascotte: 'indicare',
-      title: 'Ci siamo!',
-      body: 'Ora ti facciamo qualche domanda, non per capire chi sei, ma chi puoi diventare.',
       cta: 'Continua'
     },
 
@@ -256,17 +219,6 @@ window.NAVIDA_CONTENT = {
         { label: 'Crescere dove sono', ico: 'trending-up', reazione: 'Crescere dove sei: si può, e ti mostro come.' },
         { label: 'Capire il mio potenziale', ico: 'sparkles', reazione: 'La mia parte preferita. Partiamo da lì.' }
       ]
-    },
-
-    /* 1C.5 · Intro dati specifici — testo nuovo (FigJam v2) */
-    {
-      id: 'datiSpecifici',
-      chapter: 'scoperta',
-      type: 'info',
-      mascotte: 'matita',
-      title: 'Sappiamo dove vuoi arrivare',
-      body: 'Adesso ci serve sapere da dove parti.\nAncora poche domande e ti mostriamo che direzione può prendere il tuo percorso.',
-      cta: 'Continua'
     },
 
     {
@@ -333,10 +285,7 @@ window.NAVIDA_CONTENT = {
       id: 'tuoMomento',
       chapter: 'scoperta',
       type: 'info',
-      /* l'astronauta salta e incoraggia prima della domanda sul sogno:
-         e' il passaggio chiesto nel commento su lavoroSogni */
-      mascotte: 'saltare',
-      mascotteAnima: 'salta',
+      mascotte: 'volare',
       wow: true,
       title: 'Ora tocca a te',
       body: 'Dimentica cosa sai fare. Pensa a cosa vorresti fare.',
@@ -350,7 +299,6 @@ window.NAVIDA_CONTENT = {
       field: 'lavoroSogni',
       wow: true,
       frase: 'Qual è il lavoro che sogni?',
-      descrizione: 'Scrivi di getto cosa ti piacerebbe diventare nella vita.',
       placeholder: 'Scrivi qui',
       cta: 'Continua'
     },

@@ -1,0 +1,265 @@
+/* ==========================================================================
+   NAVIDA — La linea di carriera (tre versioni)
+   ==========================================================================
+   Colori e tempi vengono tutti dai token: se il pannello Colori cambia
+   --main, il percorso cambia con lui.
+   ========================================================================== */
+
+.perc {
+  align-self: stretch;
+  width: 100%;
+}
+
+/* Nella schermata finale il percorso e' il contenuto principale: prende
+   lo spazio che resta e scorre da solo, senza spingere via il pulsante. */
+.body--path {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-7);
+  flex: 1 1 auto;
+  min-height: 0;
+}
+.body--path .perc {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.perc__svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+/* ==========================================================================
+   1 · SERPENTINA
+   ========================================================================== */
+
+/* la scia grigia dice dove passera' la linea: senza, il disegno
+   sembra crescere nel vuoto */
+.perc--serpentina .perc__scia {
+  stroke: var(--progress-track);
+  stroke-opacity: var(--progress-track-opacity);
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+.perc--serpentina .perc__linea {
+  stroke: var(--main);
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+
+/* Di base le tappe ci sono. Si nascondono solo quando l'animazione ha
+   preso il comando (.is-anim), cosi' se lo script non parte il percorso
+   resta comunque leggibile invece di sparire. */
+.perc__nodo {
+  transform-origin: center;
+  transform-box: fill-box;
+  transition: opacity 320ms var(--ease), transform 420ms cubic-bezier(.16, 1, .3, 1);
+}
+.perc.is-anim .perc__nodo { opacity: 0; transform: scale(.6); }
+.perc.is-anim .perc__nodo.is-on { opacity: 1; transform: none; }
+
+.perc__disco {
+  fill: var(--surface);
+  stroke: var(--main);
+  stroke-width: 2;
+}
+.perc__nodo--fatto .perc__disco { fill: var(--main); stroke: var(--main); }
+.perc__nodo--poi .perc__disco {
+  stroke: var(--text-dimmed);
+  stroke-dasharray: 3 4;
+}
+
+.perc__seg {
+  font-family: var(--font);
+  font-size: 13px;
+  font-weight: var(--fw-bold);
+  fill: var(--main);
+}
+.perc__nodo--fatto .perc__seg { fill: var(--text-on-main); }
+.perc__nodo--poi .perc__seg { fill: var(--text-dimmed); }
+
+.perc__et {
+  font-family: var(--font);
+  font-size: 13px;
+  font-weight: var(--fw-semibold);
+  fill: var(--text-highlighted);
+}
+.perc__nodo--poi .perc__et { fill: var(--text-muted); font-weight: var(--fw-medium); }
+
+/* la tappa di adesso respira: e' l'unico movimento continuo della pagina */
+.perc__alone {
+  fill: var(--main);
+  opacity: .16;
+  transform-origin: center;
+  transform-box: fill-box;
+}
+.perc__nodo--ora.is-on .perc__alone { animation: perc-alone 2600ms var(--ease) infinite; }
+@keyframes perc-alone {
+  0%, 100% { transform: scale(.86); opacity: .1; }
+  50%      { transform: scale(1.12); opacity: .22; }
+}
+
+/* ==========================================================================
+   2 · FILO
+   ========================================================================== */
+
+.perc--filo {
+  position: relative;
+  display: flex;
+  gap: var(--sp-7);
+  text-align: left;
+}
+.filo__rail {
+  position: relative;
+  flex: 0 0 auto;
+  width: 2px;
+  margin-left: 10px;
+  background: var(--light-outline);
+  border-radius: var(--r-full);
+}
+/* il filo cresce con una scala, non con l'altezza: nessun ricalcolo
+   di impaginazione a ogni fotogramma */
+.filo__crescita {
+  position: absolute;
+  inset: 0 0 0 0;
+  border-radius: var(--r-full);
+  background: linear-gradient(to bottom, var(--progress-from), var(--progress-to));
+  transform-origin: top center;
+  transition: transform 1100ms cubic-bezier(.16, 1, .3, 1);
+}
+.perc--filo.is-anim .filo__crescita { transform: scaleY(0); }
+.perc--filo.is-anim.is-on .filo__crescita { transform: scaleY(1); }
+
+.filo__lista {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-8);
+  min-width: 0;
+}
+.filo__tappa {
+  position: relative;
+  display: flex;
+  gap: var(--sp-6);
+  align-items: flex-start;
+  transition: opacity 420ms var(--ease), transform 480ms cubic-bezier(.16, 1, .3, 1);
+  transition-delay: calc(var(--i) * 130ms + 180ms);
+}
+.perc--filo.is-anim .filo__tappa { opacity: 0; transform: translateY(10px); }
+.perc--filo.is-anim.is-on .filo__tappa { opacity: 1; transform: none; }
+
+/* il pallino sta sul filo, quindi esce a sinistra della riga */
+.filo__punto {
+  position: absolute;
+  left: calc(var(--sp-7) * -1 - 15px);
+  top: 3px;
+  width: 14px; height: 14px;
+  border-radius: var(--r-full);
+  background: var(--surface);
+  border: 2px solid var(--light-outline);
+  display: grid; place-items: center;
+  font-size: 9px;
+  font-weight: var(--fw-bold);
+  color: var(--text-on-main);
+  line-height: 1;
+}
+.filo__tappa--fatto .filo__punto { background: var(--main); border-color: var(--main); }
+.filo__tappa--ora .filo__punto {
+  border-color: var(--main);
+  box-shadow: 0 0 0 4px #4340b31f;
+}
+
+.filo__corpo { min-width: 0; flex: 1 1 auto; }
+.filo__nome {
+  font-size: var(--fs-base);
+  line-height: var(--lh-base);
+  font-weight: var(--fw-semibold);
+  color: var(--text-highlighted);
+}
+.filo__meta {
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+.filo__obj {
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+  color: var(--text-toned);
+  margin-top: var(--sp-4);
+}
+
+/* una sola tappa in rilievo: quella di adesso. Le altre restano righe. */
+.filo__tappa--ora {
+  background: var(--surface);
+  border: 1px solid var(--light-outline);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-md);
+  padding: var(--sp-7);
+  margin-left: calc(var(--sp-7) * -1 + 4px);
+}
+.filo__tappa--ora .filo__punto { left: calc(var(--sp-7) * -2 - 11px); top: var(--sp-7); }
+.filo__tappa--poi .filo__nome { color: var(--text-muted); font-weight: var(--fw-medium); }
+
+/* ==========================================================================
+   3 · CURVA
+   ========================================================================== */
+
+.perc--curva .perc__linea {
+  stroke: var(--main);
+  stroke-width: 3.5;
+  stroke-linecap: round;
+}
+.perc--curva .perc__piatta {
+  stroke: var(--text-dimmed);
+  stroke-width: 2;
+  stroke-dasharray: 4 5;
+  stroke-linecap: round;
+  opacity: .5;
+}
+.perc--curva .perc__disco {
+  fill: var(--surface);
+  stroke: var(--main);
+  stroke-width: 2.5;
+}
+.perc--curva .perc__nodo--meta .perc__disco { fill: var(--main); }
+
+.curva__et {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-top: calc(var(--sp-4) * -1);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+}
+.curva__oggi { color: var(--text-muted); font-weight: var(--fw-medium); }
+.curva__meta {
+  color: var(--main);
+  font-weight: var(--fw-semibold);
+  max-width: 60%;
+  text-align: right;
+}
+
+/* ==========================================================================
+   Versione corta, per la schermata di introduzione
+   ========================================================================== */
+
+.perc--mini { margin: var(--sp-4) 0 var(--sp-2); }
+.perc--mini .filo__lista { gap: var(--sp-6); }
+.perc--mini .filo__tappa--ora { padding: var(--sp-6); }
+
+/* ==========================================================================
+   Riduci animazioni: il percorso c'e' gia' tutto, non si disegna.
+   Resta il colore, che e' quello che porta l'informazione.
+   ========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  .perc.is-anim .perc__nodo,
+  .perc.is-anim .perc__nodo.is-on { opacity: 1; transform: none; transition: none; }
+  .perc__linea { stroke-dasharray: none !important; stroke-dashoffset: 0 !important; transition: none !important; }
+  .perc--filo.is-anim .filo__crescita { transform: scaleY(1); transition: none; }
+  .perc--filo.is-anim .filo__tappa { opacity: 1; transform: none; transition: none; }
+  .perc__nodo--ora.is-on .perc__alone { animation: none; opacity: .18; }
+}

@@ -21,6 +21,12 @@ navida-dati/
 # Copie scaricate dalla barra laterale
 navida-modifiche-*.json
 
+# Credenziali di accesso al database usate in locale (client mysql).
+# Il file vero vive nella cartella utente, fuori dal progetto.
+# Questa riga e' solo una rete di sicurezza, se una copia finisce qui.
+.navida-db.cnf
+*.cnf
+
 # Roba di sistema
 .DS_Store
 Thumbs.db

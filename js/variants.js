@@ -129,11 +129,28 @@ window.NAVIDA_VARIANTS = {
   path: {
     etichetta: 'Stile linea di carriera',
     attr: 'data-variant',
-    predefinita: 'default',
+    predefinita: 'serpentina',
     options: [
-      { value: 'default', label: 'Timeline' },
-      { value: 'card',    label: 'Card' },
-      { value: 'compact', label: 'Compatta' }
+      { value: 'serpentina', label: 'Serpentina animata' },
+      { value: 'filo',       label: 'Filo con tappa in rilievo' },
+      { value: 'curva',      label: 'Curva oggi → obiettivo' },
+      { value: 'default',    label: 'Timeline (vecchia)' },
+      { value: 'card',       label: 'Card (vecchia)' },
+      { value: 'compact',    label: 'Compatta (vecchia)' }
+    ]
+  },
+
+  /* Come si mette in ordine una classifica.
+     Nasce dai due commenti su b2_rank1: da telefono non si trascinava,
+     e il gesto sembrava uno scambio di campi invece di un riordino. */
+  rank: {
+    etichetta: 'Come si mette in ordine',
+    attr: 'data-variant',
+    predefinita: 'maniglia',
+    options: [
+      { value: 'maniglia', label: 'Trascina dalla maniglia' },
+      { value: 'podio',    label: 'Podio da riempire' },
+      { value: 'tocca',    label: 'Tocca in ordine' }
     ]
   }
 };
@@ -178,12 +195,18 @@ window.NAVIDA_PAGE_VARIANTS = {
       { value: 'scuro',  label: 'Scuro' }
     ]
   },
+  /* Il team ha chiesto un consiglio solo, e un codice visivo diverso da
+     quello delle schermate di domanda. Le prime tre versioni rispondono
+     a questo; le ultime due restano per confronto. */
   previsione: {
     etichetta: 'Versione della prima proiezione',
-    predefinita: 'tips',
+    predefinita: 'voce',
     options: [
-      { value: 'tips',    label: 'Tre consigli' },
-      { value: 'single',  label: 'Messaggio unico' }
+      { value: 'voce',     label: 'Navida ti parla' },
+      { value: 'verdetto', label: 'Verdetto grande' },
+      { value: 'prova',    label: 'Verdetto con prova' },
+      { value: 'tips',     label: 'Tre consigli (vecchia)' },
+      { value: 'single',   label: 'Messaggio unico (vecchia)' }
     ]
   }
 };

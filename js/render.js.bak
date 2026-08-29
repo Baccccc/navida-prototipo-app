@@ -170,8 +170,7 @@
     if (v === 'nascosta' || (!screen.mascotte && v === 'auto')) return null;
 
     var wrap = h('div', {
-      class: 'mascotte mascotte--float ' + (cls || '') +
-             (screen.mascotteAnima ? ' mascotte--' + screen.mascotteAnima : ''),
+      class: 'mascotte mascotte--float ' + (cls || ''),
       'data-varname': 'mascotte'
     });
     // rispetta le proporzioni native della posa
@@ -256,143 +255,41 @@
 
   function makeSortable(container, onEnd) {
     container.classList.add('sortable');
-
-    var dragging = null;   // la riga sollevata
-    var startY = 0;        // dove il dito ha toccato
-    var offset = 0;        // spostamento gia' assorbito dai riordini
-    var attesa = null;     // timer del tocco lungo
-    var partito = false;
-
-    function righe() {
-      return Array.prototype.slice.call(container.querySelectorAll('.opt'));
-    }
-
-    /* fotografa la posizione di ogni riga, per l'animazione FLIP */
-    function foto() {
-      return righe().map(function (n) {
-        return { n: n, top: n.getBoundingClientRect().top };
-      });
-    }
-
-    /* FLIP: le righe scavalcate partono da dov'erano e scivolano al
-       posto nuovo. Senza questo il riordino e' uno scatto secco, ed e'
-       il motivo per cui sembrava uno scambio di campi. */
-    function scivola(prima) {
-      prima.forEach(function (v) {
-        if (v.n === dragging || !v.n.isConnected) return;
-        var dy = v.top - v.n.getBoundingClientRect().top;
-        if (!dy) return;
-        v.n.style.transition = 'none';
-        v.n.style.transform = 'translateY(' + dy + 'px)';
-        void v.n.offsetHeight;              // forza il ricalcolo
-        v.n.style.transition = 'transform 200ms var(--ease)';
-        v.n.style.transform = '';
-      });
-    }
-
-    function solleva(item, e) {
-      dragging = item;
-      partito = true;
-      startY = e.clientY;
-      offset = 0;
-      item.classList.add('is-dragging');
-      container.classList.add('is-sorting');
-      item.style.transform = 'translateY(0) scale(1.03)';
-      item.setPointerCapture && item.setPointerCapture(e.pointerId);
-      attach();
-    }
+    var dragging = null, startY = 0, items = [];
 
     function onDown(e) {
       var item = e.target.closest('.opt');
       if (!item || !container.contains(item)) return;
-      partito = false;
-
-      // dalla maniglia si parte subito; dal resto della riga serve un
-      // tocco lungo, cosi' un tap sull'etichetta resta un tap
-      if (e.target.closest('.opt__grip')) {
-        solleva(item, e);
-        e.preventDefault();
-        return;
-      }
-      var ev = { clientY: e.clientY, pointerId: e.pointerId };
-      attesa = setTimeout(function () {
-        attesa = null;
-        solleva(item, ev);
-        if (navigator.vibrate) navigator.vibrate(8);
-      }, 220);
-      attachAttesa();
+      dragging = item;
+      startY = e.clientY;
+      items = Array.prototype.slice.call(container.querySelectorAll('.opt'));
+      item.classList.add('is-dragging');
+      item.setPointerCapture && item.setPointerCapture(e.pointerId);
+      e.preventDefault();
     }
 
     function onMove(e) {
       if (!dragging) return;
-      var dy = e.clientY - startY;
-      dragging.style.transform = 'translateY(' + (dy - offset) + 'px) scale(1.03)';
-
-      /* il confronto usa la posizione del dito, non il rettangolo della
-         riga: cosi' regge anche se una regola CSS tocca il transform */
-      var centro = e.clientY;
-      var lista = righe();
-      var idx = lista.indexOf(dragging);
-
-      for (var i = 0; i < lista.length; i++) {
-        if (lista[i] === dragging) continue;
-        var q = lista[i].getBoundingClientRect();
-        var mid = q.top + q.height / 2;
-        var su = i < idx && centro < mid;
-        var giu = i > idx && centro > mid;
-        if (!su && !giu) continue;
-
-        var prima = foto();
-        var eraTop = dragging.getBoundingClientRect().top;
-        container.insertBefore(dragging, su ? lista[i] : lista[i].nextSibling);
-        // la riga sollevata e' saltata nel flusso: ne tengo conto,
-        // cosi' resta esattamente sotto il dito
-        dragging.style.transform = 'none';
-        offset += dragging.getBoundingClientRect().top - eraTop;
-        dragging.style.transform = 'translateY(' + (dy - offset) + 'px) scale(1.03)';
-        scivola(prima);
-        break;
+      var y = e.clientY;
+      var idx = items.indexOf(dragging);
+      for (var i = 0; i < items.length; i++) {
+        if (items[i] === dragging) continue;
+        var r = items[i].getBoundingClientRect();
+        var mid = r.top + r.height / 2;
+        if (i < idx && y < mid) { container.insertBefore(dragging, items[i]); break; }
+        if (i > idx && y > mid) { container.insertBefore(dragging, items[i].nextSibling); break; }
       }
+      items = Array.prototype.slice.call(container.querySelectorAll('.opt'));
     }
 
     function onUp() {
-      if (attesa) { clearTimeout(attesa); attesa = null; }
-      detachAttesa();
       if (!dragging) return;
-
-      var item = dragging;
+      dragging.classList.remove('is-dragging');
       dragging = null;
-      container.classList.remove('is-sorting');
-      item.style.transition = 'transform 200ms var(--ease)';
-      item.style.transform = '';
-      setTimeout(function () {
-        item.classList.remove('is-dragging');
-        item.style.transition = '';
-      }, 200);
-
       detach();
-      onEnd(righe().map(function (n) {
-        return parseInt(n.getAttribute('data-oi'), 10);
-      }));
-    }
-
-    /* se il dito parte a scorrere prima dei 220ms, il tocco lungo salta */
-    function annulla() {
-      if (attesa) { clearTimeout(attesa); attesa = null; }
-      detachAttesa();
-    }
-    function attachAttesa() {
-      window.addEventListener('pointermove', annullaSeScorre);
-      window.addEventListener('pointerup', annulla);
-      window.addEventListener('pointercancel', annulla);
-    }
-    function detachAttesa() {
-      window.removeEventListener('pointermove', annullaSeScorre);
-      window.removeEventListener('pointerup', annulla);
-      window.removeEventListener('pointercancel', annulla);
-    }
-    function annullaSeScorre(e) {
-      if (!partito && attesa) annulla();
+      var order = Array.prototype.slice.call(container.querySelectorAll('.opt'))
+        .map(function (n) { return parseInt(n.getAttribute('data-oi'), 10); });
+      onEnd(order);
     }
 
     // i listener globali vivono solo durante il trascinamento,
@@ -565,50 +462,8 @@
       body.appendChild(ul);
     }
 
-    /* elenco numerato: "1. Titolo in grassetto. Testo che segue." */
-    if (screen.listaNum) {
-      var ol = h('ol', { class: 'listNum' }, screen.listaNum.map(function (item, i) {
-        return h('li', {}, [
-          h('span', { class: 'listNum__n', text: (i + 1) + '.' }),
-          h('span', { class: 'listNum__txt' }, [
-            h('strong', { 'data-editable': screen.id + '.listaNum.' + i + '.forte', text: S.text(screen.id + '.listaNum.' + i + '.forte', item.forte) }),
-            document.createTextNode(' '),
-            h('span', { 'data-editable': screen.id + '.listaNum.' + i + '.testo', text: S.text(screen.id + '.listaNum.' + i + '.testo', item.testo) })
-          ])
-        ]);
-      }));
-      body.appendChild(ol);
-    }
-
-    /* paragrafi con attacco in grassetto */
-    if (screen.paragrafi) {
-      screen.paragrafi.forEach(function (item, i) {
-        body.appendChild(h('p', { class: 'lead lead--left' }, [
-          h('strong', { 'data-editable': screen.id + '.paragrafi.' + i + '.forte', text: S.text(screen.id + '.paragrafi.' + i + '.forte', item.forte) }),
-          document.createTextNode(' '),
-          h('span', { 'data-editable': screen.id + '.paragrafi.' + i + '.testo', text: S.text(screen.id + '.paragrafi.' + i + '.testo', item.testo) })
-        ]));
-      });
-    }
-
     var bodyText = T(screen, 'body', screen.body);
     if (bodyText) body.appendChild(editable('p', 'lead', screen, 'body', screen.body));
-
-    /* anteprima corta della linea di carriera: la usa ob3, che deve far
-       vedere il percorso mentre lo racconta invece di descriverlo */
-    if (screen.percorso && window.NavidaPercorso) {
-      var stilePerc = S.variant(screen.id, 'path', VAR.path.predefinita);
-      if (NavidaPercorso.modi.indexOf(stilePerc) === -1) stilePerc = 'serpentina';
-      var mini = NavidaPercorso.disegna(screen.percorso, {
-        variante: stilePerc,
-        mini: true,
-        attiva: screen.percorsoAttiva == null ? 1 : screen.percorsoAttiva
-      });
-      mini.setAttribute('data-varname', 'path');
-      mini.setAttribute('data-variant', stilePerc);
-      body.appendChild(mini);
-    }
-
     if (screen.nota) body.appendChild(editable('p', 'nota', screen, 'nota', screen.nota));
 
     return [
@@ -799,199 +654,44 @@
       ? start.map(function (i) { return indexed[i]; })
       : S.ordered(screen.id, indexed);
 
-    var modo = S.variant(screen.id, 'rank', VAR.rank.predefinita);
+    var box = optionsBox(screen, []);
 
-    function salva(order) {
+    /* i numeri stanno FUORI dai box, in una colonna a sinistra:
+       restano fermi mentre trascini, così si legge come una classifica */
+    var scala = h('div', { class: 'rankScale' });
+
+    function numeri() {
+      scala.innerHTML = '';
+      seq.forEach(function (_, pos) {
+        scala.appendChild(h('span', { class: 'opt__pos', text: String(pos + 1) }));
+      });
+    }
+
+    function paint() {
+      box.innerHTML = '';
+      seq.forEach(function (entry) {
+        var label = optLabel(screen, entry.i, entry.o.label);
+        box.appendChild(h('div', { class: 'opt opt--rank', 'data-oi': entry.i }, [
+          h('span', { class: 'opt__grip' }, [icon('grip-vertical', 16)]),
+          h('span', { class: 'opt__label', 'data-editable': screen.id + '.opt.' + entry.i, text: label })
+        ]));
+      });
+      numeri();
+    }
+    paint();
+
+    makeSortable(box, function (order) {
+      seq = order.map(function (i) { return indexed[i]; });
       S.setAnswer(screen.field, order);
       if (S.mode === 'order') S.setOrder(screen.id, order);
-    }
-
-    /* ---------------------------------------------------------------
-       1 · MANIGLIA — si trascina, ma il gesto e' dichiarato: maniglia
-       a sinistra, riga che si stacca e segue il dito, numeri fermi in
-       colonna cosi' si legge come una classifica e non come uno scambio.
-       --------------------------------------------------------------- */
-    function costruisciManiglia() {
-      var box = optionsBox(screen, []);
-      var scala = h('div', { class: 'rankScale' });
-
-      function numeri() {
-        scala.innerHTML = '';
-        seq.forEach(function (_, pos) {
-          scala.appendChild(h('span', { class: 'opt__pos', text: String(pos + 1) }));
-        });
-      }
-      function paint() {
-        box.innerHTML = '';
-        seq.forEach(function (entry) {
-          box.appendChild(h('div', { class: 'opt opt--rank', 'data-oi': entry.i }, [
-            h('span', { class: 'opt__grip' }, [icon('grip-vertical', 16)]),
-            h('span', {
-              class: 'opt__label',
-              'data-editable': screen.id + '.opt.' + entry.i,
-              text: optLabel(screen, entry.i, entry.o.label)
-            })
-          ]));
-        });
-        numeri();
-      }
-      paint();
-
-      makeSortable(box, function (order) {
-        seq = order.map(function (i) { return indexed[i]; });
-        salva(order);
-        numeri();
-      });
-
-      return h('div', { class: 'rankWrap' }, [scala, box]);
-    }
-
-    /* ---------------------------------------------------------------
-       2 · PODIO — in alto le caselle numerate vuote, sotto le risposte
-       ancora libere. Un tocco le fa salire. Nessun trascinamento, quindi
-       da telefono non c'e' niente che possa non funzionare.
-       --------------------------------------------------------------- */
-    function costruisciPodio() {
-      var scelti = [];                    // entry gia' messe in classifica
-      var slots = h('div', { class: 'podio' });
-      var pool = h('div', { class: 'podio__pool' });
-
-      function aggiorna() {
-        slots.innerHTML = '';
-        indexed.forEach(function (_, pos) {
-          var entry = scelti[pos];
-          var vuoto = !entry;
-          var slot = h('button', {
-            class: 'podioSlot' + (vuoto ? ' is-vuoto' : ''),
-            type: 'button',
-            disabled: vuoto,
-            'aria-label': vuoto
-              ? 'Posizione ' + (pos + 1) + ', ancora vuota'
-              : 'Togli ' + optLabel(screen, entry.i, entry.o.label) + ' dalla posizione ' + (pos + 1),
-            onclick: function () {
-              if (vuoto) return;
-              scelti.splice(pos, 1);
-              aggiorna();
-            }
-          }, [
-            h('span', { class: 'podioSlot__n', text: String(pos + 1) }),
-            vuoto
-              ? h('span', { class: 'podioSlot__vuoto' })
-              : h('span', { class: 'podioSlot__label', text: optLabel(screen, entry.i, entry.o.label) }),
-            vuoto ? null : h('span', { class: 'podioSlot__x' }, [icon('x', 14)])
-          ].filter(Boolean));
-          slots.appendChild(slot);
-        });
-
-        pool.innerHTML = '';
-        var liberi = indexed.filter(function (e) { return scelti.indexOf(e) === -1; });
-        if (!liberi.length) {
-          pool.appendChild(h('p', { class: 'nota', text: 'Fatto. Tocca una posizione per cambiarla.' }));
-        }
-        liberi.forEach(function (entry) {
-          pool.appendChild(h('button', {
-            class: 'podioVoce',
-            type: 'button',
-            onclick: function () {
-              scelti.push(entry);
-              salva(scelti.map(function (e) { return e.i; }));
-              aggiorna();
-            }
-          }, [
-            h('span', {
-              class: 'opt__label',
-              'data-editable': screen.id + '.opt.' + entry.i,
-              text: optLabel(screen, entry.i, entry.o.label)
-            }),
-            h('span', { class: 'podioVoce__piu' }, [icon('arrow-up', 16)])
-          ]));
-        });
-      }
-      aggiorna();
-
-      return h('div', { class: 'podioWrap' }, [slots, pool]);
-    }
-
-    /* ---------------------------------------------------------------
-       3 · TOCCA IN ORDINE — si toccano le risposte dalla piu' importante
-       alla meno. Ogni tocco appiccica un numero e porta la riga in alto,
-       con lo scivolamento FLIP. Un secondo tocco la libera.
-       --------------------------------------------------------------- */
-    function costruisciTocca() {
-      var scelti = [];
-      var box = optionsBox(screen, []);
-
-      function ordine() {
-        var resto = indexed.filter(function (e) { return scelti.indexOf(e) === -1; });
-        return scelti.concat(resto);
-      }
-
-      function aggiorna(animato) {
-        var prima = animato
-          ? Array.prototype.slice.call(box.children).map(function (n) {
-              return { n: n, top: n.getBoundingClientRect().top, oi: n.getAttribute('data-oi') };
-            })
-          : null;
-
-        box.innerHTML = '';
-        ordine().forEach(function (entry) {
-          var pos = scelti.indexOf(entry);
-          var attivo = pos > -1;
-          box.appendChild(h('button', {
-            class: 'opt opt--tocca' + (attivo ? ' is-on' : ''),
-            type: 'button',
-            'data-oi': entry.i,
-            'aria-pressed': attivo ? 'true' : 'false',
-            onclick: function () {
-              if (attivo) scelti.splice(pos, 1);
-              else scelti.push(entry);
-              salva(scelti.map(function (e) { return e.i; }));
-              aggiorna(true);
-            }
-          }, [
-            h('span', { class: 'toccaN', text: attivo ? String(pos + 1) : '' }),
-            h('span', {
-              class: 'opt__label',
-              'data-editable': screen.id + '.opt.' + entry.i,
-              text: optLabel(screen, entry.i, entry.o.label)
-            })
-          ]));
-        });
-
-        if (!prima) return;
-        // FLIP: ogni riga parte da dov'era e scivola al posto nuovo
-        Array.prototype.forEach.call(box.children, function (n) {
-          var vecchia = null;
-          prima.forEach(function (v) { if (v.oi === n.getAttribute('data-oi')) vecchia = v; });
-          if (!vecchia) return;
-          var dy = vecchia.top - n.getBoundingClientRect().top;
-          if (!dy) return;
-          n.style.transition = 'none';
-          n.style.transform = 'translateY(' + dy + 'px)';
-          void n.offsetHeight;
-          n.style.transition = 'transform 260ms var(--ease)';
-          n.style.transform = '';
-        });
-      }
-      aggiorna(false);
-
-      return box;
-    }
-
-    var lista = modo === 'podio' ? costruisciPodio()
-              : modo === 'tocca' ? costruisciTocca()
-              : costruisciManiglia();
-
-    var hint = modo === 'podio' ? C.ui.ordinaHintPodio
-             : modo === 'tocca' ? C.ui.ordinaHintTocca
-             : C.ui.ordinaHint;
+    });
 
     var body = h('div', { class: 'body' }, [
       screen.eyebrow ? editable('div', 'eyebrow eyebrow--sub', screen, 'eyebrow', screen.eyebrow) : null,
       intestazione(screen, 'title--rank'),
       screen.body ? editable('p', 'lead', screen, 'body', screen.body) : null,
-      h('p', { class: 'nota', text: hint }),
-      lista
+      h('p', { class: 'nota', text: C.ui.ordinaHint }),
+      h('div', { class: 'rankWrap' }, [scala, box])
     ].filter(Boolean));
 
     return [
@@ -1111,16 +811,7 @@
     var root = h('div', { class: 'dream' }, [
       header(screen, progress),
       ring,
-      h('div', { class: 'dream__center' }, [
-        input,
-        screen.descrizione
-          ? h('p', {
-              class: 'dream__desc',
-              'data-editable': screen.id + '.descrizione',
-              text: T(screen, 'descrizione', screen.descrizione)
-            })
-          : null
-      ].filter(Boolean)),
+      h('div', { class: 'dream__center' }, [input]),
       h('div', { class: 'dream__footer' }, [ctaBtn])
     ]);
 
@@ -1312,90 +1003,12 @@
       editable('p', 'lead', screen, 'body', screen.body)
     ]);
 
-    /* Le parole che vengono dalle risposte dell'utente si accendono:
-       e' quello che fa sembrare il messaggio scritto per lui e non
-       una frase uguale per tutti. */
-    function conParoleTue(testo) {
-      var mie = ['lavoroSogni', 'nome'].map(function (k) { return S.answer(k, ''); })
-        .filter(function (v) { return v && String(v).length > 2; });
-      var out = h('span', {});
-      var resto = String(testo);
-      if (!mie.length) { out.textContent = resto; return out; }
-
-      while (resto.length) {
-        var pos = -1, trovata = '';
-        mie.forEach(function (v) {
-          var p = resto.toLowerCase().indexOf(String(v).toLowerCase());
-          if (p > -1 && (pos === -1 || p < pos)) { pos = p; trovata = String(v); }
-        });
-        if (pos === -1) { out.appendChild(document.createTextNode(resto)); break; }
-        if (pos > 0) out.appendChild(document.createTextNode(resto.slice(0, pos)));
-        out.appendChild(h('span', { class: 'tua', text: resto.substr(pos, trovata.length) }));
-        resto = resto.slice(pos + trovata.length);
-      }
-      return out;
-    }
-
-    var uno = screen.tips[0];
-    var unoTitolo = S.text(screen.id + '.tip.0.title', uno.title);
-    var unoTesto = interp(S.text(screen.id + '.tip.0.desc', uno.description));
-
-    /* --- 1 · VOCE: Navida ti parla ---------------------------------
-       Un messaggio firmato dentro una card, su un fondo che cambia
-       rispetto alle schermate di domanda. Si legge come una risposta,
-       non come un risultato di sistema. */
-    if (variant === 'voce') {
-      body.className = 'body body--voce';
-      body.innerHTML = '';
-      /* la firma dice gia' chi parla: il titolo della schermata qui
-         sarebbe una ripetizione, quindi il consiglio diventa la frase */
-      var bolla = h('div', { class: 'voce' }, [
-        h('div', { class: 'voce__firma' }, [
-          h('span', { class: 'voce__logo' }, [icon('sparkles', 14)]),
-          h('span', { text: 'Navida' })
-        ]),
-        h('h1', { class: 'voce__title', 'data-editable': screen.id + '.tip.0.title' },
-          [conParoleTue(unoTitolo)]),
-        h('p', { class: 'voce__testo', 'data-editable': screen.id + '.tip.0.desc' },
-          [conParoleTue(unoTesto)])
-      ]);
-      body.appendChild(bolla);
-      var mAst = mascotte({ id: screen.id, mascotte: 'volare' });
-      if (mAst) { mAst.classList.add('voce__mascotte'); body.appendChild(mAst); }
-
-    /* --- 2 · VERDETTO: la frase e' la schermata --------------------- */
-    } else if (variant === 'verdetto') {
-      body.className = 'body body--verdetto';
-      body.innerHTML = '';
-      body.appendChild(h('h1', {
-        class: 'verdetto__frase',
-        'data-editable': screen.id + '.tip.0.title'
-      }, [conParoleTue(unoTitolo)]));
-      body.appendChild(h('p', { class: 'verdetto__sotto', 'data-editable': screen.id + '.tip.0.desc' },
-        [conParoleTue(unoTesto)]));
-
-    /* --- 3 · PROVA: il verdetto, e sotto una sola prova ------------- */
-    } else if (variant === 'prova') {
-      body.appendChild(h('div', { class: 'prova' }, [
-        h('h2', { class: 'prova__frase', 'data-editable': screen.id + '.tip.0.title' },
-          [conParoleTue(unoTitolo)]),
-        h('p', { class: 'prova__testo', 'data-editable': screen.id + '.tip.0.desc' },
-          [conParoleTue(unoTesto)])
-      ]));
-      if (window.NavidaPercorso) {
-        var salita = NavidaPercorso.disegna([
-          { nome: 'Oggi' },
-          { nome: interp('{lavoroSogni}') || 'Il ruolo che sogni' }
-        ], { variante: 'curva', mini: true });
-        salita.classList.add('prova__grafico');
-        body.appendChild(salita);
-      }
-
-    } else if (variant === 'single') {
+    if (variant === 'single') {
+      var first = screen.tips[0];
       body.appendChild(h('div', { class: 'tips', 'data-varname': 'tips', 'data-variant': S.variant(screen.id, 'tips', 'accent') }, [
         h('div', { class: 'tip' }, [
-          h('div', { class: 'tip__title', 'data-editable': screen.id + '.tip.0.title', text: unoTitolo }),
-          h('div', { class: 'tip__desc', 'data-editable': screen.id + '.tip.0.desc', text: unoTesto })
+          h('div', { class: 'tip__title', 'data-editable': screen.id + '.tip.0.title', text: S.text(screen.id + '.tip.0.title', first.title) }),
+          h('div', { class: 'tip__desc', 'data-editable': screen.id + '.tip.0.desc', text: interp(S.text(screen.id + '.tip.0.desc', first.description)) })
         ])
       ]));
     } else {
@@ -1787,40 +1400,10 @@
 
   /* --- anteprima linea di carriera ------------------------------------ */
   Screens.preview = function (screen, progress) {
-    var stile = S.variant(screen.id, 'path', VAR.path.predefinita);
-
-    /* le tre versioni nuove hanno un modulo tutto loro, che si disegna */
-    if (window.NavidaPercorso && NavidaPercorso.modi.indexOf(stile) > -1) {
-      var steps = screen.steps.map(function (st, i) {
-        return {
-          nome: interp(S.text(screen.id + '.step.' + i + '.nome', st.nome)),
-          ruolo: interp(st.ruolo),
-          durata: st.durata,
-          obiettivo: interp(S.text(screen.id + '.step.' + i + '.obj', st.obiettivo))
-        };
-      });
-      var disegno = NavidaPercorso.disegna(steps, { variante: stile, attiva: 0 });
-      disegno.setAttribute('data-varname', 'path');
-      disegno.setAttribute('data-variant', stile);
-
-      return [
-        header(screen, progress),
-        h('div', { class: 'body body--path' }, [
-          editable('h1', 'title', screen, 'title', screen.title, { variant: 'title' }),
-          editable('p', 'lead', screen, 'body', screen.body),
-          disegno
-        ]),
-        h('div', { class: 'footer' }, [
-          cta(screen, T(screen, 'cta', screen.cta), function () { window.NavidaApp.next(); }),
-          h('p', { class: 'nota', text: screen.ctaNota })
-        ])
-      ];
-    }
-
     var path = h('div', {
       class: 'path',
       'data-varname': 'path',
-      'data-variant': stile
+      'data-variant': S.variant(screen.id, 'path', VAR.path.predefinita)
     }, screen.steps.map(function (st, i) {
       return h('div', { class: 'pathStep' }, [
         h('div', { class: 'pathStep__rail' }, [
