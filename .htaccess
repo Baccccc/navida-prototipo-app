@@ -1,0 +1,16 @@
+# ==========================================================================
+# NAVIDA — regole del server (Hostinger, Apache/LiteSpeed)
+# ==========================================================================
+# Le pagine HTML vanno sempre ricontrollate, altrimenti il telefono continua
+# a caricare la copia vecchia e le modifiche sembrano non essere arrivate.
+#
+# I file dentro css/ e js/ restano in cache come prima: li chiamiamo con un
+# numero di versione (?v=...) che cambia a ogni modifica, quindi il browser
+# scarica il file nuovo da solo. La regola sta in CLAUDE.md.
+# ==========================================================================
+
+<IfModule mod_headers.c>
+  <FilesMatch "\.html$">
+    Header set Cache-Control "no-cache, must-revalidate"
+  </FilesMatch>
+</IfModule>

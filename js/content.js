@@ -111,7 +111,7 @@ window.NAVIDA_CONTENT = {
       title: 'Cosa stai cercando?',
       listStyle: 'grid',
       options: [
-        { label: 'Lavoro', ico: 'briefcase', reazione: 'Ottimo, è quello che sappiamo fare meglio!' },
+        { label: 'Lavoro', ico: 'briefcase' },
         { label: 'Volontariato', ico: 'heart', chip: 'Coming soon', disabled: true },
         { label: 'Mentoring', ico: 'graduation-cap', chip: 'Coming soon', disabled: true }
       ]
@@ -235,11 +235,11 @@ window.NAVIDA_CONTENT = {
       field: 'motivazione',
       title: 'Cosa ti ha portato qui?',
       options: [
-        { label: 'Mi sento bloccato e non so che direzione prendere', reazione: 'Succede a tanti. Sbloccarsi si può.' },
-        { label: 'Lavoro, ma non mi riconosco in quello che faccio', reazione: 'Capito. Cerchiamo qualcosa che ti somigli.' },
+        { label: 'Mi sento bloccato e non so che direzione prendere' },
+        { label: 'Lavoro, ma non mi riconosco in quello che faccio' },
         { label: 'Mi chiedo se ha senso continuare così' },
         { label: 'Non cerco un nuovo lavoro, ma un nuovo modo di viverlo' },
-        { label: 'Non lo so, so solo che voglio cambiare qualcosa', reazione: 'Va benissimo così. Ci arriviamo insieme.' }
+        { label: 'Non lo so, so solo che voglio cambiare qualcosa' }
       ]
     },
 
@@ -252,9 +252,9 @@ window.NAVIDA_CONTENT = {
       title: 'Cosa vuoi ottenere?',
       listStyle: 'grid',
       options: [
-        { label: 'Cambiare lavoro', ico: 'repeat', reazione: 'Allora prepariamoci a cambiare rotta.' },
-        { label: 'Crescere dove sono', ico: 'trending-up', reazione: 'Crescere dove sei: si può, e ti mostro come.' },
-        { label: 'Capire il mio potenziale', ico: 'sparkles', reazione: 'La mia parte preferita. Partiamo da lì.' }
+        { label: 'Cambiare lavoro', ico: 'repeat' },
+        { label: 'Crescere dove sono', ico: 'trending-up' },
+        { label: 'Capire il mio potenziale', ico: 'sparkles' }
       ]
     },
 
@@ -311,9 +311,9 @@ window.NAVIDA_CONTENT = {
       title: 'Al momento sei…',
       listStyle: 'grid',
       options: [
-        { label: 'In cerca del primo lavoro', value: 'primo', ico: 'compass', reazione: 'Il primo passo è il più importante.' },
+        { label: 'In cerca del primo lavoro', value: 'primo', ico: 'compass' },
         { label: 'Disoccupato', value: 'disoccupato', ico: 'pause' },
-        { label: 'Occupato', value: 'occupato', ico: 'briefcase', reazione: 'Bene, partiamo da dove sei già.' }
+        { label: 'Occupato', value: 'occupato', ico: 'briefcase' }
       ]
     },
 
@@ -638,10 +638,10 @@ window.NAVIDA_CONTENT = {
       title: 'Ti trasferiresti in un’altra città?',
       listStyle: 'grid',
       options: [
-        { label: 'Sì, volentieri', ico: 'plane', reazione: 'Allora ti apro tutta l’Italia.' },
+        { label: 'Sì, volentieri', ico: 'plane' },
         { label: 'Solo se ne vale la pena', ico: 'scale' },
         { label: 'Preferirei di no', ico: 'house' },
-        { label: 'No', ico: 'x', reazione: 'Cerchiamo vicino a casa, allora.' }
+        { label: 'No', ico: 'x' }
       ]
     },
     {

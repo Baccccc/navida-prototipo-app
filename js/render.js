@@ -227,22 +227,6 @@
     ]);
   }
 
-  /**
-   * Commento della mascotte dopo una scelta.
-   * Se l'opzione ha `reazione` usa quella, altrimenti una frase generica.
-   */
-  function reazione(host, testo) {
-    if (!host) return;
-    var vecchia = host.querySelector('.reazione');
-    if (vecchia) vecchia.remove();
-    if (!testo) return;
-    var n = h('div', { class: 'reazione' }, [
-      h('span', { class: 'reazione__ico' }, [icon('sparkles', 14)]),
-      h('span', { text: testo })
-    ]);
-    host.appendChild(n);
-  }
-
   function toast(msg) {
     var host = document.querySelector('.device');
     var t = h('div', { class: 'toast', text: msg });
@@ -715,22 +699,17 @@
           if (S.mode === 'text' || S.mode === 'order' || S.mode === 'pick') return;
           if (o.disabled) { toast(o.chip ? 'Presto disponibile.' : 'Non ancora attivo.'); return; }
 
-          var bolla = testa.querySelector ? testa.querySelector('.bubble') : null;
-
           if (isMulti) {
             var k = current.indexOf(val);
             if (k === -1) current.push(val); else current.splice(k, 1);
             S.setAnswer(screen.field, current);
             paint(); refreshCta();
-            if (k === -1) reazione(bolla, o.reazione || null);
           } else {
             current = val;
             S.setAnswer(screen.field, current);
             if (screen.optionsFrom === 'professioni') S.setAnswer('categoria', val);
             paint(); refreshCta();
-            reazione(bolla, o.reazione || null);
-            var attesa = (o.reazione && bolla) ? 1100 : 190;
-            if (!hasCta) setTimeout(function () { window.NavidaApp.next(); }, attesa);
+            if (!hasCta) setTimeout(function () { window.NavidaApp.next(); }, 190);
           }
         });
 

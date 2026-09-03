@@ -359,22 +359,6 @@ input, textarea { font-family: inherit; }
   line-height: 30px;
 }
 
-/* commento della mascotte dopo la scelta */
-.reazione {
-  display: flex;
-  align-items: flex-start;
-  gap: 6px;
-  margin-top: var(--sp-5);
-  padding-top: var(--sp-5);
-  border-top: 1px solid var(--light-outline);
-  font-size: var(--fs-sm);
-  line-height: var(--lh-sm);
-  font-weight: var(--fw-medium);
-  color: var(--main);
-  animation: bubble-in 300ms var(--ease) both;
-}
-.reazione__ico { flex: 0 0 auto; margin-top: 2px; }
-
 /* --- lista opzioni ------------------------------------------------ */
 .options {
   display: flex;

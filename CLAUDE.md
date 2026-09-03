@@ -75,7 +75,7 @@ Per caricare a mano, o per capire dove stanno i dati del team, vedi
 ### Obbligatorio a ogni modifica di css/ o js/
 
 `index.html` e `fase3.html` chiamano ogni foglio di stile e ogni script con un
-numero di versione: `js/editor.js?v=20260903-menu`.
+numero di versione: `js/editor.js?v=20260903-noreazione`.
 
 **Se cambi un file dentro `css/` o `js/`, cambia quel numero in entrambi gli
 HTML**, con la data di oggi e una parola sulla modifica (es. `?v=20260904-cta`).
