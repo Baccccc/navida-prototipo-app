@@ -77,8 +77,16 @@ Sta **a destra, fuori dallo schermo del telefono**, come pannello laterale sempr
 aperto: così non copre l'interfaccia e non interferisce con la responsività.
 Si chiude con la linguetta sul suo bordo sinistro.
 
-**Su mobile non compare del tutto** — chi apre il prototipo dal telefono vede
-solo l'app.
+**Su telefono la barra laterale non c'è.** Al suo posto, in alto a destra,
+c'è un **pulsante hamburger sempre presente**: aprendolo, le stesse schede
+diventano una pagina a tutto schermo, riferita alla schermata che stai
+guardando. Lo stesso pulsante diventa una **X** e la chiude.
+
+Le tre schede che chiedono di toccare l'interfaccia — **Testi**, **Ordine** e
+**Elemento** — chiudono la pagina da sole, così puoi lavorare sull'app. In alto
+resta una striscia viola con il promemoria e il pulsante **Esci**, che riapre i
+comandi. In *Elemento*, appena tocchi un elemento la pagina torna da sola con
+le sue varianti.
 
 Ha sei pannelli. Tutto quello che cambi resta salvato **in questo browser** e si
 può esportare in JSON.

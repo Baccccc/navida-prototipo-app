@@ -17,6 +17,11 @@ Serve come proof of concept per gli investitori e come base editabile per il tea
   `js/icons.js`. Il prototipo deve funzionare anche offline.
 - **I colori e le spaziature stanno in `css/tokens.css`.** Usa le variabili CSS
   esistenti. Non scrivere valori esadecimali sparsi nei componenti.
+- **La barra di modifica ha due forme.** Su desktop è il pannello laterale a
+  destra. Su telefono è un pulsante hamburger fisso in alto a destra che apre
+  le stesse schede a tutto schermo (`#edburger` e `#editor.is-mobile-open` in
+  `js/editor.js` e `css/editor.css`). Se aggiungi una scheda, funziona da sola
+  in entrambe le forme: non duplicare il codice.
 - **L'interfaccia è solo mobile.** Su desktop vive dentro una cornice iPhone che
   si rimpicciolisce. Non progettare layout desktop.
 - **Rispetta le specifiche dell'UI kit** riportate in `LEGGIMI.md` (tabella

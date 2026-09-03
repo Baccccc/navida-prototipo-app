@@ -2,7 +2,10 @@
    NAVIDA — Barra di modifica (pannello laterale)
    ==========================================================================
    Sta fuori dallo schermo del telefono, a destra, sempre aperta.
-   Su mobile non compare.
+
+   Su mobile il pannello laterale non c'e': al suo posto compare un pulsante
+   hamburger fisso in alto a destra, che apre gli stessi comandi a tutto
+   schermo, riferiti alla schermata che si sta guardando.
 
    Pannelli:
      Versione   → alterna le versioni della schermata corrente
@@ -15,6 +18,10 @@
 
 (function () {
   'use strict';
+
+  /* Il telefono e' dove il pannello laterale non c'e'.
+     Stessa soglia del blocco @media in fondo a css/editor.css. */
+  var Q_MOBILE = '(max-width: 900px), (pointer: coarse) and (max-width: 1100px)';
 
   var S = window.NavidaState;
   var C = window.NAVIDA_CONTENT;
@@ -64,6 +71,7 @@
 
     tab: 'versione',
     aperto: true,
+    apertoMobile: false,
     pronto: false,
     _ultimaSchermata: null,
 
@@ -73,8 +81,73 @@
       icon = window.NavidaRender.icon;
       this.host = document.getElementById('editor');
       this.pronto = true;
+      this.setupMobile();
       this.setupSkip();
       this.paint();
+    },
+
+    /** Vero quando il pannello laterale e' nascosto e comanda l'hamburger. */
+    mobile: function () {
+      return !!(window.matchMedia && window.matchMedia(Q_MOBILE).matches);
+    },
+
+    /* ==================================================================
+       Telefono — hamburger in alto a destra
+       ==================================================================
+       Sempre presente. Aprendolo, il pannello diventa una pagina a tutto
+       schermo con le stesse schede della barra laterale.
+       ================================================================== */
+    setupMobile: function () {
+      if (this.burger) return;
+
+      this.burger = h('button', {
+        id: 'edburger',
+        type: 'button',
+        'aria-label': 'Apri i comandi del prototipo',
+        onclick: function () {
+          Editor.apertoMobile = !Editor.apertoMobile;
+          Editor.paint();
+        }
+      });
+      document.body.appendChild(this.burger);
+
+      /* Striscia della modalita' attiva: resta a schermo quando la pagina
+         dei comandi si chiude per lasciarti toccare l'interfaccia. */
+      this.stripMobile = h('div', { id: 'edmode' });
+      document.body.appendChild(this.stripMobile);
+    },
+
+    /** Disegna hamburger e striscia. Sul desktop il CSS li nasconde. */
+    paintMobile: function () {
+      if (!this.burger) return;
+
+      var aperta = this.apertoMobile;
+      this.burger.innerHTML = '';
+      this.burger.appendChild(icon(aperta ? 'x' : 'menu', 20));
+      this.burger.setAttribute('aria-label',
+        aperta ? 'Chiudi i comandi del prototipo' : 'Apri i comandi del prototipo');
+      this.burger.classList.toggle('is-open', aperta);
+
+      var strip = this.stripMobile;
+      strip.innerHTML = '';
+
+      var testo = {
+        text: 'Tocca un testo e riscrivilo',
+        order: 'Trascina le risposte',
+        pick: 'Tocca un elemento'
+      }[S.mode];
+
+      var mostra = !!testo && !aperta;
+      strip.classList.toggle('is-on', mostra);
+      if (!mostra) return;
+
+      strip.appendChild(icon('pencil', 13));
+      strip.appendChild(h('span', { text: testo }));
+      strip.appendChild(h('button', {
+        type: 'button',
+        text: 'Esci',
+        onclick: function () { Editor.setMode(null); Editor.paint(); }
+      }));
     },
 
     /* ==================================================================
@@ -127,6 +200,7 @@
 
       this.host.innerHTML = '';
       this.host.classList.toggle('is-closed', !this.aperto);
+      this.host.classList.toggle('is-mobile-open', this.apertoMobile);
 
       var screen = window.NavidaApp.current();
       this._ultimaSchermata = screen.id;
@@ -161,6 +235,7 @@
             Editor.tab = t.id;
             var modo = MODO[t.id] || null;
             if (S.mode !== modo) Editor.setMode(modo);   // render + modalità
+            else if (modo && Editor.mobile()) Editor.apertoMobile = false;
             Editor.paint();
           }
         }, [
@@ -244,6 +319,8 @@
           }
         }, [icon('arrow-down', 13), 'Fine (' + ultima.id + ')'])
       ]));
+
+      this.paintMobile();
 
       if (window.lucide) window.lucide.createIcons();
     },
@@ -583,6 +660,9 @@
     setMode: function (mode) {
       S.mode = mode;
       if (mode !== 'pick') S.picked = null;
+      /* Su telefono la pagina dei comandi copre lo schermo. Se la modalità
+         chiede di toccare l'interfaccia, la chiudiamo; uscendo, torna. */
+      if (this.mobile()) this.apertoMobile = !mode;
       window.NavidaApp.render();
     },
 
@@ -670,6 +750,9 @@
           n.addEventListener('click', function (e) {
             e.preventDefault(); e.stopPropagation();
             S.picked = n.getAttribute('data-varname');
+            /* Su telefono l'elemento scelto riapre la pagina dei comandi,
+               dove stanno le sue varianti. */
+            if (Editor.mobile()) Editor.apertoMobile = true;
             Editor.paint();
             Editor.markPicked();
           }, true);
