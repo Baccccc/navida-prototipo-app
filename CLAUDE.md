@@ -65,11 +65,24 @@ Se il PHP non c'è, `js/sync.js` ripiega sul salvataggio nel browser: è normale
 
 ## Come arriva online
 
-- Push su `main` → **Cloudflare Pages** aggiorna il sito da solo. Lì il PHP non
-  gira, quindi le modifiche fatte dalla barra laterale restano nel browser di chi
-  le fa. Va bene per guardare e mostrare.
-- **Hostinger** è l'hosting completo con PHP e database. Si aggiorna a mano,
-  seguendo `AGGIORNARE.md`.
+Push su `main` → **Hostinger aggiorna il sito da solo**.
+Indirizzo: `https://lightsalmon-chinchilla-498391.hostingersite.com`
+
+Lì gira il PHP, quindi le modifiche applicate dalla barra valgono per tutti.
+Per caricare a mano, o per capire dove stanno i dati del team, vedi
+`AGGIORNARE.md`.
+
+### Obbligatorio a ogni modifica di css/ o js/
+
+`index.html` e `fase3.html` chiamano ogni foglio di stile e ogni script con un
+numero di versione: `js/editor.js?v=20260903-menu`.
+
+**Se cambi un file dentro `css/` o `js/`, cambia quel numero in entrambi gli
+HTML**, con la data di oggi e una parola sulla modifica (es. `?v=20260904-cta`).
+Sostituiscilo su tutte le righe, così resta uno solo.
+
+Senza questo passaggio il telefono continua a caricare la copia vecchia dalla
+cache e la modifica **sembra non essere arrivata**. È già successo.
 
 ## Come lavorare quando Bac è al telefono
 
