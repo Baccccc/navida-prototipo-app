@@ -169,7 +169,7 @@
 .filo__tappa--fatto .filo__punto { background: var(--main); border-color: var(--main); }
 .filo__tappa--ora .filo__punto {
   border-color: var(--main);
-  box-shadow: 0 0 0 4px #4340b31f;
+  box-shadow: 0 0 0 4px #4240ba1f;
 }
 
 .filo__corpo { min-width: 0; flex: 1 1 auto; }

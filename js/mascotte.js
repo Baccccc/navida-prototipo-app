@@ -79,9 +79,9 @@
         '<rect x="1" y="1" width="120" height="167" rx="12" fill="#f1f0f8" stroke="#cbc7e0" stroke-width="1.5" stroke-dasharray="5 4"/>' +
         '<circle cx="61" cy="66" r="26" fill="#e3e3f9"/>' +
         '<circle cx="61" cy="66" r="18" fill="#cbc7e0"/>' +
-        '<text x="61" y="118" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" font-weight="600" fill="#8d87ad">mascotte</text>' +
-        '<text x="61" y="133" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="10" fill="#a9a4c2">' + posa + '</text>' +
-        '<text x="61" y="150" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="8" fill="#b8b4cc">manca il file</text>' +
+        '<text x="61" y="118" text-anchor="middle" font-family="Atkinson Hyperlegible Next, sans-serif" font-size="11" font-weight="600" fill="#8d87ad">mascotte</text>' +
+        '<text x="61" y="133" text-anchor="middle" font-family="Atkinson Hyperlegible Next, sans-serif" font-size="10" fill="#a9a4c2">' + posa + '</text>' +
+        '<text x="61" y="150" text-anchor="middle" font-family="Atkinson Hyperlegible Next, sans-serif" font-size="8" fill="#b8b4cc">manca il file</text>' +
       '</svg>';
   }
 

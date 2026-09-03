@@ -69,7 +69,7 @@ window.NAVIDA_CONTENT = {
     scriviQui: 'Scrivi qui…',
     cercaProfessione: 'Cerca una professione…',
     nessunRisultato: 'Nessun risultato. Puoi scrivere liberamente.',
-    ordinaHint: 'Trascina dalla maniglia. In cima quello che conta di più.',
+    ordinaHint: 'Trascina tutta la card. Per scorrere usa la fascia a destra.',
     ordinaHintPodio: 'Tocca le risposte per riempire le posizioni, dalla prima all’ultima.',
     ordinaHintTocca: 'Tocca in ordine di importanza. Tocca di nuovo per togliere.',
     sceltaMultiplaHint: 'Scegli tutte le risposte che vuoi'
@@ -121,7 +121,7 @@ window.NAVIDA_CONTENT = {
       id: 'ob1',
       chapter: 'intro',
       type: 'info',
-      mascotte: 'salutare',
+      mascotte: 'stretta-mano',
       obStep: 1,
       title: 'Ciao, siamo Navida',
       body: 'Uno spazio sicuro per capire davvero dove vuoi arrivare.\nNon siamo l’ennesima app di ricerca di lavoro: costruiamo su di te un percorso di carriera e ti guidiamo, tappa dopo tappa, fino al lavoro dei tuoi sogni.',
@@ -221,7 +221,7 @@ window.NAVIDA_CONTENT = {
       id: 'introDomande',
       chapter: 'scoperta',
       type: 'info',
-      mascotte: 'indicare',
+      mascotte: 'calcolare',
       title: 'Ci siamo!',
       body: 'Ora ti facciamo qualche domanda, non per capire chi sei, ma chi puoi diventare.',
       cta: 'Continua'
@@ -333,11 +333,9 @@ window.NAVIDA_CONTENT = {
       id: 'tuoMomento',
       chapter: 'scoperta',
       type: 'info',
-      /* l'astronauta salta e incoraggia prima della domanda sul sogno:
-         e' il passaggio chiesto nel commento su lavoroSogni */
+      /* passaggio di incoraggiamento prima della domanda sul sogno.
+         L'animazione si sceglie tra le varianti della schermata. */
       mascotte: 'saltare',
-      mascotteAnima: 'salta',
-      wow: true,
       title: 'Ora tocca a te',
       body: 'Dimentica cosa sai fare. Pensa a cosa vorresti fare.',
       cta: 'Ci sono'
@@ -515,7 +513,7 @@ window.NAVIDA_CONTENT = {
       chapter: 'test',
       type: 'info',
       blocco: 2,
-      mascotte: 'saltare',
+      mascotte: 'computer',
       eyebrow: 'Blocco 2 di 3',
       title: 'Cosa conta per te',
       body: 'Parliamo di aspettative: cosa cerchi in un lavoro, cosa ti preoccupa e quali valori vuoi trovare in azienda.',
@@ -802,19 +800,22 @@ window.NAVIDA_CONTENT = {
       id: 'fineTest',
       chapter: 'test',
       type: 'loading',
-      wow: true,
+      wow: false,
       noProgress: true,
       title: 'Il tuo percorso sta prendendo forma',
       body: 'Ogni risposta è un tassello della tua linea di carriera.',
-      attesa: 'Ancora qualche secondo…',
-      durata: 3600
+      status: [
+        'Mettiamo a fuoco il punto di partenza',
+        'Colleghiamo le opportunità più adatte',
+        'La tua rotta è quasi pronta'
+      ],
+      durata: 7200
     },
 
     {
       id: 'preview',
       chapter: 'auth',
       type: 'preview',
-      wow: true,
       title: 'La tua linea di carriera',
       body: 'Da dove sei oggi a {lavoroSogni}.',
       steps: [
@@ -825,7 +826,8 @@ window.NAVIDA_CONTENT = {
         { nome: 'Il ruolo che sogni', ruolo: '{lavoroSogni}', durata: 'Traguardo', obiettivo: 'Ci sei arrivato.' }
       ],
       cta: 'Vai alla dashboard',
-      ctaNota: 'Fase 3 — in costruzione'
+      ctaNota: 'Continua nella Fase 3',
+      href: 'fase3.html'
     },
 
     {

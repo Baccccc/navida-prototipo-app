@@ -1,0 +1,425 @@
+/* ==========================================================================
+   NAVIDA — Linea di carriera consultabile e varianti di costruzione
+   I riferimenti strutturali arrivano dal frame Figma “Percorso carriera”:
+   riepilogo, stati leggibili, durata e accesso al dettaglio per ogni step.
+   ========================================================================== */
+
+.body--career {
+  gap: 12px;
+  margin-top: 18px;
+  overflow: hidden;
+}
+.body--career > .title,
+.body--career > .lead { flex: 0 0 auto; }
+
+.careerView {
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--light-outline) transparent;
+  padding: 4px 2px 18px;
+  text-align: left;
+}
+.careerView::-webkit-scrollbar { width: 5px; }
+.careerView::-webkit-scrollbar-thumb { border-radius: 999px; background: var(--light-outline); }
+
+.careerOverview {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  min-height: 132px;
+  padding: 18px 18px 18px 20px;
+  border: 1px solid #ebe9f7;
+  border-radius: 16px;
+  color: #fff;
+  background: var(--grad-brand);
+  box-shadow: 0 8px 20px rgba(66, 64, 186, .14);
+}
+.careerOverview__copy { min-width: 0; }
+.careerOverview h2 { margin: 0; font-size: 18px; line-height: 24px; }
+.careerOverview p { margin: 8px 0 12px; max-width: 205px; color: #e7e6fa; font-size: 12px; line-height: 16px; }
+.careerOverview__meta { display: flex; flex-wrap: wrap; gap: 12px; color: #e7e6fa; font-size: 11px; }
+.careerOverview__meta span { display: inline-flex; align-items: center; gap: 5px; }
+.careerOverview__ring {
+  width: 72px;
+  height: 72px;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: #fff;
+  background: radial-gradient(circle at center, transparent 53%, #ffffff38 55% 68%, transparent 70%),
+              conic-gradient(#fff 0 20%, #ffffff22 20% 100%);
+}
+.careerOverview__ring strong { font-size: 18px; line-height: 1; }
+
+.careerList {
+  --career-progress: 1;
+  position: relative;
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+}
+.careerList::before,
+.careerList::after {
+  content: '';
+  position: absolute;
+  z-index: 2;
+  left: 32px;
+  top: 42px;
+  bottom: 42px;
+  width: 3px;
+  border-radius: 999px;
+}
+.careerList::before { background: var(--light-outline); }
+.careerList::after {
+  background: linear-gradient(180deg, #00a875, var(--main) 42%, #e3ba26);
+  transform: scaleY(var(--career-progress));
+  transform-origin: top;
+  transition: transform 80ms linear;
+}
+.careerStep {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  min-height: 86px;
+  padding: 13px 14px;
+  border: 1px solid var(--light-outline);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--text-toned);
+  background: var(--surface);
+  box-shadow: 0 3px 10px rgba(49, 65, 88, .05);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 180ms var(--ease), box-shadow 180ms var(--ease), background 180ms var(--ease);
+}
+.careerStep:hover { border-color: color-mix(in srgb, var(--main) 38%, var(--light-outline)); }
+.careerStep:focus-visible { outline: 3px solid color-mix(in srgb, var(--main) 24%, transparent); outline-offset: 2px; }
+.careerStep.is-selected { border: 2px solid var(--main); padding: 12px 13px; box-shadow: 0 5px 16px rgba(66, 64, 186, .12); }
+.careerStep__state,
+.careerDetail__state {
+  position: relative;
+  z-index: 3;
+  width: 38px;
+  height: 38px;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: var(--text-dimmed);
+  background: var(--gray-100);
+}
+.careerStep--done .careerStep__state,
+.careerDetail__state--done { color: #007f58; background: #e6fbf3; }
+.careerStep--active .careerStep__state,
+.careerDetail__state--active { color: var(--main); background: #eeedfb; }
+.careerStep--goal .careerStep__state,
+.careerDetail__state--goal { color: #b88700; background: #fff7d7; }
+.careerStep__copy { min-width: 0; flex: 1 1 auto; display: flex; flex-direction: column; }
+.careerStep__copy small { color: var(--text-muted); font-size: 10px; line-height: 14px; }
+.careerStep__copy strong { color: var(--text); font-size: 13px; line-height: 17px; }
+.careerStep__role { margin-top: 1px; color: var(--text-toned); font-size: 11px; line-height: 15px; }
+.careerStep__time { margin-top: 3px; display: flex; align-items: center; gap: 4px; color: var(--text-muted); font-size: 10px; }
+.careerStep > .ico:last-child { color: var(--text-dimmed); }
+
+.careerDetail {
+  margin-top: 12px;
+  padding: 15px;
+  border: 1px solid var(--light-outline);
+  border-radius: 14px;
+  color: var(--text-toned);
+  background: #f8f8fd;
+}
+.careerDetail__head { display: flex; align-items: center; gap: 11px; }
+.careerDetail__heading { min-width: 0; }
+.careerDetail__heading small { display: block; color: var(--text-muted); font-size: 10px; }
+.careerDetail h2 { margin: 1px 0 0; color: var(--text); font-size: 15px; line-height: 20px; }
+.careerDetail p { margin: 10px 0 8px; color: var(--text-toned); font-size: 12px; line-height: 17px; }
+.careerDetail__meta { display: flex; align-items: center; gap: 5px; color: var(--text-muted); font-size: 11px; }
+.careerDetail__action {
+  width: 100%;
+  margin-top: 12px;
+  padding: 10px 12px;
+  border: 0;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: #fff;
+  background: var(--main);
+  font: inherit;
+  font-size: 12px;
+  font-weight: var(--fw-semibold);
+  cursor: pointer;
+}
+.careerDetail__action:focus-visible { outline: 3px solid color-mix(in srgb, var(--main) 30%, transparent); outline-offset: 2px; }
+
+/* Variante 2: la topologia a serpentina delle varianti Figma, ma con tutte
+   le tappe cliccabili e una scheda di dettaglio nello stesso contesto. */
+.careerView__compactHead { padding: 4px 2px 12px; display: flex; justify-content: space-between; gap: 10px; }
+.careerView__compactHead strong { color: var(--text); font-size: 12px; }
+.careerView__compactHead span { color: var(--text-muted); font-size: 10px; text-align: right; }
+.careerCurve { position: relative; height: 760px; overflow: hidden; }
+.careerCurve__line { position: absolute; inset: 0; width: 100%; height: 100%; }
+.careerCurve__line path {
+  fill: none;
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+.careerCurve__track { stroke: #90a4c2; stroke-dasharray: 8 9; }
+.careerCurve__progress { stroke: var(--main); stroke-width: 3.25; }
+.careerCurve__step { position: absolute; width: 255px; min-height: 100px; z-index: 2; }
+.careerCurve__step--1 { top: 4px; left: 58px; }
+.careerCurve__step--2 { top: 144px; left: 0; }
+.careerCurve__step--3 { top: 286px; right: 0; }
+.careerCurve__step--4 { top: 430px; left: 0; }
+.careerCurve__step--5 { top: 576px; right: 0; }
+.careerView--serpentina .careerDetail { margin-top: 2px; }
+
+/* Variante 3: il percorso intero resta sempre visibile nella rail; sotto,
+   il dettaglio e l'indice permettono di esplorarlo senza cambiare pagina. */
+.careerView--mappa { display: flex; flex-direction: column; gap: 12px; }
+.careerMap__rail {
+  --career-progress: 1;
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  align-items: start;
+  padding: 12px 6px 28px;
+}
+.careerMap__rail::before,
+.careerMap__rail::after {
+  content: '';
+  position: absolute;
+  left: 10%;
+  right: 10%;
+  top: 31px;
+  height: 3px;
+  border-radius: 999px;
+}
+.careerMap__rail::before { background: var(--light-outline); }
+.careerMap__rail::after {
+  background: linear-gradient(90deg, #00a875, var(--main) 62%, #e3ba26);
+  transform: scaleX(var(--career-progress));
+  transform-origin: left;
+  transition: transform 80ms linear;
+}
+.careerMap__node {
+  position: relative;
+  z-index: 1;
+  width: 42px;
+  height: 42px;
+  justify-self: center;
+  border: 2px solid var(--light-outline);
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: var(--text-muted);
+  background: var(--surface);
+  cursor: pointer;
+}
+.careerMap__node > span:last-child { position: absolute; top: 47px; font-size: 10px; }
+.careerMap__node--done { color: #007f58; border-color: #00a875; }
+.careerMap__node--active { color: var(--main); border-color: var(--main); }
+.careerMap__node--goal { color: #b88700; border-color: #e3ba26; }
+.careerMap__node.is-selected { box-shadow: 0 0 0 6px rgba(66, 64, 186, .11); }
+.careerMap__node:focus-visible { outline: 3px solid color-mix(in srgb, var(--main) 28%, transparent); outline-offset: 3px; }
+.careerView--mappa .careerDetail { margin-top: 0; }
+.careerMap__index { display: grid; gap: 6px; }
+.careerMap__index button {
+  width: 100%;
+  min-height: 40px;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: var(--text-toned);
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+.careerMap__index button:hover,
+.careerMap__index button.is-selected { background: #f1f0fb; }
+.careerMap__index button > span { width: 22px; height: 22px; display: grid; place-items: center; border-radius: 50%; color: var(--main); background: #e8e7f8; font-size: 10px; }
+.careerMap__index strong { font-size: 11px; }
+
+/* La struttura resta consultabile mentre la linea la attraversa; soltanto gli
+   indicatori di tappa si accendono quando il tracciato arriva nella loro zona. */
+.career-is-anim .careerStep__state,
+.career-is-anim .careerMap__node {
+  opacity: .3;
+  transform: scale(.76);
+  transition: opacity 240ms var(--ease), transform 320ms var(--ease);
+}
+.career-is-anim .careerStep.is-on .careerStep__state,
+.career-is-anim .careerMap__node.is-on {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* ==========================================================================
+   “Il tuo percorso sta prendendo forma”
+   ========================================================================== */
+.loadingPath {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: var(--text);
+  background: var(--bg);
+}
+.loadingPath__copy {
+  width: 100%;
+  padding: 76px 28px 0;
+  text-align: center;
+}
+.loadingPath__title { max-width: 330px; margin: 0 auto; font-size: 27px; line-height: 31px; text-wrap: balance; }
+.loadingPath__lead { max-width: 310px; margin: 10px auto 0; color: var(--text-toned); font-size: 14px; line-height: 19px; }
+.loadingPath__statuses { position: relative; width: 100%; height: 24px; margin-top: 10px; }
+.loadingPath__status {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--main);
+  font-size: 11px;
+  font-weight: var(--fw-semibold);
+  opacity: 0;
+}
+.loadingPath__status--1 { animation: loading-status-1 7.2s both; }
+.loadingPath__status--2 { animation: loading-status-2 7.2s both; }
+.loadingPath__status--3 { animation: loading-status-3 7.2s both; }
+.loadingPath__skip {
+  position: absolute;
+  left: 50%;
+  bottom: 28px;
+  transform: translateX(-50%);
+  min-width: 136px;
+  min-height: 42px;
+  padding: 9px 16px;
+  border: 1px solid var(--light-outline);
+  border-radius: 999px;
+  color: var(--main);
+  background: var(--surface);
+  font: inherit;
+  font-size: 12px;
+  font-weight: var(--fw-semibold);
+  cursor: pointer;
+}
+.loadingPath__skip:focus-visible { outline: 3px solid color-mix(in srgb, var(--main) 28%, transparent); outline-offset: 3px; }
+
+.loadingBuild {
+  --build-progress: 1;
+  position: relative;
+  width: min(330px, calc(100% - 48px));
+  flex: 1 1 auto;
+  min-height: 0;
+  margin: 18px auto 82px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 7px;
+}
+.loadingBuild__rail {
+  position: absolute;
+  left: 21px;
+  top: 10%;
+  bottom: 10%;
+  width: 3px;
+  border-radius: 999px;
+  background: var(--light-outline);
+}
+.loadingBuild__rail::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--grad-brand);
+  transform: scaleY(var(--build-progress));
+  transform-origin: top center;
+}
+.loadingBuild__step {
+  position: relative;
+  z-index: 1;
+  min-height: 64px;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+}
+.loadingBuild.is-building .loadingBuild__step { opacity: 0; transform: translateY(7px); }
+.loadingBuild.is-building .loadingBuild__step.is-on { opacity: 1; transform: none; transition: opacity 360ms var(--ease), transform 420ms cubic-bezier(.16, 1, .3, 1); }
+.loadingBuild__dot {
+  width: 44px;
+  height: 44px;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  border: 2px solid var(--light-outline);
+  border-radius: 50%;
+  color: var(--text-muted);
+  background: var(--surface);
+}
+.loadingBuild__step--done .loadingBuild__dot { color: #007f58; border-color: #00a875; background: #e6fbf3; }
+.loadingBuild__step--active .loadingBuild__dot { color: var(--main); border-color: var(--main); background: #eeedfb; }
+.loadingBuild__step--goal .loadingBuild__dot { color: #b88700; border-color: #e3ba26; background: #fff7d7; }
+.loadingBuild__copy { min-width: 0; flex: 1; padding: 9px 12px; border: 1px solid var(--light-outline); border-radius: 11px; display: flex; flex-direction: column; background: var(--surface); box-shadow: 0 3px 10px rgba(49, 65, 88, .05); }
+.loadingBuild__copy small { color: var(--text-muted); font-size: 9px; }
+.loadingBuild__copy strong { color: var(--text); font-size: 12px; line-height: 15px; }
+.loadingBuild__copy span { margin-top: 2px; color: var(--text-muted); font-size: 9px; }
+
+.loadingPath__serpentina {
+  flex: 1 1 auto;
+  min-height: 0;
+  width: min(330px, calc(100% - 42px));
+  margin: 12px auto 82px;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+.loadingPath__serpentina::-webkit-scrollbar { display: none; }
+.loadingPath__serpentina .perc__et { font-size: 11px; }
+
+@keyframes loading-status-1 {
+  0%, 4% { opacity: 0; transform: translateY(4px); }
+  9%, 28% { opacity: 1; transform: none; }
+  34%, 100% { opacity: 0; transform: translateY(-4px); }
+}
+@keyframes loading-status-2 {
+  0%, 32% { opacity: 0; transform: translateY(4px); }
+  38%, 60% { opacity: 1; transform: none; }
+  66%, 100% { opacity: 0; transform: translateY(-4px); }
+}
+@keyframes loading-status-3 {
+  0%, 64% { opacity: 0; transform: translateY(4px); }
+  70%, 100% { opacity: 1; transform: none; }
+}
+
+@media (max-height: 700px) {
+  .loadingPath__copy { padding-top: 48px; }
+  .loadingPath__title { font-size: 23px; line-height: 27px; }
+  .loadingBuild { gap: 4px; margin-top: 8px; }
+  .loadingBuild__step { min-height: 55px; }
+  .loadingBuild__dot { width: 38px; height: 38px; }
+  .loadingBuild__rail { left: 18px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loadingPath__status { animation: none; opacity: 0; }
+  .loadingPath__status--3 { opacity: 1; }
+  .loadingBuild.is-building .loadingBuild__step { opacity: 1; transform: none; }
+  .careerStep,
+  .loadingBuild__step,
+  .career-is-anim .careerStep__state,
+  .career-is-anim .careerMap__node { transition: none; }
+}

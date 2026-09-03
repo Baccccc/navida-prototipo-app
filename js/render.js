@@ -210,7 +210,7 @@
    */
   function intestazione(screen, extraCls) {
     var v = S.variant(screen.id, 'domanda', VAR.domanda.predefinita);
-    var titolo = editable('h1', 'title ' + (extraCls || ''), screen, 'title', screen.title, { variant: 'title' });
+    var titolo = editable('h1', 'title title--question ' + (extraCls || ''), screen, 'title', screen.title, { variant: 'title' });
 
     if (v !== 'mascotte') {
       titolo.setAttribute('data-varname', 'domanda');
@@ -254,17 +254,20 @@
      SORTABLE — trascinamento con puntatore (funziona anche su mobile)
      ====================================================================== */
 
-  function makeSortable(container, onEnd) {
+  function makeSortable(container, onEnd, opts) {
+    opts = opts || {};
     container.classList.add('sortable');
 
-    var dragging = null;   // la riga sollevata
-    var startY = 0;        // dove il dito ha toccato
-    var offset = 0;        // spostamento gia' assorbito dai riordini
-    var attesa = null;     // timer del tocco lungo
-    var partito = false;
+    var selector = opts.itemSelector || '.opt';
+    var dragging = null;
+    var placeholder = null;
+    var pointerId = null;
+    var grabOffsetY = 0;
+    var latestY = 0;
+    var frame = 0;
 
     function righe() {
-      return Array.prototype.slice.call(container.querySelectorAll('.opt'));
+      return Array.prototype.slice.call(container.querySelectorAll(selector));
     }
 
     /* fotografa la posizione di ogni riga, per l'animazione FLIP */
@@ -284,115 +287,107 @@
         if (!dy) return;
         v.n.style.transition = 'none';
         v.n.style.transform = 'translateY(' + dy + 'px)';
-        void v.n.offsetHeight;              // forza il ricalcolo
-        v.n.style.transition = 'transform 200ms var(--ease)';
-        v.n.style.transform = '';
+        requestAnimationFrame(function () {
+          v.n.style.transition = 'transform 150ms var(--ease)';
+          v.n.style.transform = '';
+        });
       });
     }
 
     function solleva(item, e) {
+      var rect = item.getBoundingClientRect();
+      var host = container.getBoundingClientRect();
+
       dragging = item;
-      partito = true;
-      startY = e.clientY;
-      offset = 0;
+      pointerId = e.pointerId;
+      latestY = e.clientY;
+      grabOffsetY = e.clientY - rect.top;
+
+      placeholder = h('div', { class: 'rankPlaceholder' });
+      placeholder.style.height = rect.height + 'px';
+      container.insertBefore(placeholder, item);
+
       item.classList.add('is-dragging');
+      item.setAttribute('aria-grabbed', 'true');
       container.classList.add('is-sorting');
-      item.style.transform = 'translateY(0) scale(1.03)';
+      item.style.position = 'absolute';
+      item.style.left = (rect.left - host.left) + 'px';
+      item.style.top = (rect.top - host.top) + 'px';
+      item.style.width = rect.width + 'px';
+      item.style.margin = '0';
       item.setPointerCapture && item.setPointerCapture(e.pointerId);
       attach();
     }
 
     function onDown(e) {
-      var item = e.target.closest('.opt');
+      if (S.mode || e.button > 0) return;
+      var item = e.target.closest(selector);
       if (!item || !container.contains(item)) return;
-      partito = false;
-
-      // dalla maniglia si parte subito; dal resto della riga serve un
-      // tocco lungo, cosi' un tap sull'etichetta resta un tap
-      if (e.target.closest('.opt__grip')) {
-        solleva(item, e);
-        e.preventDefault();
-        return;
-      }
-      var ev = { clientY: e.clientY, pointerId: e.pointerId };
-      attesa = setTimeout(function () {
-        attesa = null;
-        solleva(item, ev);
-        if (navigator.vibrate) navigator.vibrate(8);
-      }, 220);
-      attachAttesa();
+      e.preventDefault();
+      solleva(item, e);
+      if (navigator.vibrate) navigator.vibrate(6);
     }
 
     function onMove(e) {
-      if (!dragging) return;
-      var dy = e.clientY - startY;
-      dragging.style.transform = 'translateY(' + (dy - offset) + 'px) scale(1.03)';
-
-      /* il confronto usa la posizione del dito, non il rettangolo della
-         riga: cosi' regge anche se una regola CSS tocca il transform */
-      var centro = e.clientY;
-      var lista = righe();
-      var idx = lista.indexOf(dragging);
-
-      for (var i = 0; i < lista.length; i++) {
-        if (lista[i] === dragging) continue;
-        var q = lista[i].getBoundingClientRect();
-        var mid = q.top + q.height / 2;
-        var su = i < idx && centro < mid;
-        var giu = i > idx && centro > mid;
-        if (!su && !giu) continue;
-
-        var prima = foto();
-        var eraTop = dragging.getBoundingClientRect().top;
-        container.insertBefore(dragging, su ? lista[i] : lista[i].nextSibling);
-        // la riga sollevata e' saltata nel flusso: ne tengo conto,
-        // cosi' resta esattamente sotto il dito
-        dragging.style.transform = 'none';
-        offset += dragging.getBoundingClientRect().top - eraTop;
-        dragging.style.transform = 'translateY(' + (dy - offset) + 'px) scale(1.03)';
-        scivola(prima);
-        break;
-      }
+      if (!dragging || e.pointerId !== pointerId) return;
+      latestY = e.clientY;
+      e.preventDefault();
+      if (!frame) frame = requestAnimationFrame(aggiornaDrag);
     }
 
-    function onUp() {
-      if (attesa) { clearTimeout(attesa); attesa = null; }
-      detachAttesa();
+    function aggiornaDrag() {
+      frame = 0;
       if (!dragging) return;
 
+      var host = container.getBoundingClientRect();
+      var hItem = dragging.getBoundingClientRect().height;
+      var top = latestY - host.top - grabOffsetY;
+      var max = Math.max(0, container.scrollHeight - hItem);
+      dragging.style.top = Math.max(0, Math.min(max, top)) + 'px';
+
+      var lista = righe().filter(function (n) { return n !== dragging; });
+      var prima = foto();
+      var inserito = false;
+
+      for (var i = 0; i < lista.length; i++) {
+        var q = lista[i].getBoundingClientRect();
+        if (latestY < q.top + q.height / 2) {
+          if (placeholder.nextSibling !== lista[i]) container.insertBefore(placeholder, lista[i]);
+          inserito = true;
+          break;
+        }
+      }
+      if (!inserito && placeholder !== container.lastElementChild) container.appendChild(placeholder);
+      scivola(prima);
+    }
+
+    function onUp(e) {
+      if (!dragging || (e && e.pointerId !== pointerId)) return;
+      if (frame) {
+        cancelAnimationFrame(frame);
+        frame = 0;
+        aggiornaDrag();
+      }
+
       var item = dragging;
+      container.insertBefore(item, placeholder);
+      placeholder.remove();
+      placeholder = null;
       dragging = null;
+      pointerId = null;
       container.classList.remove('is-sorting');
-      item.style.transition = 'transform 200ms var(--ease)';
-      item.style.transform = '';
-      setTimeout(function () {
-        item.classList.remove('is-dragging');
-        item.style.transition = '';
-      }, 200);
+      item.classList.remove('is-dragging');
+      item.setAttribute('aria-grabbed', 'false');
+      item.style.position = '';
+      item.style.left = '';
+      item.style.top = '';
+      item.style.width = '';
+      item.style.margin = '';
 
       detach();
       onEnd(righe().map(function (n) {
         return parseInt(n.getAttribute('data-oi'), 10);
       }));
-    }
-
-    /* se il dito parte a scorrere prima dei 220ms, il tocco lungo salta */
-    function annulla() {
-      if (attesa) { clearTimeout(attesa); attesa = null; }
-      detachAttesa();
-    }
-    function attachAttesa() {
-      window.addEventListener('pointermove', annullaSeScorre);
-      window.addEventListener('pointerup', annulla);
-      window.addEventListener('pointercancel', annulla);
-    }
-    function detachAttesa() {
-      window.removeEventListener('pointermove', annullaSeScorre);
-      window.removeEventListener('pointerup', annulla);
-      window.removeEventListener('pointercancel', annulla);
-    }
-    function annullaSeScorre(e) {
-      if (!partito && attesa) annulla();
     }
 
     // i listener globali vivono solo durante il trascinamento,
@@ -410,7 +405,6 @@
 
     container.addEventListener('pointerdown', function (e) {
       onDown(e);
-      if (dragging) attach();
     });
   }
 
@@ -550,7 +544,22 @@
     var body = h('div', { class: 'body body--center' });
 
     var m = mascotte(screen);
-    if (m) body.appendChild(m);
+    if (m && screen.id === 'tuoMomento') {
+      var momentoVariant = S.pageVariant(screen.id, PAGEVAR.tuoMomento.predefinita);
+      var momentoArt = h('div', {
+        class: 'momentoArt momentoArt--' + momentoVariant
+      }, [
+        h('span', { class: 'momentoArt__glow', 'aria-hidden': 'true' }),
+        h('span', { class: 'momentoArt__orbit', 'aria-hidden': 'true' }),
+        h('span', { class: 'momentoArt__gate momentoArt__gate--left', 'aria-hidden': 'true' }),
+        h('span', { class: 'momentoArt__gate momentoArt__gate--right', 'aria-hidden': 'true' })
+      ]);
+      m.classList.add('momentoArt__mascotte');
+      momentoArt.appendChild(m);
+      body.appendChild(momentoArt);
+    } else if (m) {
+      body.appendChild(m);
+    }
 
     if (screen.eyebrow) body.appendChild(editable('div', 'eyebrow', screen, 'eyebrow', screen.eyebrow));
     body.appendChild(editable('h1', 'title', screen, 'title', screen.title, { variant: 'title' }));
@@ -807,43 +816,52 @@
     }
 
     /* ---------------------------------------------------------------
-       1 · MANIGLIA — si trascina, ma il gesto e' dichiarato: maniglia
-       a sinistra, riga che si stacca e segue il dito, numeri fermi in
-       colonna cosi' si legge come una classifica e non come uno scambio.
+       1 · TRASCINAMENTO — tutta la card e' afferrabile. Il numero vive
+       nella stessa riga della proposta, quindi rimane sempre allineato.
+       A destra resta una fascia libera per scorrere da telefono.
        --------------------------------------------------------------- */
     function costruisciManiglia() {
       var box = optionsBox(screen, []);
-      var scala = h('div', { class: 'rankScale' });
+      box.classList.add('rankList');
 
-      function numeri() {
-        scala.innerHTML = '';
-        seq.forEach(function (_, pos) {
-          scala.appendChild(h('span', { class: 'opt__pos', text: String(pos + 1) }));
-        });
-      }
       function paint() {
         box.innerHTML = '';
-        seq.forEach(function (entry) {
-          box.appendChild(h('div', { class: 'opt opt--rank', 'data-oi': entry.i }, [
-            h('span', { class: 'opt__grip' }, [icon('grip-vertical', 16)]),
-            h('span', {
-              class: 'opt__label',
-              'data-editable': screen.id + '.opt.' + entry.i,
-              text: optLabel(screen, entry.i, entry.o.label)
-            })
+        seq.forEach(function (entry, pos) {
+          box.appendChild(h('div', {
+            class: 'rankItem',
+            'data-oi': entry.i,
+            'aria-grabbed': 'false'
+          }, [
+            h('span', { class: 'opt__pos', text: String(pos + 1) }),
+            h('div', { class: 'opt opt--rank' }, [
+              h('span', { class: 'opt__grip', 'aria-hidden': 'true' }, [icon('grip-vertical', 16)]),
+              h('span', {
+                class: 'opt__label',
+                'data-editable': screen.id + '.opt.' + entry.i,
+                text: optLabel(screen, entry.i, entry.o.label)
+              })
+            ])
           ]));
         });
-        numeri();
       }
       paint();
 
       makeSortable(box, function (order) {
         seq = order.map(function (i) { return indexed[i]; });
         salva(order);
-        numeri();
-      });
+        Array.prototype.forEach.call(box.querySelectorAll('.rankItem'), function (n, pos) {
+          n.querySelector('.opt__pos').textContent = String(pos + 1);
+        });
+      }, { itemSelector: '.rankItem' });
 
-      return h('div', { class: 'rankWrap' }, [scala, box]);
+      return h('div', { class: 'rankWrap' }, [
+        box,
+        h('div', {
+          class: 'rankScrollRail',
+          'aria-hidden': 'true',
+          title: 'Scorri qui'
+        })
+      ]);
     }
 
     /* ---------------------------------------------------------------
@@ -986,10 +1004,12 @@
              : modo === 'tocca' ? C.ui.ordinaHintTocca
              : C.ui.ordinaHint;
 
-    var body = h('div', { class: 'body' }, [
-      screen.eyebrow ? editable('div', 'eyebrow eyebrow--sub', screen, 'eyebrow', screen.eyebrow) : null,
-      intestazione(screen, 'title--rank'),
-      screen.body ? editable('p', 'lead', screen, 'body', screen.body) : null,
+    var body = h('div', { class: 'body body--rank' }, [
+      h('div', { class: 'rankHead' }, [
+        intestazione(screen, 'title--rank'),
+        screen.eyebrow ? editable('div', 'eyebrow eyebrow--sub', screen, 'eyebrow', screen.eyebrow) : null,
+        screen.body ? editable('p', 'lead', screen, 'body', screen.body) : null
+      ].filter(Boolean)),
       h('p', { class: 'nota', text: hint }),
       lista
     ].filter(Boolean));
@@ -1048,7 +1068,7 @@
 
     // i campi di testo stanno in alto, come tutte le altre schermate
     var body = h('div', { class: 'body' }, [
-      editable('h1', 'title', screen, 'title', screen.title, { variant: 'title' }),
+      editable('h1', 'title title--question', screen, 'title', screen.title, { variant: 'title' }),
       screen.body ? editable('p', 'lead', screen, 'body', screen.body) : null,
       input,
       screen.nota ? editable('p', 'nota', screen, 'nota', screen.nota) : null
@@ -1063,9 +1083,10 @@
   Screens.dream = function (screen, progress) {
     var value = S.answer(screen.field, '');
     var ctaBtn;
+    var variant = S.pageVariant(screen.id, 'orbite');
 
-    var ring = window.NavidaWow.anelli(T(screen, 'frase', screen.frase));
-    ring.classList.add('ring--enter');
+    var art = window.NavidaWow.sogno(T(screen, 'frase', screen.frase), variant);
+    art.classList.add('dreamArt--enter');
 
     var input = h('textarea', {
       class: 'dream__input',
@@ -1093,6 +1114,7 @@
 
     // gli anelli entrano, poi si fermano: si può scrivere
     setTimeout(function () {
+      if (new URLSearchParams(window.location.search).get('autofocus') === '0') return;
       try { input.focus(); autoGrow(); } catch (e) {}
     }, 1500);
 
@@ -1100,17 +1122,17 @@
       // la tastiera scende e gli anelli riprendono a girare
       window.NavidaKeyboard.hide();
       input.blur();
-      ring.classList.remove('ring--enter');
-      ring.classList.add('ring--spin');
+      art.classList.remove('dreamArt--enter');
+      art.classList.add('dreamArt--exit');
       if (ctaBtn) ctaBtn.disabled = true;
       setTimeout(function () { window.NavidaApp.next(); }, 900);
     }
 
     ctaBtn = cta(screen, T(screen, 'cta', screen.cta || C.ui.continua), avanti, !value.trim());
 
-    var root = h('div', { class: 'dream' }, [
+    var root = h('div', { class: 'dream dream--' + variant }, [
       header(screen, progress),
-      ring,
+      art,
       h('div', { class: 'dream__center' }, [
         input,
         screen.descrizione
@@ -1127,24 +1149,38 @@
     return root;
   };
 
-  /* --- sezione ludica: i tre cerchi che coprono lo schermo ------------ */
+  /* --- elaborazione: mascotte e professioni a rotazione ---------------- */
   Screens.circles = function (screen) {
-    return window.NavidaWow.cerchi(function () { window.NavidaApp.next(); });
+    var variante = S.pageVariant(screen.id, 'mascotte');
+    return window.NavidaWow.professioni(variante, function () { window.NavidaApp.next(); });
   };
 
   /* --- spiegazione del riordino, con dimostrazione animata ------------ */
   Screens.rankIntro = function (screen, progress) {
     var righe = (screen.demo || ['Stipendio', 'Flessibilità', 'Crescita']);
 
-    var demo = h('div', { class: 'rankDemo' }, righe.map(function (t, i) {
-      return h('div', { class: 'rankDemo__row', 'data-i': String(i) }, [
-        h('span', { class: 'opt__pos', text: String(i + 1) }),
+    /* Stessa anatomia delle domande rank reali: numero fuori dalla card,
+       maniglia dentro la risposta e intera riga trascinabile. La mano vive
+       nella card, quindi ne eredita sempre il movimento. */
+    var lista = h('div', { class: 'rankDemo__list rankList' }, righe.map(function (t, i) {
+      var cardKids = [
         h('span', { class: 'opt__grip' }, [icon('grip-vertical', 16)]),
-        h('span', { class: 'rankDemo__label', text: t })
+        h('span', { class: 'opt__label rankDemo__label', text: t })
+      ];
+      if (i === 2) {
+        cardKids.push(h('span', {
+          class: 'rankDemo__hand',
+          'aria-hidden': 'true',
+          html: manina()
+        }));
+      }
+      return h('div', { class: 'rankItem rankDemo__row', 'data-i': String(i) }, [
+        h('span', { class: 'opt__pos', text: String(i + 1) }),
+        h('div', { class: 'opt opt--rank' }, cardKids)
       ]);
     }));
-    // il dito che trascina la terza riga in cima, in loop
-    demo.appendChild(h('span', { class: 'rankDemo__hand', html: manina() }));
+
+    var demo = h('div', { class: 'rankDemo', 'aria-hidden': 'true' }, [lista]);
 
     var body = h('div', { class: 'body body--center' }, [
       editable('h1', 'title', screen, 'title', screen.title, { variant: 'title' }),
@@ -1211,7 +1247,7 @@
     setTimeout(function () { try { input.focus(); } catch (e) {} }, 1000);
 
     var body = h('div', { class: 'body' }, [
-      editable('h1', 'title', screen, 'title', screen.title, { variant: 'title' }),
+      editable('h1', 'title title--question', screen, 'title', screen.title, { variant: 'title' }),
       input,
       sugg
     ]);
@@ -1252,7 +1288,7 @@
     });
 
     var body = h('div', { class: 'body' }, [
-      editable('h1', 'title', screen, 'title', screen.title, { variant: 'title' }),
+      editable('h1', 'title title--question', screen, 'title', screen.title, { variant: 'title' }),
       screen.nota ? editable('p', 'nota', screen, 'nota', screen.nota) : null,
       wrap
     ].filter(Boolean));
@@ -1261,46 +1297,224 @@
     return [header(screen, progress), body, h('div', { class: 'footer' }, [ctaBtn])];
   };
 
-  /* --- loading -------------------------------------------------------- */
-  Screens.loading = function (screen, progress) {
-    var stack = h('div', { class: 'loader__stack' }, [h('div', { class: 'loader__ring' })]);
-    var wordHost = h('div', { class: 'loader__word' });
-    stack.appendChild(wordHost);
+  function careerSteps(screen) {
+    return (screen.steps || []).map(function (st, i) {
+      return {
+        nome: interp(S.text(screen.id + '.step.' + i + '.nome', st.nome)),
+        ruolo: interp(st.ruolo),
+        durata: st.durata,
+        obiettivo: interp(S.text(screen.id + '.step.' + i + '.obj', st.obiettivo)),
+        stato: i === 0 ? 'done' : (i === 1 ? 'active' : (i === (screen.steps.length - 1) ? 'goal' : 'todo'))
+      };
+    });
+  }
 
-    if (screen.loop && screen.loop.length) {
-      var i = 0;
-      wordHost.textContent = screen.loop[0];
-      var timer = setInterval(function () {
-        i = (i + 1) % screen.loop.length;
-        wordHost.textContent = screen.loop[i];
-        wordHost.style.animation = 'none';
-        void wordHost.offsetWidth;
-        wordHost.style.animation = '';
-      }, 520);
-      setTimeout(function () { clearInterval(timer); }, screen.durata || 3000);
+  function careerIcon(stato, size) {
+    if (stato === 'done') return icon('check', size || 18);
+    if (stato === 'goal') return icon('trophy', size || 18);
+    return icon('circle', size || 18);
+  }
+
+  /* Fa crescere la linea con un solo avanzamento e accende gli step
+     quando la punta della linea raggiunge davvero la loro posizione. */
+  function avviaCostruzione(root, durata) {
+    var nodes = Array.prototype.slice.call(root.querySelectorAll('.loadingBuild__step'));
+    var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var started = false;
+
+    function ready() {
+      if (started) return;
+      if (!root.isConnected) { requestAnimationFrame(ready); return; }
+      started = true;
+      if (reduced) {
+        root.style.setProperty('--build-progress', '1');
+        nodes.forEach(function (node) { node.classList.add('is-on'); });
+        return;
+      }
+
+      var start = null;
+      var next = 0;
+      var last = Math.max(1, nodes.length - 1);
+      root.classList.add('is-building');
+
+      function frame(now) {
+        if (start == null) start = now;
+        var time = Math.min(1, (now - start) / durata);
+        var progress = time < .5
+          ? 4 * time * time * time
+          : 1 - Math.pow(-2 * time + 2, 3) / 2;
+        root.style.setProperty('--build-progress', String(progress));
+        while (next < nodes.length && progress >= next / last) {
+          nodes[next].classList.add('is-on');
+          next++;
+        }
+        if (time < 1) requestAnimationFrame(frame);
+      }
+      requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(ready);
+  }
+
+  function avviaPercorsoConsultabile(root, nodes, durata) {
+    var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var started = false;
+
+    function ready() {
+      if (started) return;
+      if (!root.isConnected) { requestAnimationFrame(ready); return; }
+      started = true;
+      var path = root.querySelector('.careerCurve__progress') || root.querySelector('path');
+      var length = path && path.getTotalLength ? path.getTotalLength() : 0;
+      if (length) {
+        path.style.strokeDasharray = String(length);
+        path.style.strokeDashoffset = String(length);
+      }
+      if (reduced) {
+        root.style.setProperty('--career-progress', '1');
+        if (path) path.style.strokeDashoffset = '0';
+        nodes.forEach(function (node) { node.classList.add('is-on'); });
+        return;
+      }
+
+      var start = null;
+      var next = 0;
+      var last = Math.max(1, nodes.length - 1);
+      root.classList.add('career-is-anim');
+
+      function frame(now) {
+        if (start == null) start = now;
+        var time = Math.min(1, (now - start) / durata);
+        var progress = time < .5
+          ? 4 * time * time * time
+          : 1 - Math.pow(-2 * time + 2, 3) / 2;
+        root.style.setProperty('--career-progress', String(progress));
+        if (path) path.style.strokeDashoffset = String(length * (1 - progress));
+        /* L'ultimo nodo ha un'area visiva: si accende appena la punta entra
+           nella sua zona, senza aspettare l'ultimo sub-pixel del tracciato. */
+        while (next < nodes.length && progress >= (next === nodes.length - 1 ? .985 : next / last)) {
+          nodes[next].classList.add('is-on');
+          next++;
+        }
+        if (time < 1) requestAnimationFrame(frame);
+        else if (path) path.style.strokeDashoffset = '0';
+      }
+      requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(ready);
+  }
+
+  function loadingPathScene(screen, variant, status) {
+    var source = C.screens.find(function (item) { return item.id === 'preview'; });
+    var steps = source ? careerSteps(source) : [];
+    var art;
+
+    if (variant === 'linea' && window.NavidaPercorso) {
+      art = NavidaPercorso.disegna(steps, { variante: 'serpentina', attiva: 1, durata: 6200 });
+      art.classList.add('loadingPath__serpentina');
     } else {
-      wordHost.innerHTML = window.NavidaMascotte.pose('saltare');
-      wordHost.style.width = '80px';
-      wordHost.style.height = '104px';
+      art = h('div', { class: 'loadingBuild' }, [
+        h('span', { class: 'loadingBuild__rail', 'aria-hidden': 'true' })
+      ].concat(steps.map(function (step, i) {
+        var stato = i === 0 ? 'done' : (i === 1 ? 'active' : (i === steps.length - 1 ? 'goal' : 'todo'));
+        return h('div', {
+          class: 'loadingBuild__step loadingBuild__step--' + stato,
+          style: '--i:' + i
+        }, [
+          h('span', { class: 'loadingBuild__dot' }, [careerIcon(stato, 16)]),
+          h('span', { class: 'loadingBuild__copy' }, [
+            h('small', { text: 'Step ' + (i + 1) }),
+            h('strong', { text: step.nome }),
+            h('span', { text: step.durata })
+          ])
+        ]);
+      })));
+      avviaCostruzione(art, 5600);
     }
 
-    var body = h('div', { class: 'body body--center' }, [
-      h('div', { class: 'loader' }, [stack]),
-      editable('h1', 'title', screen, 'title', screen.title, { variant: 'title' }),
-      screen.body ? editable('p', 'lead', screen, 'body', screen.body) : null,
-      screen.attesa ? editable('p', 'nota', screen, 'attesa', screen.attesa) : null
-    ].filter(Boolean));
+    var scene = h('section', {
+      class: 'loadingPath loadingPath--' + variant,
+      role: 'status',
+      'aria-label': screen.title
+    }, [
+      h('div', { class: 'loadingPath__copy' }, [
+        editable('h1', 'loadingPath__title', screen, 'title', screen.title, { variant: 'title' }),
+        editable('p', 'loadingPath__lead', screen, 'body', screen.body),
+        h('div', { class: 'loadingPath__statuses', 'aria-live': 'polite' }, status.map(function (testo, i) {
+          return h('span', { class: 'loadingPath__status loadingPath__status--' + (i + 1), text: testo });
+        }))
+      ]),
+      art
+    ]);
+    return scene;
+  }
 
-    var t = setTimeout(function () { window.NavidaApp.next(); }, screen.durata || 3000);
+  /* --- loading -------------------------------------------------------- */
+  Screens.loading = function (screen, progress) {
+    var status = (screen.status && screen.status.length ? screen.status : [
+      'Mettiamo a fuoco il punto di partenza',
+      'Colleghiamo le opportunità più adatte',
+      'La tua rotta è quasi pronta'
+    ]).filter(Boolean);
+    var variant = screen.id === 'fineTest'
+      ? S.pageVariant(screen.id, PAGEVAR.fineTest.predefinita)
+      : 'spazio';
+
+    var durata = screen.durata || 7200;
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      durata = Math.min(durata, 2600);
+    }
+
+    if (variant !== 'spazio') {
+      var pathScene = loadingPathScene(screen, variant, status);
+      var pathTimer = setTimeout(function () { window.NavidaApp.next(); }, durata);
+      window.NavidaApp._pending = pathTimer;
+      pathScene.appendChild(h('button', {
+        class: 'loadingPath__skip',
+        text: 'Salta l’attesa',
+        onclick: function () { clearTimeout(pathTimer); window.NavidaApp.next(); }
+      }));
+      return pathScene;
+    }
+
+    var statusHost = h('div', { class: 'journey__status', 'aria-live': 'polite' },
+      status.map(function (testo, i) {
+        return h('span', { class: 'journey__statusLine journey__statusLine--' + (i + 1), text: testo });
+      })
+    );
+
+    var route = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    route.setAttribute('class', 'journey__route');
+    route.setAttribute('viewBox', '0 0 393 852');
+    route.setAttribute('preserveAspectRatio', 'none');
+    route.setAttribute('aria-hidden', 'true');
+    route.innerHTML = '' +
+      '<path class="journey__routeGlow" pathLength="1" d="M58 708 C84 578 263 603 296 466 C324 350 236 306 276 178"/>' +
+      '<path class="journey__routeLine" pathLength="1" d="M58 708 C84 578 263 603 296 466 C324 350 236 306 276 178"/>';
+
+    var scene = h('section', { class: 'journey', role: 'status', 'aria-label': screen.title }, [
+      h('img', { class: 'journey__space', src: 'assets/percorso/spazio-navida.webp', alt: '' }),
+      route,
+      h('div', { class: 'journey__star journey__star--one', 'aria-hidden': 'true' }),
+      h('div', { class: 'journey__star journey__star--two', 'aria-hidden': 'true' }),
+      h('img', { class: 'journey__planet journey__planet--violet', src: 'assets/percorso/pianeta-viola.webp', alt: '' }),
+      h('img', { class: 'journey__planet journey__planet--gold', src: 'assets/percorso/pianeta-anelli.webp', alt: '' }),
+      h('img', { class: 'journey__rocket', src: 'assets/percorso/razzo-navida.webp', alt: 'Astronauta Navida in viaggio nello spazio' }),
+      h('img', { class: 'journey__earth', src: 'assets/percorso/terra-partenza.webp', alt: '' }),
+      h('div', { class: 'journey__copy' }, [
+        editable('h1', 'journey__title', screen, 'title', screen.title, { variant: 'title' }),
+        screen.body ? editable('p', 'journey__lead', screen, 'body', screen.body) : null,
+        statusHost
+      ].filter(Boolean))
+    ]);
+
+    var t = setTimeout(function () { window.NavidaApp.next(); }, durata);
     window.NavidaApp._pending = t;
-
-    return [
-      header(screen, progress),
-      body,
-      h('div', { class: 'footer' }, [
-        h('button', { class: 'linkbtn', text: 'Salta l’attesa', onclick: function () { clearTimeout(t); window.NavidaApp.next(); } })
-      ])
-    ];
+    scene.appendChild(h('button', {
+      class: 'journey__skip',
+      text: 'Salta l’attesa',
+      onclick: function () { clearTimeout(t); window.NavidaApp.next(); }
+    }));
+    return scene;
   };
 
   /* --- risultato / prima proiezione ----------------------------------- */
@@ -1787,65 +2001,153 @@
 
   /* --- anteprima linea di carriera ------------------------------------ */
   Screens.preview = function (screen, progress) {
-    var stile = S.variant(screen.id, 'path', VAR.path.predefinita);
+    var variant = S.pageVariant(screen.id, PAGEVAR.preview.predefinita);
+    var steps = careerSteps(screen);
+    var selected = 1;
+    var view;
+    var detail = h('section', { class: 'careerDetail', 'aria-live': 'polite' });
 
-    /* le tre versioni nuove hanno un modulo tutto loro, che si disegna */
-    if (window.NavidaPercorso && NavidaPercorso.modi.indexOf(stile) > -1) {
-      var steps = screen.steps.map(function (st, i) {
-        return {
-          nome: interp(S.text(screen.id + '.step.' + i + '.nome', st.nome)),
-          ruolo: interp(st.ruolo),
-          durata: st.durata,
-          obiettivo: interp(S.text(screen.id + '.step.' + i + '.obj', st.obiettivo))
-        };
-      });
-      var disegno = NavidaPercorso.disegna(steps, { variante: stile, attiva: 0 });
-      disegno.setAttribute('data-varname', 'path');
-      disegno.setAttribute('data-variant', stile);
-
-      return [
-        header(screen, progress),
-        h('div', { class: 'body body--path' }, [
-          editable('h1', 'title', screen, 'title', screen.title, { variant: 'title' }),
-          editable('p', 'lead', screen, 'body', screen.body),
-          disegno
-        ]),
-        h('div', { class: 'footer' }, [
-          cta(screen, T(screen, 'cta', screen.cta), function () { window.NavidaApp.next(); }),
-          h('p', { class: 'nota', text: screen.ctaNota })
+    function updateDetail(index, reveal) {
+      selected = index;
+      var step = steps[index];
+      detail.innerHTML = '';
+      detail.appendChild(h('div', { class: 'careerDetail__head' }, [
+        h('span', { class: 'careerDetail__state careerDetail__state--' + step.stato }, [careerIcon(step.stato, 18)]),
+        h('div', { class: 'careerDetail__heading' }, [
+          h('small', { text: 'Step ' + (index + 1) }),
+          h('h2', { text: step.ruolo })
         ])
-      ];
+      ]));
+      detail.appendChild(h('p', { text: step.obiettivo }));
+      detail.appendChild(h('div', { class: 'careerDetail__meta' }, [
+        icon('clock', 14),
+        h('span', { text: step.durata || 'Traguardo' })
+      ]));
+      detail.appendChild(h('button', {
+        class: 'careerDetail__action',
+        type: 'button',
+        onclick: function () { toast('Le attività di questo step saranno disponibili nella dashboard.'); }
+      }, [h('span', { text: 'Vedi attività e opportunità' }), icon('chevron-right', 16)]));
+
+      if (view) {
+        Array.prototype.forEach.call(view.querySelectorAll('[data-career-index]'), function (node) {
+          var active = Number(node.getAttribute('data-career-index')) === index;
+          node.classList.toggle('is-selected', active);
+          node.setAttribute('aria-pressed', active ? 'true' : 'false');
+        });
+        if (reveal) {
+          requestAnimationFrame(function () {
+            if (!detail.isConnected) return;
+            var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            detail.scrollIntoView({ block: 'nearest', behavior: reduced ? 'auto' : 'smooth' });
+          });
+        }
+      }
     }
 
-    var path = h('div', {
-      class: 'path',
-      'data-varname': 'path',
-      'data-variant': stile
-    }, screen.steps.map(function (st, i) {
-      return h('div', { class: 'pathStep' }, [
-        h('div', { class: 'pathStep__rail' }, [
-          h('div', { class: 'pathStep__dot', text: String(i + 1) }),
-          h('div', { class: 'pathStep__line' })
+    function stepButton(step, index, extra) {
+      return h('button', {
+        class: 'careerStep careerStep--' + step.stato + (extra ? ' ' + extra : ''),
+        type: 'button',
+        'data-career-index': index,
+        'aria-pressed': index === selected ? 'true' : 'false',
+        onclick: function () { updateDetail(index, true); }
+      }, [
+        h('span', { class: 'careerStep__state' }, [careerIcon(step.stato, 18)]),
+        h('span', { class: 'careerStep__copy' }, [
+          h('small', { text: 'Step ' + (index + 1) }),
+          h('strong', { 'data-editable': screen.id + '.step.' + index + '.nome', text: step.nome }),
+          h('span', { class: 'careerStep__role', text: step.ruolo }),
+          h('span', { class: 'careerStep__time' }, [icon('clock', 12), step.durata || 'Traguardo'])
         ]),
-        h('div', { class: 'pathStep__body' }, [
-          h('div', { class: 'pathStep__nome', 'data-editable': screen.id + '.step.' + i + '.nome', text: interp(S.text(screen.id + '.step.' + i + '.nome', st.nome)) }),
-          h('div', { class: 'pathStep__meta', text: interp(st.ruolo) + ' · ' + st.durata }),
-          h('div', { class: 'pathStep__obj', 'data-editable': screen.id + '.step.' + i + '.obj', text: interp(S.text(screen.id + '.step.' + i + '.obj', st.obiettivo)) })
-        ])
+        icon('chevron-right', 18)
       ]);
-    }));
+    }
 
-    var body = h('div', { class: 'body' }, [
+    function overview() {
+      return h('section', { class: 'careerOverview' }, [
+        h('div', { class: 'careerOverview__copy' }, [
+          h('h2', { text: 'Il tuo percorso' }),
+          h('p', { text: 'Ogni step ti avvicina al lavoro che hai scelto.' }),
+          h('div', { class: 'careerOverview__meta' }, [
+            h('span', {}, [icon('circle-check', 14), '1 completato']),
+            h('span', {}, [icon('circle', 14), '4 da fare'])
+          ])
+        ]),
+        h('div', { class: 'careerOverview__ring', 'aria-label': '20 per cento completato' }, [h('strong', { text: '20%' })])
+      ]);
+    }
+
+    if (variant === 'serpentina') {
+      var curveSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      curveSvg.setAttribute('class', 'careerCurve__line');
+      curveSvg.setAttribute('viewBox', '0 0 345 760');
+      curveSvg.setAttribute('preserveAspectRatio', 'none');
+      curveSvg.setAttribute('aria-hidden', 'true');
+      var curvePath = 'M47 36 L47 104 C47 156 85 184 149 184 L252 184 C302 184 323 218 323 270 L323 354 C323 406 288 438 228 438 L132 438 C76 438 48 472 48 526 L48 604 C48 660 88 694 148 694 L298 694';
+      curveSvg.innerHTML = '<path class="careerCurve__track" d="' + curvePath + '" />' +
+        '<path class="careerCurve__progress" d="' + curvePath + '" />';
+      var curve = h('div', { class: 'careerCurve' }, [curveSvg]);
+      steps.forEach(function (step, i) {
+        curve.appendChild(stepButton(step, i, 'careerCurve__step careerCurve__step--' + (i + 1)));
+      });
+      avviaPercorsoConsultabile(curve, Array.prototype.slice.call(curve.querySelectorAll('.careerCurve__step')), 4600);
+      view = h('div', { class: 'careerView careerView--serpentina' }, [
+        h('div', { class: 'careerView__compactHead' }, [
+          h('strong', { text: '1 di 5 step completato' }),
+          h('span', { text: 'Tocca una tappa per consultarla' })
+        ]),
+        curve,
+        detail
+      ]);
+    } else if (variant === 'mappa') {
+      var rail = h('div', { class: 'careerMap__rail', role: 'group', 'aria-label': 'Tappe del percorso' });
+      steps.forEach(function (step, i) {
+        rail.appendChild(h('button', {
+          class: 'careerMap__node careerMap__node--' + step.stato,
+          type: 'button',
+          'data-career-index': i,
+          'aria-label': 'Step ' + (i + 1) + ': ' + step.nome,
+          'aria-pressed': i === selected ? 'true' : 'false',
+          onclick: function () { updateDetail(i, true); }
+        }, [careerIcon(step.stato, 16), h('span', { text: String(i + 1) })]));
+      });
+      avviaPercorsoConsultabile(rail, Array.prototype.slice.call(rail.querySelectorAll('.careerMap__node')), 3800);
+      var compactList = h('div', { class: 'careerMap__index' }, steps.map(function (step, i) {
+        return h('button', {
+          type: 'button',
+          'data-career-index': i,
+          'aria-pressed': i === selected ? 'true' : 'false',
+          onclick: function () { updateDetail(i, true); }
+        }, [h('span', { text: String(i + 1) }), h('strong', { text: step.nome })]);
+      }));
+      view = h('div', { class: 'careerView careerView--mappa' }, [overview(), rail, detail, compactList]);
+    } else {
+      var careerList = h('div', { class: 'careerList' }, steps.map(function (step, i) { return stepButton(step, i); }));
+      avviaPercorsoConsultabile(careerList, Array.prototype.slice.call(careerList.querySelectorAll('.careerStep')), 4200);
+      view = h('div', { class: 'careerView careerView--lista' }, [
+        overview(),
+        careerList,
+        detail
+      ]);
+    }
+
+    updateDetail(selected);
+
+    var body = h('div', { class: 'body body--career' }, [
       editable('h1', 'title', screen, 'title', screen.title, { variant: 'title' }),
       editable('p', 'lead', screen, 'body', screen.body),
-      path
+      view
     ]);
 
     return [
       header(screen, progress),
       body,
       h('div', { class: 'footer' }, [
-        cta(screen, T(screen, 'cta', screen.cta), function () { window.NavidaApp.next(); }),
+        cta(screen, T(screen, 'cta', screen.cta), function () {
+          if (screen.href) window.location.href = screen.href;
+          else window.NavidaApp.next();
+        }),
         h('p', { class: 'nota', text: screen.ctaNota })
       ])
     ];

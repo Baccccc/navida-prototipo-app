@@ -1,7 +1,8 @@
 # Navida — Prototipo interattivo
 
-Prototipo navigabile della **Fase 1 (ingresso e scoperta)** e della **Fase 2 (questionario)**
-dell'app Navida, ramo *Lavoro (Job)*. Serve come proof of concept da mostrare
+Prototipo navigabile delle **Fasi 1–3** dell'app Navida, ramo *Lavoro (Job)*.
+Le prime due fasi sono in `index.html`; la nuova area post-questionario è in
+`fase3.html`. Serve come proof of concept da mostrare
 agli investitori e come base editabile per il team Navida.
 
 Tutto è **deterministico**: non c'è algoritmo, non c'è backend, non ci sono account veri.
@@ -147,10 +148,12 @@ riportale a mano dentro `js/content.js`.
 
 ```
 index.html
+fase3.html            dashboard, linea di carriera, catalogo e notifiche
 css/
   tokens.css          colori, font, spaziature, raggi — presi dalle variabili Figma
   app.css             layout mobile, cornice iPhone, tutti i componenti
   editor.css          barra di modifica
+  fase3.css           componenti specifici della Fase 3
 js/
   content.js          ← TUTTI I TESTI E LE DOMANDE. È il file da toccare.
   data-professioni.js   23 categorie professionali + 426 mansioni
@@ -160,6 +163,9 @@ js/
   render.js             disegna le schermate
   editor.js             barra di modifica
   app.js                navigazione e avvio
+  fase3-content.js      schermate e contenuti della Fase 3
+  fase3-variants.js     versioni alternative della Fase 3
+  fase3-render.js       disegna le schermate della Fase 3
 ```
 
 ### Modificare i contenuti dal codice
@@ -187,6 +193,11 @@ Per aggiungere una domanda basta copiare un oggetto esistente, cambiare
 5. **Chiusura** (2) — anteprima della linea di carriera
 
 Le barre di avanzamento sono **proporzionali** al numero di schermate del capitolo.
+
+Alla fine del questionario il pulsante **Vedi il tuo percorso** apre `fase3.html`.
+La Fase 3 comprende dashboard, linea di carriera con quattro versioni, catalogo,
+filtri, dettaglio opportunità, impostazioni, notifiche e gli stati vuoti previsti
+nel file Figma.
 
 ---
 
@@ -229,8 +240,9 @@ con la tastiera del computer, ma anche i tasti a schermo funzionano.
 ## Altre cose ancora da fare
 
 1. **Sezione ludica** — funzionante ma da ridisegnare.
-2. **Fase 3** — dashboard, mappa, consulenza e profilo non sono incluse.
-3. **Testi placeholder** — le 4 schede di onboarding hanno copy provvisorio.
+2. **Fase 3** — dashboard e linea di carriera sono in `fase3.html`; mappa e consulenza restano da implementare.
+3. **Fase 4** — profilo, modifica dati e foto, profilo professionale, preferenze e logout sono in `fase3.html`.
+4. **Testi placeholder** — le 4 schede di onboarding hanno copy provvisorio.
 
 ---
 

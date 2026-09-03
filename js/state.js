@@ -23,7 +23,7 @@
     /* --- modifiche APPLICATE (quelle che vedono tutti) --------------- */
     overrides: {
       text: {},      // "screenId.title" -> "nuovo testo"
-      colors: {},    // "--main" -> "#4340b3"
+      colors: {},    // "--main" -> "#4240ba"
       order: {},     // "screenId" -> [2,0,1,...]
       variants: {},  // "screenId:nomeVariante" -> "valore"
       page: {}       // "screenId" -> "varianteDiPagina"

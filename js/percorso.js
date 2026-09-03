@@ -81,6 +81,48 @@
     });
   }
 
+  /* Disegna una linea e usa il suo stesso avanzamento per accendere i nodi.
+     In questo modo una tappa non puo' comparire prima che la linea la tocchi. */
+  function animaLinea(linea, nodi, durata) {
+    var L = linea.getTotalLength();
+    var ultimo = Math.max(1, nodi.length - 1);
+    var prossimo = 0;
+    var inizio = null;
+
+    linea.style.strokeDasharray = L;
+    linea.style.strokeDashoffset = L;
+
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      linea.style.strokeDashoffset = '0';
+      nodi.forEach(function (n) { n.classList.add('is-on'); });
+      return;
+    }
+
+    function morbida(t) {
+      return t < .5
+        ? 4 * t * t * t
+        : 1 - Math.pow(-2 * t + 2, 3) / 2;
+    }
+
+    function fotogramma(ora) {
+      if (inizio == null) inizio = ora;
+      var tempo = Math.min(1, (ora - inizio) / durata);
+      var avanzamento = morbida(tempo);
+
+      linea.style.strokeDashoffset = String(L * (1 - avanzamento));
+
+      while (prossimo < nodi.length && avanzamento >= prossimo / ultimo) {
+        nodi[prossimo].classList.add('is-on');
+        prossimo++;
+      }
+
+      if (tempo < 1) requestAnimationFrame(fotogramma);
+      else linea.style.strokeDashoffset = '0';
+    }
+
+    requestAnimationFrame(fotogramma);
+  }
+
   /* ======================================================================
      1 · SERPENTINA
      ======================================================================
@@ -163,20 +205,10 @@
     root.appendChild(svg);
 
     alColpo(root, function () {
-      var L = linea.getTotalLength();
-      linea.style.strokeDasharray = L;
-      linea.style.strokeDashoffset = L;
-      var durata = Math.min(2000, 380 + steps.length * 260);
-      // forza il ricalcolo prima di far partire la corsa
-      void linea.getBoundingClientRect();
-      linea.style.transition = 'stroke-dashoffset ' + durata + 'ms cubic-bezier(.16,1,.3,1)';
-      linea.style.strokeDashoffset = '0';
-
-      // ogni nodo si accende quando la linea lo raggiunge
-      nodi.forEach(function (g, i) {
-        var quando = 120 + (durata * (i / Math.max(1, nodi.length - 1))) * .82;
-        setTimeout(function () { g.classList.add('is-on'); }, quando);
-      });
+      /* La mini della schermata ob3 e' il momento narrativo principale:
+         dura 3,2 secondi, piu' del doppio della versione precedente. */
+      var durata = opt.durata || (mini ? 3200 : Math.min(3600, 1000 + steps.length * 520));
+      animaLinea(linea, nodi, durata);
     });
 
     return root;
@@ -278,16 +310,7 @@
         g.querySelector('circle').setAttribute('cy', p.y);
       });
 
-      linea.style.strokeDasharray = L;
-      linea.style.strokeDashoffset = L;
-      void linea.getBoundingClientRect();
-      linea.style.transition = 'stroke-dashoffset 1500ms cubic-bezier(.16,1,.3,1)';
-      linea.style.strokeDashoffset = '0';
-
-      nodi.forEach(function (g, i) {
-        setTimeout(function () { g.classList.add('is-on'); },
-          160 + 1500 * (i / Math.max(1, nodi.length - 1)) * .84);
-      });
+      animaLinea(linea, nodi, mini ? 2800 : 3200);
       root.classList.add('is-on');
     });
 

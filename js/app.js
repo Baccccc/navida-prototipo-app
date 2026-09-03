@@ -155,16 +155,20 @@
 
       // queste schermate occupano tutto lo spazio, senza margini
       if (screen.type === 'hero' || tipo === 'loginPopup' || screen.type === 'splash' ||
-          screen.type === 'dream' || screen.type === 'circles') {
+          screen.type === 'dream' || screen.type === 'circles' || screen.type === 'loading' || screen.fullBleed) {
         wrap.style.padding = '0';
       }
 
-      // badge sulle schermate della sezione ludica, ancora da rifare
-      if (screen.wow) {
+      // il badge resta solo sulle schermate wow che non sono ancora state rifatte
+      if (screen.wow && screen.type !== 'loading' && screen.type !== 'circles') {
         wrap.appendChild(R.h('div', { class: 'wowBadge', text: 'Sezione ludica · da rifare' }));
       }
 
       host.appendChild(wrap);
+
+      var device = document.querySelector('.device');
+      var isSpaceJourney = screen.type === 'loading' && S.pageVariant(screen.id, 'spazio') === 'spazio';
+      if (device) device.classList.toggle('device--space', isSpaceJourney);
 
       if (window.lucide && window.lucide.createIcons) window.lucide.createIcons();
       if (window.NavidaEditor) window.NavidaEditor.afterRender();
@@ -173,6 +177,24 @@
 
     /* ------------------------------------------------------------------ */
     init: function () {
+      /* Collegamenti di anteprima per review e demo, senza alterare il flusso
+         normale: ?screen=lavoroSogni&variant=portale */
+      try {
+        var preview = new URLSearchParams(window.location.search);
+        var target = preview.get('screen');
+        var variant = preview.get('variant');
+        var targetIndex = target
+          ? C.screens.findIndex(function (screen) { return screen.id === target; })
+          : -1;
+        if (targetIndex > -1) S.index = targetIndex;
+        var pageVariant = target && window.NAVIDA_PAGE_VARIANTS[target];
+        var validVariant = pageVariant && pageVariant.options.some(function (option) {
+          return option.value === variant;
+        });
+        if (validVariant) {
+          S.draft.page[target] = variant;
+        }
+      } catch (e) {}
       this.render();
 
       document.addEventListener('keydown', function (e) {

@@ -78,9 +78,12 @@ input, textarea { font-family: inherit; }
   border-radius: 56px;
   box-shadow:
     0 0 0 2px #2c2c3a,
-    0 40px 80px -20px #00000099,
-    inset 0 0 0 1px #ffffff0d;
+    0 40px 80px -20px #00000099;
 }
+
+/* La schermata deborda sotto la cornice per evitare spiragli sub-pixel
+   sul raccordo arrotondato tra interfaccia e mockup. */
+.device--framed .screen { inset: -1px; }
 
 .device__notch {
   position: absolute;
@@ -212,7 +215,7 @@ input, textarea { font-family: inherit; }
   justify-content: center;
 }
 
-/* progress bar — 185x4, track #1e1a4d al 12%, riempimento sfumato #8c2895 -> #3118a0 */
+/* progress bar — 185x4, track #1e1a4d al 12%, riempimento con la sfumatura del brand */
 .progress {
   flex: 1 1 auto;
   max-width: var(--progress-w);
@@ -274,6 +277,13 @@ input, textarea { font-family: inherit; }
 }
 .title--left { text-align: left; padding: 0; }
 .title--lg { font-size: var(--fs-3xl); line-height: var(--lh-3xl); }
+
+/* Le domande hanno un gradino tipografico dedicato: più leggibili senza
+   ingrandire anche titoli informativi, login e risultati. */
+.title.title--question {
+  font-size: 26px;
+  line-height: 34px;
+}
 
 /* Il testo di descrizione sale di un gradino nella scala tipografica:
    14/20 -> 16/24. Richiesta del team (commento su ob1), vale ovunque. */
@@ -343,6 +353,10 @@ input, textarea { font-family: inherit; }
   color: var(--text);
   text-align: left;
   padding: 0;
+}
+.bubble__testo.title--question {
+  font-size: var(--fs-xl);
+  line-height: 30px;
 }
 
 /* commento della mascotte dopo la scelta */
@@ -431,37 +445,74 @@ input, textarea { font-family: inherit; }
   margin-top: 2px;
 }
 .opt__col { display: flex; flex-direction: column; flex: 1 1 auto; min-width: 0; }
-/* ---- domande a classifica ------------------------------------------
-   I numeri stanno in una colonna fuori dai box: restano fermi mentre
-   trascini, quindi si legge come una classifica e non confonde. */
+/* ---- domande a classifica ------------------------------------------ */
+.body--rank {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+}
+.body--rank::-webkit-scrollbar { display: none; }
+.rankHead {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  flex: 0 0 auto;
+}
 .rankWrap {
   display: flex;
-  align-items: flex-start;
-  gap: var(--sp-5);
+  align-items: stretch;
+  gap: 4px;
   min-height: 0;
   flex: 1 1 auto;
 }
-.rankScale {
-  flex: 0 0 auto;
-  display: flex;
-  flex-direction: column;
-  gap: var(--option-gap);
-  padding-top: 0;
+.rankWrap .options {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+  padding: 0 0 4px;
+  position: relative;
 }
-.rankWrap .options { flex: 1 1 auto; margin: 0; padding: 0 0 4px; }
-
-.opt--rank { align-items: center; }
+.rankItem {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-5);
+  width: 100%;
+  touch-action: none;
+  cursor: grab;
+  user-select: none;
+  will-change: transform;
+}
+.rankItem:active { cursor: grabbing; }
+.rankItem .opt--rank { flex: 1 1 auto; min-width: 0; align-items: center; }
 .opt__pos {
   flex: 0 0 auto;
   width: 24px;
-  height: var(--option-h);
+  min-height: var(--option-h);
   color: var(--text-dimmed);
   font-size: var(--fs-base);
   font-weight: var(--fw-bold);
   display: grid; place-items: center;
   font-variant-numeric: tabular-nums;
 }
-.rankScale .opt__pos:first-child { color: var(--main); }
+.rankItem:first-child .opt__pos { color: var(--main); }
+.rankScrollRail {
+  position: relative;
+  flex: 0 0 18px;
+  touch-action: pan-y;
+  cursor: ns-resize;
+}
+.rankScrollRail::after {
+  content: '';
+  position: sticky;
+  display: block;
+  top: 45%;
+  width: 4px;
+  height: 38px;
+  margin: 0 auto;
+  border-radius: var(--r-full);
+  background: var(--bg-accented);
+  opacity: .72;
+}
 
 /* ---- 2 · PODIO -----------------------------------------------------
    Le posizioni stanno in alto, vuote, e chiedono di essere riempite.
@@ -590,11 +641,9 @@ input, textarea { font-family: inherit; }
   line-height: var(--lh-sm);
   font-weight: var(--fw-semibold);
   color: var(--text-muted);
-  order: 2;
-  margin-top: calc(var(--sp-7) * -1 + 2px);
+  margin-top: 0;
 }
 .title--rank {
-  order: 1;
   font-size: var(--fs-3xl);
   line-height: var(--lh-3xl);
   font-weight: var(--fw-bold);
@@ -731,7 +780,11 @@ input, textarea { font-family: inherit; }
 }
 /* spazio per il chip solo dove il chip c'è davvero */
 .options[data-variant="grid"] .opt:has(.opt__chip) { padding-bottom: 34px; }
-.options[data-variant="grid"] .opt__col { align-items: center; text-align: center; }
+.options[data-variant="grid"] .opt__col {
+  flex: 0 1 auto;
+  align-items: center;
+  text-align: center;
+}
 .options[data-variant="grid"] .opt__label {
   font-size: var(--fs-xs);
   line-height: var(--lh-xs);
@@ -941,23 +994,132 @@ textarea.field__input { min-height: 84px; resize: none; }
 /* entra con una dissolvenza, poi sta ferma */
 .mascotte--float { animation: mascotte-in 420ms var(--ease) both; }
 
-/* Il salto di incoraggiamento, prima della domanda sul lavoro dei sogni.
-   Entra, fa due balzi e si ferma: non e' un ciclo infinito, e' un gesto. */
-.mascotte--salta {
-  animation:
-    mascotte-in 420ms var(--ease) both,
-    mascotte-salta 900ms cubic-bezier(.3, .8, .4, 1) 420ms 2;
+/* “Ora tocca a te”: quattro modi di presentare lo stesso passaggio.
+   La versione attuale resta completamente ferma; le alternative compiono
+   un solo gesto e poi si assestano, senza loop. */
+.momentoArt {
+  position: relative;
+  width: min(250px, 66vw);
+  height: 226px;
+  display: grid;
+  place-items: center;
+  isolation: isolate;
 }
-@keyframes mascotte-salta {
-  0%   { transform: translateY(0) rotate(0deg); }
-  22%  { transform: translateY(4px) scaleY(.94) scaleX(1.04); }
-  48%  { transform: translateY(-26px) rotate(-4deg) scaleY(1.04); }
-  70%  { transform: translateY(0) scaleY(.97); }
-  84%  { transform: translateY(-6px) rotate(2deg); }
-  100% { transform: translateY(0); }
+.momentoArt__mascotte {
+  position: relative;
+  z-index: 3;
+  width: 142px;
+  height: auto;
+  max-height: 196px;
+  margin: 0;
 }
+.momentoArt__glow,
+.momentoArt__orbit,
+.momentoArt__gate {
+  position: absolute;
+  pointer-events: none;
+}
+.momentoArt__glow {
+  z-index: 0;
+  width: 210px;
+  height: 210px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(107, 33, 168, .18) 0 34%, rgba(66, 64, 186, .08) 58%, transparent 72%);
+  opacity: 0;
+}
+.momentoArt__orbit {
+  z-index: 1;
+  width: 214px;
+  height: 128px;
+  border: 2px solid transparent;
+  border-top-color: rgba(66, 64, 186, .7);
+  border-right-color: rgba(107, 33, 168, .34);
+  border-radius: 50%;
+  transform: rotate(-12deg);
+  opacity: 0;
+}
+.momentoArt__orbit::after {
+  content: '';
+  position: absolute;
+  top: 13px;
+  right: 17px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--main-2);
+  box-shadow: 0 4px 12px rgba(107, 33, 168, .28);
+}
+.momentoArt__gate {
+  z-index: 2;
+  top: 8px;
+  bottom: 8px;
+  width: 50%;
+  opacity: 0;
+  background: linear-gradient(90deg, rgba(66, 64, 186, .03), rgba(107, 33, 168, .18));
+}
+.momentoArt__gate--left { left: 0; border-radius: 110px 0 0 110px; }
+.momentoArt__gate--right { right: 0; border-radius: 0 110px 110px 0; transform: scaleX(-1); }
+
+.momentoArt--statica .momentoArt__mascotte { animation: none; }
+
+.momentoArt--accensione .momentoArt__mascotte {
+  animation: momento-focus 720ms cubic-bezier(.16, 1, .3, 1) both;
+}
+.momentoArt--accensione .momentoArt__glow {
+  animation: momento-glow 780ms cubic-bezier(.16, 1, .3, 1) both;
+}
+
+.momentoArt--orbita .momentoArt__mascotte { animation: none; }
+.momentoArt--orbita .momentoArt__orbit {
+  animation: momento-orbita 760ms cubic-bezier(.16, 1, .3, 1) both;
+}
+
+.momentoArt--portale .momentoArt__mascotte {
+  animation: momento-portale-mascotte 720ms cubic-bezier(.16, 1, .3, 1) both;
+}
+.momentoArt--portale .momentoArt__gate { opacity: 1; }
+.momentoArt--portale .momentoArt__gate--left {
+  animation: momento-portale-sx 760ms cubic-bezier(.16, 1, .3, 1) both;
+}
+.momentoArt--portale .momentoArt__gate--right {
+  animation: momento-portale-dx 760ms cubic-bezier(.16, 1, .3, 1) both;
+}
+
+@keyframes momento-focus {
+  from { filter: saturate(.55) blur(5px); opacity: .3; clip-path: inset(12% 10% 12% 10% round 48%); }
+  to { filter: none; opacity: 1; clip-path: inset(0 round 0); }
+}
+@keyframes momento-glow {
+  from { opacity: 0; transform: scale(.42); }
+  58% { opacity: 1; }
+  to { opacity: .72; transform: scale(1); }
+}
+@keyframes momento-orbita {
+  from { opacity: 0; transform: rotate(-138deg) scale(.74); clip-path: inset(0 54% 0 46%); }
+  52% { opacity: 1; }
+  to { opacity: .82; transform: rotate(-12deg) scale(1); clip-path: inset(0); }
+}
+@keyframes momento-portale-mascotte {
+  from { opacity: .25; filter: blur(4px); clip-path: inset(0 50%); }
+  to { opacity: 1; filter: none; clip-path: inset(0); }
+}
+@keyframes momento-portale-sx {
+  from { transform: translateX(50%); opacity: .9; }
+  to { transform: translateX(-54%); opacity: 0; }
+}
+@keyframes momento-portale-dx {
+  from { transform: translateX(-50%) scaleX(-1); opacity: .9; }
+  to { transform: translateX(54%) scaleX(-1); opacity: 0; }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .mascotte--salta { animation: mascotte-in 1ms both; }
+  .momentoArt .momentoArt__mascotte,
+  .momentoArt .momentoArt__glow,
+  .momentoArt .momentoArt__orbit,
+  .momentoArt .momentoArt__gate { animation: none; }
+  .momentoArt--accensione .momentoArt__glow { opacity: .72; }
+  .momentoArt--orbita .momentoArt__orbit { opacity: .82; }
+  .momentoArt--portale .momentoArt__gate { opacity: 0; }
 }
 
 /* la riga che spiega come rispondere, sotto il campo del sogno */
@@ -1106,7 +1268,7 @@ textarea.field__input { min-height: 84px; resize: none; }
   flex: 1 1 auto;
   display: grid;
   place-items: center;
-  background: linear-gradient(160deg, #6a63e8 0%, var(--main) 55%, #3a2f9e 100%);
+  background: linear-gradient(160deg, var(--main) 0%, var(--main-2) 100%);
   padding: 40px 0 60px;
 }
 .hero--split .hero__cover .mascotte { width: 190px; height: 258px; }
@@ -1136,7 +1298,7 @@ textarea.field__input { min-height: 84px; resize: none; }
   width: 340px; height: 340px;
   transform: translateX(-50%);
   border-radius: var(--r-full);
-  background: radial-gradient(circle, #6a63e880 0%, transparent 70%);
+  background: radial-gradient(circle, #4240ba80 0%, transparent 70%);
   filter: blur(10px);
   pointer-events: none;
 }
@@ -1336,7 +1498,7 @@ textarea.field__input { min-height: 84px; resize: none; }
   position: absolute;
   top: 0; left: 0; right: 0;
   height: 42%;
-  background: linear-gradient(160deg, #6a63e8 0%, var(--main) 60%, #3a2f9e 100%);
+  background: linear-gradient(160deg, var(--main) 0%, var(--main-2) 100%);
   display: grid;
   place-items: center;
 }
@@ -1572,26 +1734,32 @@ textarea.field__input { min-height: 84px; resize: none; }
 /* La riga sollevata si stacca davvero: sale di un gradino d'ombra, cresce
    di un soffio e resta sotto il dito. Le altre si abbassano di tono, cosi'
    l'occhio segue una cosa sola. */
-.opt.is-dragging {
-  position: relative;
+.rankItem.is-dragging {
   z-index: 3;
+  cursor: grabbing;
+  pointer-events: none;
+}
+.rankItem.is-dragging .opt {
   background: var(--surface);
   border-color: var(--risposte-outline);
   box-shadow: 0 10px 24px #1e1a4d29, 0 2px 6px #1e1a4d14;
-  cursor: grabbing;
+  transform: scale(1.015);
 }
-.sortable.is-sorting .opt:not(.is-dragging) { opacity: .62; }
+.rankPlaceholder {
+  width: 100%;
+  border: 1px dashed var(--risposte-outline);
+  border-radius: var(--r-md);
+  background: color-mix(in srgb, var(--risposte-bg) 45%, transparent);
+}
 .sortable.is-sorting .opt__grip { color: var(--text-dimmed); }
-.opt.is-over { border-color: var(--main); }
 
 /* la maniglia e' l'invito: area di tocco piena, non solo l'icona */
 .opt--rank .opt__grip {
   width: 32px;
   height: var(--option-h);
   margin: 0 calc(var(--sp-3) * -1) 0 calc(var(--sp-4) * -1);
-  cursor: grab;
+  cursor: inherit;
 }
-.opt--rank .opt__grip:active { cursor: grabbing; }
 
 /* Con "riduci animazioni" spariscono le transizioni, non lo spostamento:
    la riga deve comunque seguire il dito, altrimenti il trascinamento
@@ -1622,7 +1790,7 @@ textarea.field__input { min-height: 84px; resize: none; }
   gap: var(--sp-8);
   position: relative;
   background:
-    radial-gradient(120% 80% at 12% 0%, #8f40b31f 0%, transparent 58%),
+    radial-gradient(120% 80% at 12% 0%, #6b21a81f 0%, transparent 58%),
     radial-gradient(120% 90% at 96% 22%, #4085b31f 0%, transparent 62%);
   border-radius: var(--r-xl);
   padding: var(--sp-8) var(--sp-7);

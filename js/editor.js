@@ -22,10 +22,25 @@
   var PAGEVAR = window.NAVIDA_PAGE_VARIANTS;
   var h, icon;
 
+  /* Elementi con stile fisso: restano configurati per il rendering, ma non
+     devono comparire tra le varianti modificabili della barra laterale. */
+  var VARIANTI_NASCOSTE = {
+    answerList: true,
+    progress: true,
+    title: true,
+    cta: true,
+    mascotte: true
+  };
+
+  function varianteVisibile(nome) {
+    return !!VAR[nome] && !VARIANTI_NASCOSTE[nome];
+  }
+
   var TABS = [
     { id: 'versione', label: 'Versione', ico: 'layers' },
     { id: 'testi',    label: 'Testi',    ico: 'type' },
     { id: 'colori',   label: 'Colori',   ico: 'palette' },
+    { id: 'mascotte', label: 'Mascotte', ico: 'smile' },
     { id: 'ordine',   label: 'Ordine',   ico: 'arrow-up-down' },
     { id: 'elemento', label: 'Elemento', ico: 'mouse-pointer-click' },
     { id: 'vai',      label: 'Vai a',    ico: 'list' },
@@ -70,6 +85,11 @@
       if (!btn) return;
 
       btn.addEventListener('click', function () {
+        var target = btn.getAttribute('data-target');
+        if (target) {
+          window.location.href = target;
+          return;
+        }
         // riempie il questionario con risposte finte e va al risultato
         window.NavidaApp.compilaTutto();
         window.NavidaApp.goTo('preview');
@@ -234,6 +254,7 @@
       if (this.tab === 'versione') this.panelVersione(p, screen);
       if (this.tab === 'testi')    this.panelTesti(p, screen);
       if (this.tab === 'colori')   this.panelColori(p);
+      if (this.tab === 'mascotte') this.panelMascotte(p, screen);
       if (this.tab === 'ordine')   this.panelOrdine(p, screen);
       if (this.tab === 'elemento') this.panelElemento(p, screen);
       if (this.tab === 'vai')      this.panelVai(p, screen);
@@ -243,8 +264,7 @@
 
     /* --- Versione ------------------------------------------------------
        In cima le versioni della schermata intera, poi tutti gli elementi
-       che si possono cambiare su questa schermata: stile delle risposte,
-       come si presenta la domanda, barra di avanzamento, e così via. */
+       che si possono cambiare su questa schermata. */
     panelVersione: function (p, screen) {
 
       /* 1 · versioni della schermata */
@@ -272,7 +292,7 @@
       var presenti = [];
       document.querySelectorAll('.screen [data-varname]').forEach(function (n) {
         var nome = n.getAttribute('data-varname');
-        if (presenti.indexOf(nome) === -1 && VAR[nome]) presenti.push(nome);
+        if (presenti.indexOf(nome) === -1 && varianteVisibile(nome)) presenti.push(nome);
       });
 
       if (presenti.length) {
@@ -422,6 +442,37 @@
       ]));
     },
 
+    /* --- Mascotte ----------------------------------------------------- */
+    panelMascotte: function (p, screen) {
+      var def = VAR.mascotte;
+      var cur = S.variant(screen.id, 'mascotte', def.predefinita);
+
+      p.appendChild(h('div', { class: 'ed-label', text: 'Scegli la mascotte' }));
+      p.appendChild(h('div', { class: 'ed-seg' }, def.options.map(function (o) {
+        return h('button', {
+          class: 'ed-chip' + (cur === o.value ? ' is-active' : ''),
+          text: o.label,
+          onclick: function () {
+            S.setVariant(screen.id, 'mascotte', o.value);
+            window.NavidaApp.render();
+            Editor.paint();
+          }
+        });
+      })));
+
+      p.appendChild(h('div', { class: 'ed-actions' }, [
+        h('button', {
+          class: 'ed-btn',
+          onclick: function () {
+            S.setVariantGlobal('mascotte', S.variant(screen.id, 'mascotte', def.predefinita));
+            window.NavidaApp.render();
+            Editor.paint();
+            window.NavidaRender.toast('Mascotte applicata a tutte le schermate.');
+          }
+        }, [icon('copy', 13), 'Usa questa ovunque'])
+      ]));
+    },
+
     /* --- Ordine ------------------------------------------------------- */
     panelOrdine: function (p, screen) {
       if (!document.querySelector('.screen .options .opt')) {
@@ -459,13 +510,13 @@
       ]));
 
       if (!active) {
-        p.appendChild(h('p', { class: 'ed-hint', text: 'Attiva la selezione e clicca un elemento nello schermo: lista risposte, titolo, pulsante, barra, mascotte.' }));
+        p.appendChild(h('p', { class: 'ed-hint', text: 'Attiva la selezione e clicca un elemento modificabile nello schermo.' }));
       }
 
       var present = [];
       document.querySelectorAll('.screen [data-varname]').forEach(function (n) {
         var nm = n.getAttribute('data-varname');
-        if (present.indexOf(nm) === -1 && VAR[nm]) present.push(nm);
+        if (present.indexOf(nm) === -1 && varianteVisibile(nm)) present.push(nm);
       });
 
       if (active && present.length) {
@@ -514,7 +565,7 @@
       C.screens.forEach(function (s, i) {
         (groups[s.chapter] = groups[s.chapter] || []).push({ s: s, i: i });
       });
-      var nomi = { intro: 'Ingresso', scoperta: 'Fase 1 · Scoperta', auth: 'Accesso e risultato', test: 'Fase 2 · Questionario' };
+      var nomi = { intro: 'Ingresso', scoperta: 'Fase 1 · Scoperta', auth: 'Accesso e risultato', test: 'Fase 2 · Questionario', fase3: 'Fase 3 · Dashboard' };
 
       Object.keys(groups).forEach(function (ch) {
         p.appendChild(h('div', { class: 'ed-label', text: nomi[ch] || ch }));
@@ -614,6 +665,7 @@
 
       if (S.mode === 'pick') {
         document.querySelectorAll('.screen [data-varname]').forEach(function (n) {
+          if (!varianteVisibile(n.getAttribute('data-varname'))) return;
           n.classList.add('is-pickable');
           n.addEventListener('click', function (e) {
             e.preventDefault(); e.stopPropagation();

@@ -233,7 +233,7 @@
 .ed-pending {
   flex: 0 0 auto;
   padding: 12px 16px;
-  background: linear-gradient(180deg, #8f40b3 0%, #6d3aa8 100%);
+  background: linear-gradient(180deg, #6b21a8 0%, #55198a 100%);
   color: #fff;
   animation: pending-in 220ms var(--ease) both;
 }

@@ -160,6 +160,52 @@ window.NAVIDA_VARIANTS = {
    ========================================================================== */
 
 window.NAVIDA_PAGE_VARIANTS = {
+  fineTest: {
+    etichetta: 'Animazione di “Il tuo percorso sta prendendo forma”',
+    predefinita: 'spazio',
+    options: [
+      { value: 'spazio',       label: 'Viaggio nello spazio' },
+      { value: 'costruzione', label: 'Step che si compongono' },
+      { value: 'linea',        label: 'Linea che si disegna' }
+    ]
+  },
+  preview: {
+    etichetta: 'Versione di “La tua linea di carriera”',
+    predefinita: 'lista',
+    options: [
+      { value: 'lista',       label: 'Lista Figma' },
+      { value: 'serpentina', label: 'Serpentina' },
+      { value: 'mappa',       label: 'Mappa + dettaglio' }
+    ]
+  },
+  tuoMomento: {
+    etichetta: 'Animazione di “Ora tocca a te”',
+    predefinita: 'statica',
+    options: [
+      { value: 'statica',     label: 'Attuale, statica' },
+      { value: 'accensione',  label: 'Accensione' },
+      { value: 'orbita',      label: 'Orbita' },
+      { value: 'portale',     label: 'Portale' }
+    ]
+  },
+  elaborazione: {
+    etichetta: 'Animazione di elaborazione',
+    predefinita: 'mascotte',
+    options: [
+      { value: 'mascotte',    label: 'Pose esistenti' },
+      { value: 'professioni', label: 'Sei professioni' }
+    ]
+  },
+  lavoroSogni: {
+    etichetta: 'Animazione del lavoro dei sogni',
+    predefinita: 'orbite',
+    options: [
+      { value: 'orbite',        label: 'Orbita tipografica' },
+      { value: 'costellazione', label: 'Costellazione' },
+      { value: 'portale',       label: 'Portale' },
+      { value: 'tunnel',        label: 'Tunnel cinetico' }
+    ]
+  },
   registrazione: {
     etichetta: 'Versione della schermata di accesso',
     predefinita: 'essenziale',

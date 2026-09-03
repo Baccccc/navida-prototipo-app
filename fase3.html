@@ -4,26 +4,22 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
   <meta name="theme-color" content="#fafbfc">
-  <title>Navida — Prototipo</title>
-  <meta name="description" content="Prototipo interattivo dell'app Navida.">
+  <title>Navida — Dashboard e profilo</title>
+  <meta name="description" content="Prototipo interattivo della dashboard e del profilo Navida.">
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:ital,wght@0,200..800;1,200..800&display=swap" rel="stylesheet">
 
   <link rel="stylesheet" href="css/tokens.css">
-  <link rel="stylesheet" href="css/app.css?v=20260831-momento1">
+  <link rel="stylesheet" href="css/app.css">
   <link rel="stylesheet" href="css/percorso.css">
-  <link rel="stylesheet" href="css/career-variants.css?v=20260831-career2">
-  <link rel="stylesheet" href="css/space-journey.css?v=20260831-space2">
-  <link rel="stylesheet" href="css/wow.css?v=20260831-rank2">
+  <link rel="stylesheet" href="css/fase3.css">
   <link rel="stylesheet" href="css/editor.css">
   <link rel="stylesheet" href="css/commenti.css">
 </head>
-<body>
-
-  <!-- Salto rapido: invisibile finché non premi Tab -->
-  <button id="skip" class="skiplink">Salta al questionario</button>
+<body class="phase3-prototype">
+  <button id="skip" class="skiplink" data-target="index.html">Torna al questionario</button>
 
   <div id="stage">
     <div class="device">
@@ -34,34 +30,28 @@
       </div>
 
       <main id="app"></main>
-
       <div class="device__home"></div>
     </div>
   </div>
 
-  <!-- Commenti del team: foglietti a sinistra dello schermo -->
   <aside id="commenti" class="is-vuoto"></aside>
-
-  <!-- Barra di modifica: pannello laterale, fuori dallo schermo del telefono -->
   <aside id="editor"></aside>
 
-  <!-- Icone Lucide: geometria incorporata in js/icons.js, così il prototipo
-       funziona anche offline. Il CDN copre le eventuali icone non incorporate. -->
   <script src="https://unpkg.com/lucide@0.446.0/dist/umd/lucide.min.js"></script>
-
   <script src="js/icons.js"></script>
-  <script src="js/content.js?v=20260831-career2"></script>
+  <script src="js/fase3-content.js"></script>
   <script src="js/data-professioni.js"></script>
-  <script src="js/variants.js?v=20260831-career2"></script>
+  <script src="js/variants.js"></script>
+  <script src="js/fase3-variants.js"></script>
   <script src="js/mascotte.js"></script>
-  <script src="js/percorso.js?v=20260831-career2"></script>
+  <script src="js/percorso.js"></script>
   <script src="js/state.js"></script>
   <script src="js/sync.js"></script>
-  <script src="js/render.js?v=20260831-career3"></script>
+  <script src="js/render.js"></script>
+  <script src="js/fase3-render.js"></script>
   <script src="js/keyboard.js"></script>
-  <script src="js/wow.js"></script>
   <script src="js/commenti.js"></script>
   <script src="js/editor.js"></script>
-  <script src="js/app.js?v=20260831-career2"></script>
+  <script src="js/app.js"></script>
 </body>
 </html>
