@@ -69,7 +69,7 @@ window.NAVIDA_CONTENT = {
     scriviQui: 'Scrivi qui…',
     cercaProfessione: 'Cerca una professione…',
     nessunRisultato: 'Nessun risultato. Puoi scrivere liberamente.',
-    ordinaHint: 'Trascina tutta la card. Per scorrere usa la fascia a destra.',
+    ordinaHint: 'Trascina le risposte per ordinarle. Per scorrere usa la colonna dei numeri.',
     ordinaHintPodio: 'Tocca le risposte per riempire le posizioni, dalla prima all’ultima.',
     ordinaHintTocca: 'Tocca in ordine di importanza. Tocca di nuovo per togliere.',
     sceltaMultiplaHint: 'Scegli tutte le risposte che vuoi'
@@ -124,7 +124,7 @@ window.NAVIDA_CONTENT = {
       mascotte: 'stretta-mano',
       obStep: 1,
       title: 'Ciao, siamo Navida',
-      body: 'Uno spazio sicuro per capire davvero dove vuoi arrivare.\nNon siamo l’ennesima app di ricerca di lavoro: costruiamo su di te un percorso di carriera e ti guidiamo, tappa dopo tappa, fino al lavoro dei tuoi sogni.',
+      body: 'Non siamo l’ennesima app per cercare lavoro.\nCostruiamo con te un percorso di carriera e ti guidiamo, tappa dopo tappa.',
       cta: 'Continua'
     },
     {
@@ -383,7 +383,6 @@ window.NAVIDA_CONTENT = {
         }
       ],
       ctaPrimaria: 'Completa la profilazione',
-      ctaPrimariaNota: 'Per una proiezione più accurata',
       ctaSecondaria: 'Continua a giocare'
     },
 
@@ -426,16 +425,7 @@ window.NAVIDA_CONTENT = {
         'Rispondi di pancia, senza pensarci troppo.'
       ],
       body: '',
-      cta: 'Continua'
-    },
-    {
-      id: 'ctaTest',
-      chapter: 'test',
-      type: 'info',
-      mascotte: 'ok',
-      noProgress: true,
-      title: 'Sei pronto?',
-      body: '',
+      /* la vecchia schermata "Sei pronto?" e' stata tolta: il test parte da qui */
       cta: 'Inizia il test'
     },
 

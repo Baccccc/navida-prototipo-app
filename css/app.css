@@ -145,7 +145,8 @@ input, textarea { font-family: inherit; }
 
   .screen {
     padding-top: max(var(--header-top), calc(env(safe-area-inset-top) + 20px));
-    padding-bottom: calc(env(safe-area-inset-bottom) + 20px);
+    --pad-b: calc(env(safe-area-inset-bottom) + 20px);
+    padding-bottom: var(--pad-b);
     padding-left: max(var(--gutter), env(safe-area-inset-left));
     padding-right: max(var(--gutter), env(safe-area-inset-right));
   }
@@ -173,7 +174,8 @@ input, textarea { font-family: inherit; }
   inset: 0;
   display: flex;
   flex-direction: column;
-  padding: var(--header-top) var(--gutter) 34px;
+  --pad-b: 34px;
+  padding: var(--header-top) var(--gutter) var(--pad-b);
   background: var(--bg);
   animation: screen-in var(--dur) var(--ease);
 }
@@ -372,6 +374,14 @@ input, textarea { font-family: inherit; }
   padding-right: var(--gutter);
 }
 
+/* Quando la schermata non ha il pulsante Continua, le risposte arrivano
+   fino in fondo allo sfondo invece di fermarsi 34px prima. */
+.options--pieno {
+  flex: 1 1 auto;
+  margin-bottom: calc(var(--pad-b) * -1);
+  padding-bottom: var(--pad-b);
+}
+
 .opt {
   display: flex;
   align-items: flex-start;
@@ -390,7 +400,9 @@ input, textarea { font-family: inherit; }
   line-height: var(--lh-sm);
   font-weight: var(--fw-medium);
   text-align: left;
-  transition: background var(--dur) var(--ease), border-color var(--dur) var(--ease), transform 120ms var(--ease);
+  transition: background var(--dur) var(--ease), border-color var(--dur) var(--ease),
+              box-shadow var(--dur) var(--ease), opacity var(--dur) var(--ease),
+              transform 120ms var(--ease);
 }
 .opt:active { transform: scale(.985); }
 .opt.is-selected {
@@ -423,10 +435,18 @@ input, textarea { font-family: inherit; }
   white-space: nowrap;
 }
 .opt__info {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition: grid-template-rows var(--dur) var(--ease), opacity var(--dur) var(--ease);
+}
+.opt.is-selected .opt__info { grid-template-rows: 1fr; opacity: 1; }
+.opt__info__testo {
+  overflow: hidden;
+  min-height: 0;
   font-size: var(--fs-xs);
   line-height: var(--lh-xs);
   color: var(--text-toned);
-  margin-top: 2px;
 }
 .opt__col { display: flex; flex-direction: column; flex: 1 1 auto; min-width: 0; }
 /* ---- domande a classifica ------------------------------------------ */
@@ -456,47 +476,38 @@ input, textarea { font-family: inherit; }
   padding: 0 0 4px;
   position: relative;
 }
-.rankItem {
-  display: flex;
+/* Due colonne: i numeri fermi a sinistra, le card trascinabili a destra.
+   La griglia le tiene allineate anche quando un'etichetta va a capo. */
+.options.rankList {
+  display: grid;
+  grid-template-columns: 24px 1fr;
+  align-items: stretch;
+  column-gap: var(--sp-5);
+  row-gap: var(--option-gap);
+  gap: var(--option-gap) var(--sp-5);
+}
+.options.rankList .opt--rank {
+  grid-column: 2;
   align-items: center;
-  gap: var(--sp-5);
-  width: 100%;
-  touch-action: none;
   cursor: grab;
-  user-select: none;
   will-change: transform;
 }
-.rankItem:active { cursor: grabbing; }
-.rankItem .opt--rank { flex: 1 1 auto; min-width: 0; align-items: center; }
+.options.rankList .opt--rank:active { cursor: grabbing; }
+.options.rankList .rankPlaceholder { grid-column: 2; }
 .opt__pos {
-  flex: 0 0 auto;
-  width: 24px;
+  grid-column: 1;
+  /* il gesto sui numeri scorre la lista invece di trascinare */
+  touch-action: pan-y;
   min-height: var(--option-h);
   color: var(--text-dimmed);
   font-size: var(--fs-base);
   font-weight: var(--fw-bold);
   display: grid; place-items: center;
   font-variant-numeric: tabular-nums;
+  user-select: none;
 }
-.rankItem:first-child .opt__pos { color: var(--main); }
-.rankScrollRail {
-  position: relative;
-  flex: 0 0 18px;
-  touch-action: pan-y;
-  cursor: ns-resize;
-}
-.rankScrollRail::after {
-  content: '';
-  position: sticky;
-  display: block;
-  top: 45%;
-  width: 4px;
-  height: 38px;
-  margin: 0 auto;
-  border-radius: var(--r-full);
-  background: var(--bg-accented);
-  opacity: .72;
-}
+.opt__pos[style*="grid-row:1"] { color: var(--main); }
+
 
 /* ---- 2 · PODIO -----------------------------------------------------
    Le posizioni stanno in alto, vuote, e chiedono di essere riempite.
@@ -712,7 +723,11 @@ input, textarea { font-family: inherit; }
 .options[data-lato="destra"] .opt { flex-direction: row-reverse; }
 .options[data-lato="destra"] .opt__col { text-align: left; }
 .options[data-lato="destra"] .opt__chip { order: -1; }
-.options[data-lato="destra"] .opt--rank { flex-direction: row-reverse; }
+/* variante "numeri a destra": si invertono le colonne della griglia */
+.options.rankList[data-lato="destra"] { grid-template-columns: 1fr 24px; }
+.options.rankList[data-lato="destra"] .opt--rank { grid-column: 1; flex-direction: row-reverse; }
+.options.rankList[data-lato="destra"] .rankPlaceholder { grid-column: 1; }
+.options.rankList[data-lato="destra"] .opt__pos { grid-column: 2; }
 .options[data-variant="grid"][data-lato="destra"] .opt { flex-direction: column; }
 
 /* ---- riga con icona a sinistra (riferimento: Duolingo) ------------ */
@@ -902,7 +917,11 @@ input, textarea { font-family: inherit; }
   transition: border-color var(--dur) var(--ease);
 }
 .bigInput:focus { border-color: var(--main); }
-.bigInput::placeholder { color: var(--text-dimmed); font-weight: var(--fw-medium); }
+.bigInput::placeholder {
+  color: var(--text-dimmed);
+  font-weight: var(--fw-medium);
+  font-size: var(--fs-lg);
+}
 
 .field { display: flex; flex-direction: column; gap: 6px; }
 .field__label {
@@ -1433,8 +1452,11 @@ textarea.field__input { min-height: 84px; resize: none; }
   padding: 18px var(--sp-8);
   font-size: var(--fs-base);
 }
-.login--essenziale .btn { border-radius: var(--r-full); height: 58px; }
-.login--essenziale .social { border-radius: var(--r-full); height: 56px; background: var(--gray-100); border: 0; }
+.login--essenziale .btn { border-radius: var(--r-full); height: var(--btn-h); }
+.login--essenziale .social { border-radius: var(--r-full); height: var(--btn-h); background: var(--gray-100); border: 0; }
+/* senza questa riga il fondo chiaro qui sopra vinceva sul nero di Apple e
+   restava la scritta bianca su grigio: illeggibile */
+.login--essenziale .social--apple { background: #000; color: #fff; }
 .linkbtn--forte { font-weight: var(--fw-bold); text-decoration: none; }
 
 /* Compatta (rif. Duolingo) */
@@ -1603,9 +1625,14 @@ textarea.field__input { min-height: 84px; resize: none; }
 .divider::before, .divider::after { content: ''; height: 1px; flex: 1; background: var(--light-outline); }
 
 .socialRow { display: flex; gap: var(--sp-6); }
+/* affiancati si dividono la larghezza, ma non l'altezza */
+.socialRow .social { flex: 1 1 0; }
 .social {
-  flex: 1;
-  height: 46px;
+  /* in colonna "flex: 1" azzerava l'altezza: i bottoni si schiacciavano.
+     52px e' la misura del pulsante Full page dell'UI kit, la stessa della
+     CTA principale, cosi' i tre bottoni della pagina sono allineati. */
+  flex: 0 0 auto;
+  height: var(--btn-h);
   border-radius: var(--r-md);
   border: 1px solid var(--light-outline);
   background: var(--surface);
@@ -1652,10 +1679,11 @@ textarea.field__input { min-height: 84px; resize: none; }
 .listPlain { display: flex; flex-direction: column; gap: var(--sp-5); }
 .listPlain li {
   display: flex; align-items: flex-start; gap: var(--sp-5);
-  font-size: var(--fs-sm); line-height: var(--lh-sm); color: var(--text-toned);
+  font-size: var(--fs-base); line-height: var(--lh-base);
+  font-weight: var(--fw-medium); color: var(--text-toned);
 }
 .listPlain { list-style: none; padding: 0; margin: 0; }
-.listPlain .ico { color: var(--main); flex: 0 0 auto; margin-top: 2px; }
+.listPlain .ico { color: var(--main); flex: 0 0 auto; margin-top: 4px; }
 
 .toast {
   position: absolute;
@@ -1718,16 +1746,14 @@ textarea.field__input { min-height: 84px; resize: none; }
 /* La riga sollevata si stacca davvero: sale di un gradino d'ombra, cresce
    di un soffio e resta sotto il dito. Le altre si abbassano di tono, cosi'
    l'occhio segue una cosa sola. */
-.rankItem.is-dragging {
+.opt.is-dragging {
   z-index: 3;
   cursor: grabbing;
   pointer-events: none;
-}
-.rankItem.is-dragging .opt {
   background: var(--surface);
   border-color: var(--risposte-outline);
   box-shadow: 0 10px 24px #1e1a4d29, 0 2px 6px #1e1a4d14;
-  transform: scale(1.015);
+  transform: scale(1.03) rotate(-.6deg);
 }
 .rankPlaceholder {
   width: 100%;
@@ -1735,7 +1761,9 @@ textarea.field__input { min-height: 84px; resize: none; }
   border-radius: var(--r-md);
   background: color-mix(in srgb, var(--risposte-bg) 45%, transparent);
 }
-.sortable.is-sorting .opt__grip { color: var(--text-dimmed); }
+/* mentre trascini, l'occhio deve seguire una cosa sola */
+.sortable.is-sorting .opt:not(.is-dragging) { opacity: .55; }
+.sortable.is-sorting .opt__grip { color: var(--main); }
 
 /* la maniglia e' l'invito: area di tocco piena, non solo l'icona */
 .opt--rank .opt__grip {
@@ -1870,9 +1898,12 @@ textarea.field__input { min-height: 84px; resize: none; }
   align-self: stretch;
   animation: verdetto-in 620ms cubic-bezier(.16, 1, .3, 1) both;
 }
+/* il verdetto e' il titolo della schermata: prende la misura dei titoli
+   dell'UI kit (24/32) invece di restare piu' piccolo del titolo di servizio */
+.body--prova { justify-content: center; }
 .prova__frase {
-  font-size: var(--fs-xl);
-  line-height: var(--lh-xl);
+  font-size: var(--fs-2xl);
+  line-height: var(--lh-2xl);
   font-weight: var(--fw-semibold);
   color: var(--text-highlighted);
   margin: 0 0 var(--sp-6);
@@ -1885,7 +1916,7 @@ textarea.field__input { min-height: 84px; resize: none; }
   margin: 0;
 }
 .prova__grafico {
-  margin-top: var(--sp-9);
+  margin-top: var(--sp-7);
   padding: var(--sp-7) var(--sp-6) var(--sp-6);
   background: var(--surface);
   border: 1px solid var(--light-outline);
@@ -1907,7 +1938,8 @@ textarea.field__input { min-height: 84px; resize: none; }
 }
 .listNum li {
   display: flex; align-items: flex-start; gap: var(--sp-4);
-  font-size: var(--fs-sm); line-height: var(--lh-sm); color: var(--text-toned);
+  font-size: var(--fs-base); line-height: var(--lh-base);
+  font-weight: var(--fw-medium); color: var(--text-toned);
 }
 .listNum__n { color: var(--main); font-weight: var(--fw-semibold); flex: 0 0 auto; }
 .listNum__txt strong { color: var(--text-highlighted); font-weight: var(--fw-semibold); }

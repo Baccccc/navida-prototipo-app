@@ -189,17 +189,17 @@
   /* Sequenza di mascotte per la schermata di elaborazione. La variante
      "professioni" usa cinque asset generati sul personaggio Navida piu'
      la posa al computer gia' presente nel progetto. */
+  /* Solo pose in piedi: "computer" e "leggere" sono sedute e rompevano il
+     ritmo dell'animazione. L'etichetta resta perche' descrive l'immagine
+     a chi usa un lettore di schermo, ma non si vede piu'. */
   var POSE_ELABORAZIONE = [
-    { posa: 'computer',  label: 'Tecnologia' },
     { posa: 'matita',    label: 'Creatività' },
-    { posa: 'leggere',   label: 'Formazione' },
     { posa: 'calcolare', label: 'Analisi' },
     { posa: 'tablet',    label: 'Digitale' },
     { posa: 'zaino',     label: 'Nuovi percorsi' }
   ];
 
   var RUOLI_ELABORAZIONE = [
-    { posa: 'computer', label: 'Sviluppo software' },
     { src: 'assets/mascotte-professione-medico.png', label: 'Medicina' },
     { src: 'assets/mascotte-professione-chef.png', label: 'Ristorazione' },
     { src: 'assets/mascotte-professione-ingegnere.png', label: 'Ingegneria' },
@@ -210,7 +210,10 @@
   function professioni(variante, fine) {
     var h = window.NavidaRender.h;
     var items = variante === 'professioni' ? RUOLI_ELABORAZIONE : POSE_ELABORAZIONE;
-    var passo = 900;
+    /* durata complessiva fissa: le due varianti hanno un numero diverso di
+       mascotte, ma l'attesa dura sempre lo stesso tempo */
+    var DURATA = 5400;
+    var passo = Math.round(DURATA / items.length);
     var box = h('div', { class: 'jobSpin' }, [
       h('div', { class: 'jobSpin__orbit', 'aria-hidden': 'true' }),
       h('p', { class: 'jobSpin__title', text: 'Stiamo esplorando le possibilità' }),
@@ -226,10 +229,10 @@
 
       box.appendChild(h('div', {
         class: 'jobSpin__slide',
-        style: 'animation-delay:' + (i * passo) + 'ms'
+        style: 'animation-delay:' + (i * passo) + 'ms;' +
+               'animation-duration:' + passo + 'ms'
       }, [
-        h('div', { class: 'jobSpin__art' }, [art]),
-        h('span', { class: 'jobSpin__label', text: item.label })
+        h('div', { class: 'jobSpin__art' }, [art])
       ]));
     });
 

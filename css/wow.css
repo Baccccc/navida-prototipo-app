@@ -395,9 +395,9 @@
   position: absolute;
   top: 50%;
   left: 50%;
-  width: 230px;
+  width: 250px;
   height: 300px;
-  margin: -142px 0 0 -115px;
+  margin: -142px 0 0 -125px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -407,11 +407,20 @@
   animation: job-slide 900ms cubic-bezier(.2, .8, .2, 1) both;
 }
 .jobSpin__art {
-  width: 210px;
+  /* piu' largo che alto: cosi' a decidere la dimensione e' sempre l'altezza
+     e le mascotte restano tutte grandi uguali, qualunque sia il formato */
+  position: relative;
+  width: 250px;
   height: 230px;
-  display: grid;
-  place-items: center;
   filter: drop-shadow(0 14px 18px #1e1a4d20);
+}
+/* I figli devono avere una misura certa: appoggiati ai quattro lati del
+   riquadro. Senza, l'altezza in percentuale non ha un riferimento e
+   l'immagine cresce fino alla sua dimensione naturale, sfondando lo schermo. */
+.jobSpin__art > div,
+.jobSpin__art > img {
+  position: absolute;
+  inset: 0;
 }
 .jobSpin__art > div,
 .jobSpin__art img {
@@ -419,19 +428,6 @@
   height: 100%;
   object-fit: contain;
   display: block;
-}
-.jobSpin__label {
-  min-width: 132px;
-  padding: 8px 14px;
-  border: 1px solid var(--light-outline);
-  border-radius: var(--r-full);
-  background: #fffffff0;
-  box-shadow: var(--shadow-sm);
-  color: var(--main);
-  font-size: var(--fs-sm);
-  line-height: var(--lh-sm);
-  font-weight: var(--fw-semibold);
-  text-align: center;
 }
 @keyframes job-slide {
   0%   { opacity: 0; transform: translateX(52px) rotate(10deg) scale(.76); }
@@ -477,28 +473,25 @@
   max-width: 300px;
   margin: var(--sp-4) auto 0;
 }
+/* stessa griglia delle domande vere: numeri a sinistra, card a destra */
 .rankDemo__list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--option-gap);
+  display: grid;
+  grid-template-columns: 24px 1fr;
+  gap: var(--option-gap) var(--sp-5);
 }
-.rankDemo__row {
-  position: relative;
-  overflow: visible;
-}
-.rankDemo__row .opt {
+.rankDemo__card {
+  grid-column: 2;
   position: relative;
   overflow: visible;
 }
 .rankDemo__label { flex: 1 1 auto; text-align: left; }
 
-/* La terza card sale in cima e le altre due liberano il posto. */
-.rankDemo__row[data-i="2"] {
-  animation: demo-up 4s var(--ease) infinite;
-  z-index: 2;
-}
-.rankDemo__row[data-i="0"] { animation: demo-down 4s var(--ease) infinite; }
-.rankDemo__row[data-i="1"] { animation: demo-down 4s var(--ease) infinite; }
+/* La terza card sale in cima e le altre due liberano il posto.
+   I numeri 1 2 3 restano fermi: sono le posizioni della classifica, non
+   un'etichetta della risposta. Per questo l'animazione sta sulla card. */
+.rankDemo__card[data-i="2"] { z-index: 2; animation: demo-up 4s var(--ease) infinite; }
+.rankDemo__card[data-i="0"] { animation: demo-down 4s var(--ease) infinite; }
+.rankDemo__card[data-i="1"] { animation: demo-down 4s var(--ease) infinite; }
 
 @keyframes demo-up {
   0%, 12%   { transform: translateY(0) scale(1); box-shadow: none; }
@@ -529,7 +522,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .rankDemo__row,
+  .rankDemo__card,
   .rankDemo__hand {
     animation: none !important;
   }

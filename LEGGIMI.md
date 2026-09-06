@@ -188,13 +188,13 @@ Per aggiungere una domanda basta copiare un oggetto esistente, cambiare
 
 ## Cosa c'è dentro
 
-**50 schermate**, in quest'ordine:
+**49 schermate**, in quest'ordine:
 
 1. **Ingresso** (6) — splash, scelta tipo utente, 4 schede di onboarding
 2. **Fase 1 · Scoperta** (16) — nome, genere, età, motivazione, obiettivo, titolo di
    studio, specializzazioni, situazione lavorativa, lavoro dei sogni, prima proiezione
 3. **Accesso** (2) — registrazione (3 versioni) e codice via email
-4. **Fase 2 · Questionario** (24) — introduzione + 3 blocchi:
+4. **Fase 2 · Questionario** (23) — introduzione + 3 blocchi:
    - Blocco 1 · anagrafica, categoria professionale, mansioni, livello di responsabilità
    - Blocco 2 · 3 ordinamenti, paure, valori, trasferimento, sogno aperto
    - Blocco 3 · 7 domande di personalità da 8 risposte
@@ -227,14 +227,17 @@ le proporzioni sono registrate in `js/mascotte.js`, così non si deformano.
 
 Ricostruita com'è oggi nel Figma (schermate *Animaz ludica 1-12*):
 
-1. **`lavoroSogni`** — tre anelli concentrici con la scritta *"Qual è il lavoro
+1. **`tuoMomento`** — l'astronauta salta e fa il gesto di incoraggiamento.
+2. **`lavoroSogni`** — tre anelli concentrici con la scritta *"Qual è il lavoro
    che sogni?"* entrano in dissolvenza ingrandendosi e ruotando, poi si fermano.
-   Al centro il campo di testo; la tastiera sale da sola.
-2. Premuto **Continua**, la tastiera scende e gli anelli riprendono a girare.
-3. **`elaborazione`** — tre cerchi giganti (lavanda, azzurro, viola) si aprono
-   dal centro uno sopra l'altro, ciascuno con la sua etichetta:
-   *Analizzando le risposte · Calcolando profilo utente · Creando suggerimenti*.
-4. **`previsione`** — i tre consigli entrano a cascata, uno dopo l'altro.
+   Al centro il campo di testo e la sua descrizione. **La tastiera non sale da
+   sola:** si apre solo toccando il campo.
+3. Premuto **Continua**, la tastiera scende e gli anelli riprendono a girare.
+4. **`elaborazione`** — l'astronauta cambia veste e mestiere: le mascotte si
+   avvicendano al centro dello schermo, tutte della stessa dimensione e tutte
+   in piedi, senza etichette. L'attesa dura sempre lo stesso tempo (5,4
+   secondi) qualunque sia il numero di pose della variante scelta.
+5. **`previsione`** — un consiglio solo, con la firma di Navida.
 
 Resta col badge *"da rifare"* perché il design va ripensato insieme: intanto si
 comporta come il progetto attuale.
