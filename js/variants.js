@@ -125,7 +125,10 @@ window.NAVIDA_VARIANTS = {
     ]
   },
 
-  /* Linea di carriera */
+  /* Linea di carriera.
+     Qui ci sono solo le tre versioni che js/percorso.js sa davvero
+     disegnare: le vecchie voci "default", "card" e "compact" non
+     esistevano piu' nel codice e sceglierle non cambiava niente. */
   path: {
     etichetta: 'Stile linea di carriera',
     attr: 'data-variant',
@@ -133,10 +136,7 @@ window.NAVIDA_VARIANTS = {
     options: [
       { value: 'serpentina', label: 'Serpentina animata' },
       { value: 'filo',       label: 'Filo con tappa in rilievo' },
-      { value: 'curva',      label: 'Curva oggi → obiettivo' },
-      { value: 'default',    label: 'Timeline (vecchia)' },
-      { value: 'card',       label: 'Card (vecchia)' },
-      { value: 'compact',    label: 'Compatta (vecchia)' }
+      { value: 'curva',      label: 'Curva oggi → obiettivo' }
     ]
   },
 
@@ -190,10 +190,12 @@ window.NAVIDA_PAGE_VARIANTS = {
   },
   elaborazione: {
     etichetta: 'Animazione di elaborazione',
-    predefinita: 'mascotte',
+    /* "l'astronauta che cambia veste e lavoro": e' la versione con i
+       mestieri, non le pose generiche. Richiesta del team. */
+    predefinita: 'professioni',
     options: [
-      { value: 'mascotte',    label: 'Pose esistenti' },
-      { value: 'professioni', label: 'Sei professioni' }
+      { value: 'professioni', label: 'Cambia mestiere' },
+      { value: 'mascotte',    label: 'Pose esistenti' }
     ]
   },
   lavoroSogni: {

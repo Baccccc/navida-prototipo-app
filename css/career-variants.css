@@ -61,14 +61,16 @@
   --career-progress: 1;
   position: relative;
   display: grid;
-  gap: 8px;
-  margin-top: 12px;
+  gap: 16px;          /* aria fra le tappe: la linea si vede negli spazi */
+  margin-top: 14px;
 }
+/* La linea sta DIETRO le card (z-index 0 contro 1): si vede solo negli
+   spazi fra una tappa e l'altra, non passa mai sopra a un testo. */
 .careerList::before,
 .careerList::after {
   content: '';
   position: absolute;
-  z-index: 2;
+  z-index: 0;
   left: 32px;
   top: 42px;
   bottom: 42px;
@@ -122,11 +124,13 @@
 .careerDetail__state--active { color: var(--main); background: #eeedfb; }
 .careerStep--goal .careerStep__state,
 .careerDetail__state--goal { color: #b88700; background: #fff7d7; }
+/* I tre livelli tipografici del riferimento Figma "Struttura del programma":
+   occhiello tenue, titolo semibold che va a capo, meta tenue. */
 .careerStep__copy { min-width: 0; flex: 1 1 auto; display: flex; flex-direction: column; }
-.careerStep__copy small { color: var(--text-muted); font-size: 10px; line-height: 14px; }
-.careerStep__copy strong { color: var(--text); font-size: 13px; line-height: 17px; }
-.careerStep__role { margin-top: 1px; color: var(--text-toned); font-size: 11px; line-height: 15px; }
-.careerStep__time { margin-top: 3px; display: flex; align-items: center; gap: 4px; color: var(--text-muted); font-size: 10px; }
+.careerStep__copy small { color: var(--text-muted); font-size: 11px; line-height: 15px; }
+.careerStep__copy strong { color: var(--text-highlighted); font-size: 14px; line-height: 19px; overflow-wrap: anywhere; }
+.careerStep__role { margin-top: 1px; color: var(--text-toned); font-size: 12px; line-height: 16px; overflow-wrap: anywhere; }
+.careerStep__time { margin-top: 4px; display: flex; align-items: center; gap: 4px; color: var(--text-muted); font-size: 11px; }
 .careerStep > .ico:last-child { color: var(--text-dimmed); }
 
 .careerDetail {
@@ -161,46 +165,124 @@
 }
 .careerDetail__action:focus-visible { outline: 3px solid color-mix(in srgb, var(--main) 30%, transparent); outline-offset: 2px; }
 
-/* Variante 2: la topologia a serpentina delle varianti Figma, ma con tutte
-   le tappe cliccabili e una scheda di dettaglio nello stesso contesto. */
-.careerView__compactHead { padding: 4px 2px 12px; display: flex; justify-content: space-between; gap: 10px; }
+/* ==========================================================================
+   Variante 2 · SERPENTINA
+   ==========================================================================
+   Stessa anatomia della lista — pallino a sinistra, testo sempre a destra —
+   ma il pallino oscilla dentro la sua corsia e la linea li unisce con curve
+   morbide a S. Le tappe stanno nel flusso normale: nessuna altezza fissa,
+   nessuna coordinata cablata, quindi regge un numero qualsiasi di tappe.
+   Il tracciato lo calcola render.js sui centri veri dei pallini.
+   ========================================================================== */
+.careerView__compactHead { padding: 4px 2px 14px; display: flex; justify-content: space-between; gap: 10px; }
 .careerView__compactHead strong { color: var(--text); font-size: 12px; }
 .careerView__compactHead span { color: var(--text-muted); font-size: 10px; text-align: right; }
-.careerCurve { position: relative; height: 760px; overflow: hidden; }
-.careerCurve__line { position: absolute; inset: 0; width: 100%; height: 100%; }
+
+.careerCurve {
+  --career-progress: 1;
+  --curva-corsia: 64px;   /* pallino 34 + oscillazione 30 */
+  position: relative;
+  height: auto;           /* mai altezze fisse: scorre il contenitore */
+  overflow: visible;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;              /* l'aria chiesta fra una tappa e l'altra */
+  padding: 2px 0 6px;
+}
+/* la linea sta dietro le card, mai in mezzo */
+.careerCurve__line {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
 .careerCurve__line path {
   fill: none;
   stroke-width: 3;
   stroke-linecap: round;
 }
-.careerCurve__track { stroke: #90a4c2; stroke-dasharray: 8 9; }
+/* niente tratteggio: la parte da fare e' solo piu' tenue */
+.careerCurve__track { stroke: var(--light-outline); }
 .careerCurve__progress { stroke: var(--main); stroke-width: 3.25; }
-.careerCurve__step { position: absolute; width: 255px; min-height: 100px; z-index: 2; }
-.careerCurve__step--1 { top: 4px; left: 58px; }
-.careerCurve__step--2 { top: 144px; left: 0; }
-.careerCurve__step--3 { top: 286px; right: 0; }
-.careerCurve__step--4 { top: 430px; left: 0; }
-.careerCurve__step--5 { top: 576px; right: 0; }
-.careerView--serpentina .careerDetail { margin-top: 2px; }
 
-/* Variante 3: il percorso intero resta sempre visibile nella rail; sotto,
-   il dettaglio e l'indice permettono di esplorarlo senza cambiare pagina. */
-.careerView--mappa { display: flex; flex-direction: column; gap: 12px; }
+.careerCurve .careerStep {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: var(--curva-corsia) minmax(0, 1fr);
+  align-items: start;
+  gap: 10px;
+  padding: 0;
+  border: 0;
+  background: none;
+  box-shadow: none;
+}
+.careerCurve .careerStep__state {
+  width: 34px;
+  height: 34px;
+  margin-left: var(--dx, 0px);   /* l'oscillazione: la scrive render.js */
+  transition: margin-left 320ms var(--ease);
+}
+/* qui la card veste il testo, non la riga: il pallino resta sulla linea */
+.careerCurve .careerStep__copy {
+  padding: 12px 34px 12px 14px;
+  border: 1px solid var(--light-outline);
+  border-radius: 14px;
+  background: var(--surface);
+  box-shadow: 0 3px 10px rgba(49, 65, 88, .05);
+  transition: border-color 180ms var(--ease), box-shadow 180ms var(--ease);
+}
+.careerCurve .careerStep:hover .careerStep__copy {
+  border-color: color-mix(in srgb, var(--main) 38%, var(--light-outline));
+}
+.careerCurve .careerStep.is-selected { border: 0; padding: 0; box-shadow: none; }
+.careerCurve .careerStep.is-selected .careerStep__copy {
+  border: 2px solid var(--main);
+  padding: 11px 33px 11px 13px;
+  box-shadow: 0 5px 16px rgba(66, 64, 186, .12);
+}
+.careerCurve .careerStep > .ico:last-child {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+.careerView--serpentina .careerDetail { margin-top: 14px; }
+
+/* ==========================================================================
+   Variante 3 · MAPPA
+   ==========================================================================
+   Il percorso intero resta sempre visibile nella rail; sotto, il dettaglio
+   e l'indice permettono di esplorarlo senza cambiare pagina. Le colonne si
+   generano da sole (grid-auto-flow), quindi la rail regge un numero
+   qualsiasi di tappe invece delle cinque cablate di prima.
+   ========================================================================== */
+.careerView--mappa { display: flex; flex-direction: column; gap: 16px; }
 .careerMap__rail {
   --career-progress: 1;
+  --nodo: 44px;      /* diametro del pallino */
+  --lato: 6px;       /* margine laterale della rail */
   position: relative;
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
   align-items: start;
-  padding: 12px 6px 28px;
+  padding: 14px var(--lato) 34px;
 }
+/* la linea parte dal centro del primo pallino e finisce nel centro
+   dell'ultimo: calcolata, non a percentuale a occhio */
 .careerMap__rail::before,
 .careerMap__rail::after {
   content: '';
   position: absolute;
-  left: 10%;
-  right: 10%;
-  top: 31px;
+  left: calc(var(--lato) + var(--nodo) / 2);
+  right: calc(var(--lato) + var(--nodo) / 2);
+  top: calc(14px + var(--nodo) / 2 - 1.5px);
   height: 3px;
   border-radius: 999px;
 }
@@ -214,8 +296,8 @@
 .careerMap__node {
   position: relative;
   z-index: 1;
-  width: 42px;
-  height: 42px;
+  width: min(var(--nodo), 100%);   /* con tante tappe il pallino rimpicciolisce */
+  aspect-ratio: 1;
   justify-self: center;
   border: 2px solid var(--light-outline);
   border-radius: 50%;
@@ -225,23 +307,28 @@
   background: var(--surface);
   cursor: pointer;
 }
-.careerMap__node > span:last-child { position: absolute; top: 47px; font-size: 10px; }
+.careerMap__node > span:last-child {
+  position: absolute;
+  top: calc(100% + 8px);
+  font-size: 11px;
+  font-weight: var(--fw-semibold);
+}
 .careerMap__node--done { color: #007f58; border-color: #00a875; }
 .careerMap__node--active { color: var(--main); border-color: var(--main); }
 .careerMap__node--goal { color: #b88700; border-color: #e3ba26; }
 .careerMap__node.is-selected { box-shadow: 0 0 0 6px rgba(66, 64, 186, .11); }
 .careerMap__node:focus-visible { outline: 3px solid color-mix(in srgb, var(--main) 28%, transparent); outline-offset: 3px; }
 .careerView--mappa .careerDetail { margin-top: 0; }
-.careerMap__index { display: grid; gap: 6px; }
+.careerMap__index { display: grid; gap: 4px; }
 .careerMap__index button {
   width: 100%;
-  min-height: 40px;
-  padding: 8px 10px;
+  min-height: 46px;
+  padding: 10px 12px;
   border: 0;
-  border-radius: 9px;
+  border-radius: 11px;
   display: flex;
   align-items: center;
-  gap: 9px;
+  gap: 12px;
   color: var(--text-toned);
   background: transparent;
   text-align: left;
@@ -249,8 +336,8 @@
 }
 .careerMap__index button:hover,
 .careerMap__index button.is-selected { background: #f1f0fb; }
-.careerMap__index button > span { width: 22px; height: 22px; display: grid; place-items: center; border-radius: 50%; color: var(--main); background: #e8e7f8; font-size: 10px; }
-.careerMap__index strong { font-size: 11px; }
+.careerMap__index button > span { width: 26px; height: 26px; flex: 0 0 auto; display: grid; place-items: center; border-radius: 50%; color: var(--main); background: #e8e7f8; font-size: 11px; font-weight: var(--fw-bold); }
+.careerMap__index strong { font-size: 13px; line-height: 17px; overflow-wrap: anywhere; }
 
 /* La struttura resta consultabile mentre la linea la attraversa; soltanto gli
    indicatori di tappa si accendono quando il tracciato arriva nella loro zona. */
@@ -388,7 +475,8 @@
   scrollbar-width: none;
 }
 .loadingPath__serpentina::-webkit-scrollbar { display: none; }
-.loadingPath__serpentina .perc__et { font-size: 11px; }
+/* qui il percorso si disegna mentre si aspetta: sta tutto in una schermata,
+   quindi il testo resta quello dell'anatomia condivisa senza ritocchi */
 
 @keyframes loading-status-1 {
   0%, 4% { opacity: 0; transform: translateY(4px); }

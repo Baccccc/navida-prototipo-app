@@ -264,6 +264,19 @@
    ========================================================================== */
 
 .f3-notificationList,.f3-pathList,.f3-catalogGroups { padding: 0 var(--gutter) var(--sp-10); }
+
+/* --- linea di carriera, versioni con la linea -----------------------
+   Riusano il modulo js/percorso.js (foglio css/percorso.css, gia'
+   caricato da fase3.html): qui serve solo la spaziatura di pagina e la
+   differenza fra le tre versioni. */
+.f3-percorso { padding: 0 var(--gutter) var(--sp-10); }
+.f3-percorso .perc__tappa { cursor: pointer; }
+/* "outline": nessuna tappa in rilievo, si legge come un indice */
+.f3-percorso--outline .perc--filo .perc__tappa--ora .perc__testo {
+  background: none;
+  border-color: transparent;
+  box-shadow: none;
+}
 .f3-notification { margin-bottom: var(--sp-4); padding: var(--sp-6); display: flex; align-items: flex-start; gap: var(--sp-5); position: relative; }
 .f3-notification__copy { flex: 1; padding-right: var(--sp-9); }
 .f3-notification h2,.f3-notification p { margin: 0; }

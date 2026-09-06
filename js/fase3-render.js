@@ -336,23 +336,35 @@
     }));
   }
 
+  /* Le versioni con la linea usano lo stesso modulo del questionario
+     (js/percorso.js): una sola anatomia, la linea disegnata sui pallini
+     veri e nessuna altezza fissa. Prima qui c'era un disegno a parte che
+     mostrava due tappe su cinque e non aveva nemmeno un CSS. */
+  var LINEA_DI = { serpentina: 'serpentina', outline: 'filo', attiva: 'filo' };
+
   function pathCurve(screen, variant) {
-    var first = screen.steps[0], second = screen.steps[1];
-    return h('div', { class: 'f3-curve f3-curve--' + variant }, [
-      h('div', { class: 'f3-curveLine' }),
-      h('span', { class: 'f3-curveDot f3-curveDot--done' }, [icon('check', ICO_MD)]),
-      h('button', { class: 'f3-curveCard f3-curveCard--one', onclick: go('catalogo') }, [
-        h('small', { text: first.label }),
-        text(screen, 'step.0.role', first.role, 'strong', ''),
-        h('span', {}, [icon('clock', ICO_SM), ' ' + first.duration])
-      ]),
-      h('span', { class: 'f3-curveDot f3-curveDot--active' }),
-      h('button', { class: 'f3-curveCard f3-curveCard--two', onclick: go('catalogo') }, [
-        h('small', { text: second.label }),
-        text(screen, 'step.1.role', second.role, 'strong', ''),
-        h('span', {}, [icon('clock', ICO_SM), ' ' + second.duration])
-      ])
-    ]);
+    var box = h('div', { class: 'f3-percorso f3-percorso--' + variant });
+
+    if (!window.NavidaPercorso) return pathList(screen);
+
+    var attiva = 0;
+    screen.steps.forEach(function (st, i) {
+      if (st.state === 'active') attiva = i;
+    });
+
+    var linea = window.NavidaPercorso.disegna(screen.steps.map(function (st) {
+      return { nome: st.role, durata: st.duration };
+    }), { variante: LINEA_DI[variant] || 'serpentina', attiva: attiva });
+
+    /* le tappe restano toccabili come le card della versione a elenco */
+    Array.prototype.forEach.call(linea.querySelectorAll('.perc__tappa'), function (riga) {
+      riga.setAttribute('role', 'button');
+      riga.setAttribute('tabindex', '0');
+      riga.addEventListener('click', go('catalogo'));
+    });
+
+    box.appendChild(linea);
+    return box;
   }
 
   Screens.careerPath = function (screen) {
