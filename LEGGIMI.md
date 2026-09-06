@@ -98,7 +98,7 @@ può esportare in JSON.
 | **Colori** | Cambia i colori del tema. Si applicano subito a tutta l'app. |
 | **Ordine** | Attiva il riordino e trascina le risposte per cambiarne l'ordine. |
 | **Elemento** | Attiva la selezione, clicca un elemento (lista risposte, titolo, pulsante, barra, mascotte, card…) e scegli una variante di stile. Puoi applicarla solo a quella schermata o a tutte. |
-| **Vai a** | Salta direttamente a una qualsiasi delle 49 schermate. |
+| **Vai a** | Salta direttamente a una qualsiasi delle schermate. |
 
 | **Commenti** | Lascia un commento sulla schermata che stai guardando. |
 
@@ -188,16 +188,20 @@ Per aggiungere una domanda basta copiare un oggetto esistente, cambiare
 
 ## Cosa c'è dentro
 
-**49 schermate**, in quest'ordine:
+**51 schermate** in `index.html`, in quest'ordine:
 
-1. **Ingresso** (6) — splash, scelta tipo utente, 4 schede di onboarding
+1. **Ingresso** (7) — splash, benvenuto, scelta tipo utente, 4 schede di onboarding
 2. **Fase 1 · Scoperta** (16) — nome, genere, età, motivazione, obiettivo, titolo di
    studio, specializzazioni, situazione lavorativa, lavoro dei sogni, prima proiezione
-3. **Accesso** (2) — registrazione (3 versioni) e codice via email
-4. **Fase 2 · Questionario** (23) — introduzione + 3 blocchi:
+3. **Accesso e chiusura** (4) — registrazione (più versioni), codice via email,
+   anteprima della linea di carriera, fine del prototipo
+4. **Fase 2 · Questionario** (24) — introduzione + 3 blocchi:
    - Blocco 1 · anagrafica, categoria professionale, mansioni, livello di responsabilità
    - Blocco 2 · 3 ordinamenti, paure, valori, trasferimento, sogno aperto
    - Blocco 3 · 7 domande di personalità da 8 risposte
+
+Più **15 schermate** in `fase3.html`: dashboard, mappa, consulenza, notifiche,
+percorso, catalogo, dettaglio, filtri, impostazioni del contenuto e le sei del profilo.
 5. **Chiusura** (2) — anteprima della linea di carriera
 
 Le barre di avanzamento sono **proporzionali** al numero di schermate del capitolo.
@@ -251,7 +255,11 @@ con la tastiera del computer, ma anche i tasti a schermo funzionano.
 ## Altre cose ancora da fare
 
 1. **Sezione ludica** — funzionante ma da ridisegnare.
-2. **Fase 3** — dashboard e linea di carriera sono in `fase3.html`; mappa e consulenza restano da implementare.
+2. **Fase 3** — dashboard, linea di carriera e catalogo sono in `fase3.html`.
+   **Mappa** e **Consulenza** hanno la loro voce nella barra in basso e una
+   schermata "in arrivo": il contenuto vero resta da costruire.
+   Restano da fare anche lo scorrimento orizzontale fra gli step e la vista a
+   mappa delle attività (punti 3.1.2 e 3.1.3 del flusso su FigJam).
 3. **Fase 4** — profilo, modifica dati e foto, profilo professionale, preferenze e logout sono in `fase3.html`.
 4. **Testi placeholder** — le 4 schede di onboarding hanno copy provvisorio.
 

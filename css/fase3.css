@@ -117,10 +117,11 @@
 /* ==========================================================================
    BARRA DI NAVIGAZIONE IN BASSO
    --------------------------------------------------------------------------
-   Non c'e' in nessun export del Figma: e' una proposta. Quattro voci
-   (Home, Percorso, Catalogo, Profilo), icona da 24 sopra ed etichetta
-   piccola sotto, la voce corrente in colore di marca. Sta accanto alla
-   pagina, non dentro, quindi non copre mai l'ultimo contenuto.
+   Le tre voci del flusso (Dashboard, Mappa, Consulenza), icona da 24
+   sopra ed etichetta piccola sotto, la voce corrente in colore di marca.
+   Sta accanto alla pagina, non dentro, quindi non copre mai l'ultimo
+   contenuto. Le colonne si contano da sole: se un giorno le voci
+   diventano due o quattro, qui non si tocca niente.
    ========================================================================== */
 
 .f3-nav {
@@ -128,7 +129,8 @@
   min-height: var(--nav-h);
   padding-bottom: var(--f3-nav-bottom);
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
   border-top: 1px solid var(--light-outline);
   background: var(--surface);
   z-index: 15;
@@ -215,8 +217,123 @@
 .f3-section__head h2 { margin: 0; font-size: var(--fs-sm); line-height: var(--lh-sm); }
 .f3-section__head button { border: 0; background: transparent; color: var(--main); font-size: var(--fs-xs); }
 
+/* ==========================================================================
+   HOME "DA FLUSSO" (FigJam 3.1)
+   --------------------------------------------------------------------------
+   Linea di carriera compressa, step di adesso con i suoi obiettivi e le
+   due scorciatoie. L'avanzamento si legge dal disegno — pallini pieni e
+   tratte piene fino a dove sei arrivato — e non da una percentuale: il
+   flusso la esclude in modo esplicito.
+   ========================================================================== */
+
+.f3-lineaCard {
+  padding: var(--sp-7);
+  border: 1px solid var(--light-outline);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-soft);
+}
+.f3-lineaCard .f3-section__head { margin-bottom: var(--sp-7); }
+
+.f3-linea {
+  margin: 0 0 var(--sp-7);
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+}
+.f3-linea__passo {
+  position: relative;
+  display: flex; flex-direction: column; align-items: center;
+  gap: var(--sp-2);
+}
+/* La tratta che arriva da sinistra unisce questo pallino al precedente:
+   meta' larghezza di la' e meta' di qua, cosi' resta agganciata anche se
+   gli step diventano quattro o sei. */
+.f3-linea__passo::before {
+  content: '';
+  position: absolute;
+  left: -50%; width: 100%;
+  top: calc((var(--sp-9) - var(--progress-h)) / 2);
+  height: var(--progress-h);
+  border-radius: var(--r-full);
+  background: var(--light-outline);
+}
+.f3-linea__passo:first-child::before { content: none; }
+.f3-linea__passo.is-piena::before { background: var(--main); }
+.f3-linea__pallino {
+  /* la tratta passa da centro a centro: il pallino le sta sopra,
+     altrimenti la riga grigia gli taglia una meta' */
+  position: relative; z-index: 1;
+  width: var(--sp-9); height: var(--sp-9);
+  display: grid; place-items: center;
+  border-radius: var(--r-full);
+  color: var(--text-dimmed);
+  background: var(--gray-100);
+}
+.f3-linea__num { font-size: var(--fs-xs); line-height: var(--lh-xs); color: var(--text-muted); }
+.f3-linea__passo.is-fatto .f3-linea__pallino { color: var(--text-on-main); background: var(--success); }
+.f3-linea__passo.is-adesso .f3-linea__pallino { border: var(--sp-2) solid var(--main-ring); background: var(--main); }
+.f3-linea__passo.is-adesso .f3-linea__num { color: var(--main); font-weight: var(--fw-bold); }
+
+.f3-lineaEstendi {
+  width: 100%;
+  display: flex; align-items: center; justify-content: center; gap: var(--sp-2);
+}
+
+.f3-stepNow {
+  margin: 0 var(--gutter) var(--sp-7);
+  padding: var(--sp-7);
+  border: 1px solid var(--light-outline);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-soft);
+}
+.f3-stepNow__head { display: flex; align-items: center; gap: var(--sp-4); }
+.f3-stepNow__badge {
+  padding: var(--sp-1) var(--sp-3);
+  border-radius: var(--r-xs);
+  color: var(--main); background: var(--main-soft);
+  font-size: var(--fs-xs); line-height: var(--lh-xs); font-weight: var(--fw-bold);
+}
+.f3-stepNow__head small { font-size: var(--fs-xs); line-height: var(--lh-xs); color: var(--text-muted); }
+.f3-stepNow h2 { margin: var(--sp-5) 0 var(--sp-3); font-size: var(--fs-lg); line-height: var(--lh-lg); }
+.f3-stepNow p { margin: 0; font-size: var(--fs-xs); line-height: var(--lh-xs); color: var(--text-muted); }
+.f3-stepGoals { margin: var(--sp-6) 0 0; padding: 0; list-style: none; }
+.f3-stepGoals li {
+  margin-top: var(--sp-4);
+  display: flex; align-items: flex-start; gap: var(--sp-4);
+  font-size: var(--fs-xs); line-height: var(--lh-xs);
+}
+.f3-stepGoals li > span:first-child { color: var(--success); }
+
+.f3-primoPiano { display: grid; gap: var(--sp-4); }
+
+.f3-scorciatoie {
+  margin: 0 var(--gutter) var(--sp-10);
+  display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-4);
+}
+.f3-scorciatoia {
+  padding: var(--sp-6);
+  border: 1px solid var(--light-outline);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  box-shadow: var(--shadow-soft);
+  display: flex; flex-direction: column; align-items: flex-start; gap: var(--sp-1);
+  text-align: left;
+}
+.f3-scorciatoia__icon {
+  width: var(--ico-chip); height: var(--ico-chip);
+  margin-bottom: var(--sp-3);
+  display: grid; place-items: center;
+  border-radius: var(--r-md);
+}
+.f3-scorciatoia strong { font-size: var(--fs-sm); line-height: var(--lh-sm); }
+.f3-scorciatoia small { font-size: var(--fs-xs); line-height: var(--lh-xs); color: var(--text-muted); }
+
 /* --- Scheda corso e scheda evento ---------------------------------------- */
-.f3-course,.f3-event,.f3-pathCard,.f3-roleCard,.f3-notification,.f3-priceCard,.f3-keypoints {
+.f3-course,.f3-event,.f3-pathCard,.f3-roleCard,.f3-notification,.f3-priceCard,.f3-keypoints,.f3-attivita {
   border: 1px solid var(--light-outline);
   border-radius: var(--r-md);
   background: var(--surface);
@@ -386,6 +503,33 @@
 .f3-keypoints ul { margin: 0; padding: 0; list-style: none; }
 .f3-keypoints li { margin: var(--sp-3) 0; display: flex; align-items: flex-start; gap: var(--sp-4); font-size: var(--fs-xs); line-height: var(--lh-xs); }
 .f3-keypoints li > span:first-child { color: var(--success); }
+
+/* --- Attività dello step, con il tag obbligatoria / facoltativa ----------
+   Il tag e' un'etichetta piccola come "EVENTO" e "Sponsor": blu di marca
+   quando l'attivita' e' obbligatoria, grigia quando e' facoltativa. */
+.f3-attivita { margin-top: var(--sp-6); padding: var(--sp-6); }
+.f3-attivita h2 { margin: 0 0 var(--sp-4); font-size: var(--fs-sm); line-height: var(--lh-sm); }
+.f3-attivita ul { margin: 0; padding: 0; list-style: none; }
+.f3-attivita li {
+  padding: var(--sp-5) 0;
+  border-top: 1px solid var(--light-outline);
+  display: flex; align-items: center; justify-content: space-between; gap: var(--sp-5);
+}
+.f3-attivita li:first-child { padding-top: 0; border-top: 0; }
+.f3-attivita li:last-child { padding-bottom: 0; }
+.f3-attivita__copy { min-width: 0; display: flex; flex-direction: column; gap: var(--sp-1); }
+.f3-attivita__copy strong { font-size: var(--fs-sm); line-height: var(--lh-sm); }
+.f3-attivita__copy span { font-size: var(--fs-xs); line-height: var(--lh-xs); color: var(--text-muted); }
+.f3-tag {
+  flex: 0 0 auto;
+  padding: var(--sp-1) var(--sp-3);
+  border-radius: var(--r-xs);
+  color: var(--text-muted); background: var(--gray-100);
+  font-size: var(--fs-xs); line-height: var(--lh-xs);
+  font-style: normal;
+}
+.f3-tag--obbligatoria { color: var(--main); background: var(--main-soft); }
+
 .f3-gallery { margin-top: var(--sp-6); display: grid; grid-template-columns: repeat(3,1fr); gap: var(--sp-4); }
 .f3-gallery img { width: 100%; height: 76px; object-fit: cover; border-radius: var(--r-md); }
 
@@ -488,6 +632,9 @@
 .p4-header h1 { margin: 0; font-size: var(--fs-xl); line-height: var(--lh-xl); text-align: center; }
 .p4-iconbtn { width: var(--ico-lg); height: var(--ico-lg); padding: 0; border: 0; background: transparent; display: grid; place-items: center; }
 .p4-profileHero { padding: var(--f3-top) var(--gutter) 0; display: flex; flex-direction: column; align-items: center; gap: var(--sp-4); }
+/* Sopra all'avatar c'e' gia' la barra con la freccia "indietro": qui lo
+   spazio del notch e' stato preso da lei. */
+.p4-home .p4-profileHero { padding-top: 0; }
 .p4-profileHero h1 { margin: 0; font-size: var(--fs-xl); line-height: var(--lh-xl); }
 .p4-avatar { width: var(--mascotte-w); height: var(--mascotte-w); padding: 0; position: relative; border: 0; border-radius: var(--r-full); background: transparent; }
 .p4-avatar__image {
@@ -719,3 +866,39 @@
 }
 .f3-emptyNotifications h2 { margin: var(--sp-9) 0 var(--sp-6); font-size: var(--fs-2xl); line-height: var(--lh-2xl); color: var(--text-highlighted); }
 .f3-emptyNotifications p { margin: 0; max-width: 270px; font-size: var(--fs-base); line-height: var(--lh-base); color: var(--text-muted); }
+
+/* ==========================================================================
+   MAPPA E CONSULENZA — lo stato "in arrivo"
+   --------------------------------------------------------------------------
+   Stessa scheda degli altri stati vuoti (.f3-emptyStart): cambia solo il
+   disegno grande, che qui e' la mascotte invece dell'icona, e l'elenco
+   di cosa ci sara' dentro alla sezione.
+   ========================================================================== */
+
+.f3-soon { padding-bottom: var(--sp-8); }
+.f3-soon__mascotte { width: var(--mascotte-w); height: var(--mascotte-w); }
+.f3-soon h2 { margin: var(--sp-6) 0 var(--sp-3); font-size: var(--fs-xl); line-height: var(--lh-xl); }
+
+.f3-soonList {
+  margin: var(--sp-7) var(--gutter) var(--sp-10);
+  padding: 0;
+  list-style: none;
+  display: grid; gap: var(--sp-4);
+}
+.f3-soonList li {
+  padding: var(--sp-6);
+  border: 1px solid var(--light-outline);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  box-shadow: var(--shadow-soft);
+  display: flex; align-items: center; gap: var(--sp-6);
+}
+.f3-soonList__icon {
+  width: var(--ico-chip); height: var(--ico-chip);
+  flex: 0 0 auto;
+  display: grid; place-items: center;
+  border-radius: var(--r-md);
+}
+.f3-soonList__copy { min-width: 0; display: flex; flex-direction: column; }
+.f3-soonList__copy strong { font-size: var(--fs-sm); line-height: var(--lh-sm); }
+.f3-soonList__copy small { font-size: var(--fs-xs); line-height: var(--lh-xs); color: var(--text-muted); }

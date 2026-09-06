@@ -25,7 +25,28 @@ window.NAVIDA_CONTENT = {
       monthlyTitle: 'Obiettivo mensile',
       monthlyBody: 'Continua, così stai andando alla grande! 🎉',
       activeTitle: 'Corsi attivi',
-      eventTitle: 'Prossimo evento'
+      eventTitle: 'Prossimo evento',
+
+      /* --- Versione "Da flusso" (FigJam 3.1) ---------------------------
+         La dashboard come la descrive il flusso: linea di carriera
+         compressa in alto, descrizione dello step di adesso con i suoi
+         obiettivi, "In primo piano" e le due scorciatoie.
+         Gli step non stanno qui: arrivano dalla schermata "percorso",
+         cosi' esiste un elenco solo da tenere aggiornato. */
+      lineaTitolo: 'La tua linea di carriera',
+      lineaEstendi: 'Apri la versione estesa',
+      stepOcchiello: 'Lo step di adesso',
+      stepDescrizione: 'Dalle pratiche di tutti i giorni passi ai numeri: impari a leggere un bilancio e a usare gli strumenti che ti chiederanno nel prossimo ruolo.',
+      stepObiettivi: [
+        'Chiudere un corso di contabilità di base',
+        'Usare Excel a livello avanzato ogni giorno',
+        'Affiancare per tre mesi chi prepara il bilancio'
+      ],
+      primoPianoTitolo: 'In primo piano',
+      scorciatoie: [
+        { icona: 'graduation-cap', tono: 'violet', etichetta: 'Formazione', nota: 'I corsi collegati allo step' },
+        { icona: 'briefcase-business', tono: 'blue', etichetta: 'Lavoro', nota: 'Offerte e tirocini dello step' }
+      ]
     },
     {
       id: 'notifiche',
@@ -91,6 +112,16 @@ window.NAVIDA_CONTENT = {
         'Progetti pratici reali',
         'Testing e iterazione',
         'Supporto della community'
+      ],
+
+      /* --- Attività dello step (FigJam 3.1.2) --------------------------
+         Ogni attività porta il suo tag: obbligatoria o facoltativa.
+         Basta cambiare "obbligatoria" per far cambiare l'etichetta. */
+      attivitaTitolo: 'Attività dello step',
+      attivita: [
+        { nome: 'Formazione 1 · Contabilità di base', dati: 'Corso online · 12 ore', obbligatoria: true },
+        { nome: 'Formazione 2 · Excel avanzato', dati: 'Corso online · 6 ore', obbligatoria: true },
+        { nome: 'Tirocinio in studio amministrativo', dati: 'In presenza · 3 mesi', obbligatoria: false }
       ]
     },
     {
@@ -108,11 +139,54 @@ window.NAVIDA_CONTENT = {
       title: 'Impostazioni contenuto',
       subtitle: 'Personalizza la tua esperienza'
     },
+
+    /* ================================================================
+       LE DUE SEZIONI ANCORA DA COSTRUIRE (FigJam 3.2 e 3.3)
+       ----------------------------------------------------------------
+       Sono le altre due voci della barra in basso. Finche' non esistono
+       davvero mostrano uno stato "in arrivo" con le parole del flusso:
+       meglio dire cosa ci sara' che aprire una pagina vuota.
+       ================================================================ */
+    {
+      id: 'mappa',
+      chapter: 'fase3',
+      type: 'sezioneInArrivo',
+      fullBleed: true,
+      title: 'Mappa',
+      posa: 'indicare',
+      titoloInArrivo: 'La mappa sta arrivando',
+      testoInArrivo: 'Qui trovi tutte le opportunità geolocalizzate e filtrabili, step per step del tuo percorso.',
+      voci: [
+        { icona: 'graduation-cap', tono: 'violet', etichetta: 'Formazione', nota: 'Scuole e corsi vicino a te' },
+        { icona: 'briefcase-business', tono: 'blue', etichetta: 'Lavoro', nota: 'Offerte e tirocini sul territorio' },
+        { icona: 'calendar', tono: 'purple', etichetta: 'Eventi', nota: 'Incontri e fiere in programma' },
+        { icona: 'zap', tono: 'orange', etichetta: 'Workshop', nota: 'Laboratori pratici, mezza giornata' }
+      ],
+      azione: 'Torna alla dashboard'
+    },
+    {
+      id: 'consulenza',
+      chapter: 'fase3',
+      type: 'sezioneInArrivo',
+      fullBleed: true,
+      title: 'Consulenza',
+      posa: 'stretta-mano',
+      titoloInArrivo: 'La consulenza sta arrivando',
+      testoInArrivo: 'Incontri in persona, divisi per tematica: scegli chi ti serve e prenoti dall’app.',
+      voci: [
+        { icona: 'circle-dollar-sign', tono: 'mint', etichetta: 'Commercialista', nota: 'Contratti, partita IVA, tasse' },
+        { icona: 'heart', tono: 'purple', etichetta: 'Psicologo', nota: 'Come stai mentre cambi lavoro' },
+        { icona: 'target', tono: 'violet', etichetta: 'Coaching', nota: 'Obiettivi, colloqui, tempi' },
+        { icona: 'heart-handshake', tono: 'blue', etichetta: 'Affiancamento', nota: 'Qualcuno accanto nei primi mesi' }
+      ],
+      azione: 'Torna alla dashboard'
+    },
     {
       id: 'profilo',
       chapter: 'fase4',
       type: 'profileHome',
       fullBleed: true,
+      title: 'Profilo',
       name: 'Marco Bacchin',
       email: 'bacchin.marco03@gmail.com',
       phone: '+39 123405687',

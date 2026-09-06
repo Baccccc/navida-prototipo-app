@@ -218,10 +218,13 @@ Sempre allo stesso modo, in tre pezzi:
    la finta barra di stato dell'iPhone, su telefono vero rispetta il notch.
 2. **La pagina** — è l'unica parte che scorre. Non ha altezze fisse: se il
    contenuto è lungo, si scorre; se è corto, resta com'è.
-3. **Barra in basso** — solo sulle quattro sezioni principali: Home, Percorso,
-   Catalogo, Profilo. Icona da 24 sopra, etichetta da 12 sotto, la voce in cui
-   ti trovi in `--main`. Sulle pagine di secondo livello non c'è: lì si torna
+3. **Barra in basso** — tre voci, come nel flusso su FigJam: **Dashboard ·
+   Mappa · Consulenza**. Icona da 24 sopra, etichetta da 12 sotto, la voce in
+   cui ti trovi in `--main`. Compare anche su percorso e catalogo, dove nessuna
+   voce risulta attiva. Sulle pagine di secondo livello non c'è: lì si torna
    indietro con la freccia in alto a sinistra.
+   Il **profilo** e le **notifiche** non stanno nella barra: si raggiungono
+   dall'avatar e dalla campanella in alto, come dice il flusso.
 
 I **pop up** (filtri, impostazioni del contenuto, foto profilo, log out) non
 sono pagine a sé: coprono la schermata da cui li hai aperti, che resta visibile

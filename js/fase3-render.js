@@ -56,6 +56,7 @@
     'heart-handshake': '<path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/><path d="M12 5 9.04 7.96a2.17 2.17 0 0 0 0 3.08c.82.82 2.13.85 3 .07l2.07-1.9a2.82 2.82 0 0 1 3.79 0l2.96 2.66"/><path d="m18 15-2-2"/><path d="m15 18-2-2"/>',
     'image': '<rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>',
     'log-out': '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/>',
+    'map': '<path d="M14.106 5.553a2 2 0 0 0 1.788 0l3.659-1.83A1 1 0 0 1 21 4.619v12.764a1 1 0 0 1-.553.894l-4.553 2.277a2 2 0 0 1-1.788 0l-4.212-2.106a2 2 0 0 0-1.788 0l-3.659 1.83A1 1 0 0 1 3 19.381V6.618a1 1 0 0 1 .553-.894l4.553-2.277a2 2 0 0 1 1.788 0z"/><path d="M15 5.764v15"/><path d="M9 3.236v15"/>',
     'moon': '<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>',
     'pencil-line': '<path d="M12 20h9"/><path d="M16.376 3.622a1 1 0 0 1 3.002 3.002L7.368 18.635a2 2 0 0 1-.855.506l-2.872.838a.5.5 0 0 1-.62-.62l.838-2.872a2 2 0 0 1 .506-.854z"/><path d="m15 5 3 3"/>',
     'person-standing': '<circle cx="12" cy="5" r="1"/><path d="m9 20 3-6 3 6"/><path d="m6 8 6 2 6-2"/><path d="M12 10v4"/>',
@@ -111,21 +112,23 @@
   /* ==================================================================
      BARRA DI NAVIGAZIONE IN BASSO
      ------------------------------------------------------------------
-     Non esiste in nessun export del Figma: e' una proposta. Quattro
-     voci, icona sopra ed etichetta corta sotto, la voce in cui ti trovi
-     in colore brand. Va solo sulle quattro schermate di primo livello:
-     le pagine di secondo livello hanno la freccia "indietro" e i pop up
-     coprono la schermata, quindi li' la barra non serve.
+     Tre voci, quelle del flusso: Dashboard · Mappa · Consulenza.
+     Notifiche e profilo NON stanno qui: si aprono dalla barra in alto
+     (campanella e avatar), come dice il flusso.
+
+     Icona da 24 sopra ed etichetta corta sotto, la voce in cui ti trovi
+     in colore brand. Percorso e catalogo sono di secondo livello: la
+     barra c'e' lo stesso (ci si arriva dalla dashboard e da li' si deve
+     poter tornare), ma nessuna voce risulta attiva.
 
      Non e' dentro alla pagina ma le sta accanto: la schermata (.screen)
      e' gia' una colonna flessibile, cosi' la pagina scorre e la barra
      resta ferma in fondo senza coprire l'ultimo contenuto.
      ================================================================== */
   var VOCI_NAV = [
-    { id: 'dashboard', icona: 'house', label: 'Home' },
-    { id: 'percorso', icona: 'trending-up', label: 'Percorso' },
-    { id: 'catalogo', icona: 'compass', label: 'Catalogo' },
-    { id: 'profilo', icona: 'user', label: 'Profilo' }
+    { id: 'dashboard', icona: 'house', label: 'Dashboard' },
+    { id: 'mappa', icona: 'map', label: 'Mappa' },
+    { id: 'consulenza', icona: 'users', label: 'Consulenza' }
   ];
 
   function bottomNav(attivo) {
@@ -227,8 +230,99 @@
     ].filter(Boolean));
   }
 
+  /* La scheda del prossimo evento: la usano sia la Home "Con percorso"
+     sia "In primo piano" della versione da flusso. */
+  function eventCard(screen) {
+    return h('button', { class: 'f3-event', onclick: go('dettaglio') }, [
+      h('div', { class: 'f3-date' }, [h('strong', { text: '15' }), h('span', { text: 'MAR' })]),
+      h('div', { class: 'f3-event__copy' }, [
+        h('small', { text: 'Scuola Italiana Design' }),
+        h('strong', { text: 'Workshop di introduzione all’AI generativa' }),
+        meta('users', '98 partecipanti'),
+        h('span', {}, [icon('calendar', ICO_SM), ' Evento', icon('clock', ICO_SM), ' 120m']),
+        h('em', { text: 'EVENTO' })
+      ]),
+      h('span', { class: 'f3-course__link' }, ['Dettagli ', icon('chevron-right', ICO_SM)])
+    ]);
+  }
+
+  /* ==================================================================
+     LINEA DI CARRIERA COMPRESSA (FigJam 3.1)
+     ------------------------------------------------------------------
+     Gli step in orizzontale, 1-2-3-4-5. L'avanzamento si legge dal
+     disegno — pallini pieni e tratte piene fino a dove sei arrivato —
+     e non da un numero: il flusso esclude la percentuale in modo
+     esplicito ("no percentuale").
+     Gli step non sono scritti qui: sono quelli della schermata
+     "percorso", cosi' resta un elenco solo da tenere aggiornato e i tre
+     stati (fatto / adesso / da fare) sono gli stessi della versione
+     estesa.
+     ================================================================== */
+  function passiPercorso() {
+    var percorso = schermata('percorso');
+    return (percorso && percorso.steps) || [];
+  }
+
+  function indiceAttivo(passi) {
+    var attivo = 0;
+    passi.forEach(function (passo, i) { if (passo.state === 'active') attivo = i; });
+    return attivo;
+  }
+
+  function lineaCompressa(passi, attivo) {
+    return h('ol', { class: 'f3-linea', 'aria-label': 'Avanzamento del percorso' }, passi.map(function (passo, i) {
+      var stato = passo.state === 'done' ? 'fatto' : passo.state === 'active' ? 'adesso' : 'dafare';
+      /* dentro al pallino: la spunta di chi ha finito, la coppa del
+         traguardo, niente per gli step ancora da fare */
+      var dentro = passo.state === 'done' ? icon('check', ICO_SM)
+        : passo.state === 'goal' ? icon('award', ICO_SM) : null;
+      return h('li', {
+        class: 'f3-linea__passo is-' + stato + (i <= attivo ? ' is-piena' : ''),
+        title: passo.role,
+        'aria-label': (passo.label || 'Step ' + (i + 1)) + (passo.role ? ' · ' + passo.role : '')
+      }, [
+        h('span', { class: 'f3-linea__pallino' }, dentro ? [dentro] : []),
+        h('span', { class: 'f3-linea__num', text: String(i + 1) })
+      ]);
+    }));
+  }
+
+  /* Descrizione dello step di adesso, con i suoi obiettivi.
+     Il titolo arriva dallo step della schermata "percorso": se il team
+     lo riscrive da qui, vale solo per la dashboard. */
+  function stepAdesso(screen, passi, attivo) {
+    var passo = passi[attivo] || {};
+    return h('section', { class: 'f3-stepNow' }, [
+      h('div', { class: 'f3-stepNow__head' }, [
+        h('span', { class: 'f3-stepNow__badge', text: passo.label || 'Step ' + (attivo + 1) }),
+        text(screen, 'stepOcchiello', screen.stepOcchiello, 'small', '')
+      ]),
+      text(screen, 'stepTitolo', passo.role || '', 'h2', ''),
+      text(screen, 'stepDescrizione', screen.stepDescrizione, 'p', ''),
+      h('ul', { class: 'f3-stepGoals' }, (screen.stepObiettivi || []).map(function (obiettivo, i) {
+        return h('li', {}, [
+          h('span', {}, [icon('check', ICO_SM)]),
+          text(screen, 'obiettivo.' + i, obiettivo, 'span', '')
+        ]);
+      }))
+    ]);
+  }
+
+  /* Le due scorciatoie del flusso: [Formazione] e [Lavoro]. */
+  function scorciatoie(screen) {
+    return h('div', { class: 'f3-scorciatoie' }, (screen.scorciatoie || []).map(function (voce, i) {
+      return h('button', { class: 'f3-scorciatoia', onclick: go('catalogo') }, [
+        h('span', { class: 'f3-scorciatoia__icon f3-tone--' + voce.tono }, [icon(voce.icona, ICO_MD)]),
+        text(screen, 'scorciatoia.' + i + '.etichetta', voce.etichetta, 'strong', ''),
+        text(screen, 'scorciatoia.' + i + '.nota', voce.nota, 'small', '')
+      ]);
+    }));
+  }
+
   Screens.dashboardHome = function (screen) {
-    if (S.pageVariant(screen.id, 'attiva') === 'vuota') {
+    var variante = S.pageVariant(screen.id, 'flusso');
+
+    if (variante === 'vuota') {
       return [h('div', { class: 'f3-page f3-home f3-home--empty' }, [
         topBar(screen, { identity: true }),
         h('div', { class: 'f3-stats' }, [
@@ -252,46 +346,104 @@
         ])
       ]), bottomNav('dashboard')];
     }
-    return [h('div', { class: 'f3-page f3-home' }, [
-      topBar(screen, { identity: true }),
-      h('div', { class: 'f3-stats' }, [
-        stat('book-open', 'violet', 'In corso', '1'),
-        stat('award', 'mint', 'Completati', '12'),
-        stat('trending-up', 'orange', 'Ore totali', '48h')
-      ]),
-      h('button', { class: 'f3-goal', onclick: go('percorso') }, [
-        h('div', { class: 'f3-goal__copy' }, [
-          text(screen, 'monthlyTitle', screen.monthlyTitle, 'h2', ''),
-          text(screen, 'monthlyBody', screen.monthlyBody, 'p', ''),
-          h('div', { class: 'f3-goal__meta' }, [
-            meta('target', '3/4 corsi'),
-            meta('clock', '18h/20h')
-          ])
+    if (variante === 'attiva') {
+      return [h('div', { class: 'f3-page f3-home' }, [
+        topBar(screen, { identity: true }),
+        h('div', { class: 'f3-stats' }, [
+          stat('book-open', 'violet', 'In corso', '1'),
+          stat('award', 'mint', 'Completati', '12'),
+          stat('trending-up', 'orange', 'Ore totali', '48h')
         ]),
-        h('div', { class: 'f3-ring', 'aria-label': '75 per cento' }, [h('strong', { text: '75%' })])
+        h('button', { class: 'f3-goal', onclick: go('percorso') }, [
+          h('div', { class: 'f3-goal__copy' }, [
+            text(screen, 'monthlyTitle', screen.monthlyTitle, 'h2', ''),
+            text(screen, 'monthlyBody', screen.monthlyBody, 'p', ''),
+            h('div', { class: 'f3-goal__meta' }, [
+              meta('target', '3/4 corsi'),
+              meta('clock', '18h/20h')
+            ])
+          ]),
+          h('div', { class: 'f3-ring', 'aria-label': '75 per cento' }, [h('strong', { text: '75%' })])
+        ]),
+        h('section', { class: 'f3-section' }, [
+          h('div', { class: 'f3-section__head' }, [
+            text(screen, 'activeTitle', screen.activeTitle, 'h2', ''),
+            h('button', { onclick: go('catalogo') }, ['Vedi tutti ', icon('chevron-right', ICO_SM)])
+          ]),
+          courseCard(screen, 'ux', 0)
+        ]),
+        h('section', { class: 'f3-section' }, [
+          h('div', { class: 'f3-section__head' }, [text(screen, 'eventTitle', screen.eventTitle, 'h2', '')]),
+          eventCard(screen)
+        ])
+      ]), bottomNav('dashboard')];
+    }
+
+    /* --- "Da flusso": la dashboard come la descrive il FigJam (3.1) ---
+       Nell'ordine del flusso: linea compressa, pulsante per estenderla,
+       step di adesso con obiettivi, "In primo piano", scorciatoie. */
+    var passi = passiPercorso();
+    var attivo = indiceAttivo(passi);
+
+    return [h('div', { class: 'f3-page f3-home f3-home--flusso' }, [
+      topBar(screen, { identity: true }),
+      h('section', { class: 'f3-section f3-lineaCard' }, [
+        h('div', { class: 'f3-section__head' }, [
+          text(screen, 'lineaTitolo', screen.lineaTitolo, 'h2', '')
+        ]),
+        lineaCompressa(passi, attivo),
+        h('button', { class: 'f3-btnOutline f3-lineaEstendi', onclick: go('percorso') }, [
+          text(screen, 'lineaEstendi', screen.lineaEstendi, 'span', ''),
+          icon('chevron-right', ICO_SM)
+        ])
       ]),
+      stepAdesso(screen, passi, attivo),
       h('section', { class: 'f3-section' }, [
         h('div', { class: 'f3-section__head' }, [
-          text(screen, 'activeTitle', screen.activeTitle, 'h2', ''),
+          text(screen, 'primoPianoTitolo', screen.primoPianoTitolo, 'h2', ''),
           h('button', { onclick: go('catalogo') }, ['Vedi tutti ', icon('chevron-right', ICO_SM)])
         ]),
-        courseCard(screen, 'ux', 0)
-      ]),
-      h('section', { class: 'f3-section' }, [
-        h('div', { class: 'f3-section__head' }, [text(screen, 'eventTitle', screen.eventTitle, 'h2', '')]),
-        h('button', { class: 'f3-event', onclick: go('dettaglio') }, [
-          h('div', { class: 'f3-date' }, [h('strong', { text: '15' }), h('span', { text: 'MAR' })]),
-          h('div', { class: 'f3-event__copy' }, [
-            h('small', { text: 'Scuola Italiana Design' }),
-            h('strong', { text: 'Workshop di introduzione all’AI generativa' }),
-            meta('users', '98 partecipanti'),
-            h('span', {}, [icon('calendar', ICO_SM), ' Evento', icon('clock', ICO_SM), ' 120m']),
-            h('em', { text: 'EVENTO' })
-          ]),
-          h('span', { class: 'f3-course__link' }, ['Dettagli ', icon('chevron-right', ICO_SM)])
+        h('div', { class: 'f3-primoPiano' }, [
+          courseCard(screen, 'excel', 'flusso.0'),
+          eventCard(screen)
         ])
-      ])
+      ]),
+      scorciatoie(screen)
     ]), bottomNav('dashboard')];
+  };
+
+  /* ==================================================================
+     MAPPA E CONSULENZA (FigJam 3.2 e 3.3)
+     ------------------------------------------------------------------
+     Le due sezioni non esistono ancora. Invece di lasciare due voci
+     della barra che non portano da nessuna parte, mostrano uno stato
+     "in arrivo" con le parole del flusso: si capisce cosa ci sara' e
+     si torna alla dashboard con un tocco.
+     Stesso vestito degli altri stati vuoti (f3-emptyStart).
+     ================================================================== */
+  Screens.sezioneInArrivo = function (screen) {
+    var mascotte = h('div', { class: 'f3-soon__mascotte', 'aria-hidden': 'true' });
+    if (window.NavidaMascotte) mascotte.appendChild(window.NavidaMascotte.elemento(screen.posa));
+
+    return [h('div', { class: 'f3-page f3-soonPage' }, [
+      topBar(screen, {}),
+      text(screen, 'title', screen.title, 'h1', 'f3-pageTitle'),
+      h('section', { class: 'f3-emptyStart f3-soon' }, [
+        mascotte,
+        text(screen, 'titoloInArrivo', screen.titoloInArrivo, 'h2', ''),
+        text(screen, 'testoInArrivo', screen.testoInArrivo, 'p', ''),
+        h('button', { onclick: go('dashboard') }, [icon('house', ICO_MD), text(screen, 'azione', screen.azione, 'span', '')])
+      ]),
+      h('ul', { class: 'f3-soonList' }, (screen.voci || []).map(function (voce, i) {
+        return h('li', {}, [
+          h('span', { class: 'f3-soonList__icon f3-tone--' + voce.tono }, [icon(voce.icona, ICO_MD)]),
+          h('span', { class: 'f3-soonList__copy' }, [
+            text(screen, 'voce.' + i + '.etichetta', voce.etichetta, 'strong', ''),
+            text(screen, 'voce.' + i + '.nota', voce.nota, 'small', '')
+          ])
+        ]);
+      }))
+    ]), bottomNav(screen.id)];
   };
 
   Screens.dashboardNotifications = function (screen) {
@@ -405,6 +557,35 @@
     ]), bottomNav('catalogo')];
   };
 
+  /* ==================================================================
+     ATTIVITA' DELLO STEP, CON IL TAG (FigJam 3.1.2)
+     ------------------------------------------------------------------
+     Ogni attivita' porta un'etichetta piccola: obbligatoria oppure
+     facoltativa. Stessa taglia di "EVENTO" e di "Sponsor".
+     ================================================================== */
+  function tagAttivita(obbligatoria) {
+    return h('em', {
+      class: 'f3-tag' + (obbligatoria ? ' f3-tag--obbligatoria' : ''),
+      text: obbligatoria ? 'Obbligatoria' : 'Facoltativa'
+    });
+  }
+
+  function elencoAttivita(screen) {
+    if (!screen.attivita || !screen.attivita.length) return null;
+    return h('section', { class: 'f3-attivita' }, [
+      text(screen, 'attivitaTitolo', screen.attivitaTitolo, 'h2', ''),
+      h('ul', {}, screen.attivita.map(function (voce, i) {
+        return h('li', {}, [
+          h('span', { class: 'f3-attivita__copy' }, [
+            text(screen, 'attivita.' + i + '.nome', voce.nome, 'strong', ''),
+            h('span', { text: voce.dati })
+          ]),
+          tagAttivita(voce.obbligatoria)
+        ]);
+      }))
+    ]);
+  }
+
   Screens.careerDetail = function (screen) {
     return h('div', { class: 'f3-page f3-detail' }, [
       h('header', { class: 'f3-detailHero' }, [
@@ -432,6 +613,7 @@
           text(screen, 'pointsTitle', screen.pointsTitle, 'h2', ''),
           h('ul', {}, screen.points.map(function (point, i) { return h('li', {}, [h('span', {}, [icon('check', ICO_SM)]), text(screen, 'point.' + i, point, 'span', '')]); }))
         ]),
+        elencoAttivita(screen),
         h('div', { class: 'f3-gallery' }, [
           h('img', { src: 'assets/fase3/detail-gallery-1.png', alt: '' }),
           h('img', { src: 'assets/fase3/detail-gallery-2.png', alt: '' }),
@@ -542,9 +724,14 @@
     return h('button', { class: 'p4-menuRow' + (danger ? ' is-danger' : ''), onclick: action }, [icon(iconName, ICO_MD), h('span', { text: label }), icon('chevron-right', ICO_SM)]);
   }
 
-  Screens.profileHome = function () {
+  /* Il profilo si apre dall'avatar nella barra in alto (cosi' dice il
+     flusso), quindi non e' una voce della barra in basso: da qui si
+     torna indietro con la freccia, come nelle altre pagine di secondo
+     livello. */
+  Screens.profileHome = function (screen) {
     var d = profileData();
-    return [h('div', { class: 'p4-page p4-home' }, [
+    return h('div', { class: 'p4-page p4-home' }, [
+      profileHeader((screen && screen.title) || 'Profilo', 'dashboard'),
       h('div', { class: 'p4-profileHero' }, [profileAvatar(true), h('h1', { text: d.firstName + ' ' + d.lastName })]),
       h('section', { class: 'p4-section' }, [
         h('h2', { text: 'Anagrafica' }),
@@ -565,7 +752,7 @@
           menuRow('log-out', 'Log out', go('logoutProfilo'), true)
         ])
       ])
-    ]), bottomNav('profilo')];
+    ]);
   };
 
   function photoChoice(iconName, title, body, action, danger) {
