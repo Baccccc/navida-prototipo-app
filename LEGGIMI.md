@@ -98,7 +98,7 @@ può esportare in JSON.
 | **Colori** | Cambia i colori del tema. Si applicano subito a tutta l'app. |
 | **Ordine** | Attiva il riordino e trascina le risposte per cambiarne l'ordine. |
 | **Elemento** | Attiva la selezione, clicca un elemento (lista risposte, titolo, pulsante, barra, mascotte, card…) e scegli una variante di stile. Puoi applicarla solo a quella schermata o a tutte. |
-| **Vai a** | Salta direttamente a una qualsiasi delle 49 schermate. |
+| **Vai a** | Salta direttamente a una qualsiasi delle schermate. |
 
 | **Commenti** | Lascia un commento sulla schermata che stai guardando. |
 
@@ -117,11 +117,15 @@ a cui si riferiscono.
 - La prima volta il prototipo chiede il tuo nome, poi se lo ricorda.
 - Ogni commento resta legato alla sua schermata: cambiando pagina compaiono
   quelli di quella pagina.
-- **Risolto** lo barra e lo sbiadisce, senza cancellarlo. Si può riaprire.
+- **Risolto** lo toglie dai foglietti e lo sposta nella sezione **Risolti**
+  del pannello, che si apre e si chiude. **Non viene cancellato:** lo rileggi
+  quando vuoi e lo riapri con **Riapri**. Così a sinistra resta solo quello
+  che c'è ancora da guardare, e il lavoro fatto non si perde.
 - **Elimina** chiede la parola d'ordine, così non si buttano via per sbaglio
   i commenti degli altri.
-- Sulla scheda c'è un pallino arancione con quanti commenti aperti ci sono in
-  tutto il prototipo, e sotto l'elenco delle altre schermate che ne hanno.
+- Sulla scheda c'è un pallino arancione con quanti commenti **aperti** ci sono
+  in tutto il prototipo, e sotto l'elenco delle altre schermate che ne hanno.
+  In fondo al pannello c'è il conto dei risolti.
 
 I commenti stanno nella tabella `navida_commenti` del database: come le
 modifiche, non si perdono ricaricando l'app. Sotto i 1240px di larghezza i
@@ -188,16 +192,20 @@ Per aggiungere una domanda basta copiare un oggetto esistente, cambiare
 
 ## Cosa c'è dentro
 
-**50 schermate**, in quest'ordine:
+**51 schermate** in `index.html`, in quest'ordine:
 
-1. **Ingresso** (6) — splash, scelta tipo utente, 4 schede di onboarding
+1. **Ingresso** (7) — splash, benvenuto, scelta tipo utente, 4 schede di onboarding
 2. **Fase 1 · Scoperta** (16) — nome, genere, età, motivazione, obiettivo, titolo di
    studio, specializzazioni, situazione lavorativa, lavoro dei sogni, prima proiezione
-3. **Accesso** (2) — registrazione (3 versioni) e codice via email
+3. **Accesso e chiusura** (4) — registrazione (più versioni), codice via email,
+   anteprima della linea di carriera, fine del prototipo
 4. **Fase 2 · Questionario** (24) — introduzione + 3 blocchi:
    - Blocco 1 · anagrafica, categoria professionale, mansioni, livello di responsabilità
    - Blocco 2 · 3 ordinamenti, paure, valori, trasferimento, sogno aperto
    - Blocco 3 · 7 domande di personalità da 8 risposte
+
+Più **15 schermate** in `fase3.html`: dashboard, mappa, consulenza, notifiche,
+percorso, catalogo, dettaglio, filtri, impostazioni del contenuto e le sei del profilo.
 5. **Chiusura** (2) — anteprima della linea di carriera
 
 Le barre di avanzamento sono **proporzionali** al numero di schermate del capitolo.
@@ -227,14 +235,17 @@ le proporzioni sono registrate in `js/mascotte.js`, così non si deformano.
 
 Ricostruita com'è oggi nel Figma (schermate *Animaz ludica 1-12*):
 
-1. **`lavoroSogni`** — tre anelli concentrici con la scritta *"Qual è il lavoro
+1. **`tuoMomento`** — l'astronauta salta e fa il gesto di incoraggiamento.
+2. **`lavoroSogni`** — tre anelli concentrici con la scritta *"Qual è il lavoro
    che sogni?"* entrano in dissolvenza ingrandendosi e ruotando, poi si fermano.
-   Al centro il campo di testo; la tastiera sale da sola.
-2. Premuto **Continua**, la tastiera scende e gli anelli riprendono a girare.
-3. **`elaborazione`** — tre cerchi giganti (lavanda, azzurro, viola) si aprono
-   dal centro uno sopra l'altro, ciascuno con la sua etichetta:
-   *Analizzando le risposte · Calcolando profilo utente · Creando suggerimenti*.
-4. **`previsione`** — i tre consigli entrano a cascata, uno dopo l'altro.
+   Al centro il campo di testo e la sua descrizione. **La tastiera non sale da
+   sola:** si apre solo toccando il campo.
+3. Premuto **Continua**, la tastiera scende e gli anelli riprendono a girare.
+4. **`elaborazione`** — l'astronauta cambia veste e mestiere: le mascotte si
+   avvicendano al centro dello schermo, tutte della stessa dimensione e tutte
+   in piedi, senza etichette. L'attesa dura sempre lo stesso tempo (5,4
+   secondi) qualunque sia il numero di pose della variante scelta.
+5. **`previsione`** — un consiglio solo, con la firma di Navida.
 
 Resta col badge *"da rifare"* perché il design va ripensato insieme: intanto si
 comporta come il progetto attuale.
@@ -248,7 +259,11 @@ con la tastiera del computer, ma anche i tasti a schermo funzionano.
 ## Altre cose ancora da fare
 
 1. **Sezione ludica** — funzionante ma da ridisegnare.
-2. **Fase 3** — dashboard e linea di carriera sono in `fase3.html`; mappa e consulenza restano da implementare.
+2. **Fase 3** — dashboard, linea di carriera e catalogo sono in `fase3.html`.
+   **Mappa** e **Consulenza** hanno la loro voce nella barra in basso e una
+   schermata "in arrivo": il contenuto vero resta da costruire.
+   Restano da fare anche lo scorrimento orizzontale fra gli step e la vista a
+   mappa delle attività (punti 3.1.2 e 3.1.3 del flusso su FigJam).
 3. **Fase 4** — profilo, modifica dati e foto, profilo professionale, preferenze e logout sono in `fase3.html`.
 4. **Testi placeholder** — le 4 schede di onboarding hanno copy provvisorio.
 

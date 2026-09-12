@@ -296,7 +296,9 @@
       container.classList.add('is-sorting');
       item.style.position = 'absolute';
       item.style.left = (rect.left - host.left) + 'px';
-      item.style.top = (rect.top - host.top) + 'px';
+      /* la lista scorre: la posizione assoluta va misurata sul contenuto,
+         non sulla finestra, altrimenti la card salta appena la afferri */
+      item.style.top = (rect.top - host.top + container.scrollTop) + 'px';
       item.style.width = rect.width + 'px';
       item.style.margin = '0';
       item.setPointerCapture && item.setPointerCapture(e.pointerId);
@@ -325,7 +327,7 @@
 
       var host = container.getBoundingClientRect();
       var hItem = dragging.getBoundingClientRect().height;
-      var top = latestY - host.top - grabOffsetY;
+      var top = latestY - host.top - grabOffsetY + container.scrollTop;
       var max = Math.max(0, container.scrollHeight - hItem);
       dragging.style.top = Math.max(0, Math.min(max, top)) + 'px';
 
@@ -643,8 +645,13 @@
       ctaBtn.disabled = !ok;
     }
 
+    /* i bottoni disegnati adesso: servono alle schermate con la riga di
+       info, che cambiano scelta senza ridisegnare tutta la lista */
+    var nodi = [];
+
     function paint() {
       box.innerHTML = '';
+      nodi = [];
       ordered.forEach(function (entry) {
         var o = entry.o;
         var oi = entry.i;
@@ -666,8 +673,14 @@
           h('span', { class: 'opt__label', 'data-editable': screen.id + '.opt.' + oi, text: label })
         ]);
         if (o.hint) col.appendChild(h('span', { class: 'opt__hint', text: o.hint }));
-        if (type === 'singleInfo' && selected && o.info) {
-          col.appendChild(h('span', { class: 'opt__info', 'data-editable': screen.id + '.info.' + oi, text: S.text(screen.id + '.info.' + oi, o.info) }));
+        if (type === 'singleInfo' && o.info) {
+          col.appendChild(h('span', { class: 'opt__info' }, [
+            h('span', {
+              class: 'opt__info__testo',
+              'data-editable': screen.id + '.info.' + oi,
+              text: S.text(screen.id + '.info.' + oi, o.info)
+            })
+          ]));
         }
         kids.push(col);
         if (o.chip) kids.push(h('span', { class: 'opt__chip', text: o.chip }));
@@ -708,11 +721,19 @@
             current = val;
             S.setAnswer(screen.field, current);
             if (screen.optionsFrom === 'professioni') S.setAnswer('categoria', val);
-            paint(); refreshCta();
+            if (type === 'singleInfo') {
+              /* niente ridisegno: la riga di info si apre e si chiude
+                 con la transizione, invece di comparire di scatto */
+              nodi.forEach(function (r) { r.n.classList.toggle('is-selected', r.val === current); });
+              refreshCta();
+            } else {
+              paint(); refreshCta();
+            }
             if (!hasCta) setTimeout(function () { window.NavidaApp.next(); }, 190);
           }
         });
 
+        if (type === 'singleInfo') nodi.push({ n: node, val: val });
         box.appendChild(node);
       });
 
@@ -768,8 +789,13 @@
       }));
     }
 
+    /* Senza pulsante il footer resta vuoto: non va messo in pagina,
+       altrimenti si mangia lo spazio in fondo e la lista delle risposte
+       viene tagliata prima del bordo dello sfondo. */
+    if (!hasCta) box.classList.add('options--pieno');
+
     paint();
-    return [header(screen, progress), body, footer];
+    return [header(screen, progress), body, footer.children.length ? footer : null];
   }
 
   Screens.single = choiceScreen;
@@ -795,9 +821,13 @@
     }
 
     /* ---------------------------------------------------------------
-       1 · TRASCINAMENTO — tutta la card e' afferrabile. Il numero vive
-       nella stessa riga della proposta, quindi rimane sempre allineato.
-       A destra resta una fascia libera per scorrere da telefono.
+       1 · TRASCINAMENTO — si trascina la card, non la riga intera.
+       I numeri stanno in una colonna a sinistra, fuori da cio' che si
+       muove: sono le posizioni della classifica, non un'etichetta della
+       risposta. Premendo sui numeri si scorre la pagina, cosi' da
+       telefono la lista si puo' leggere tutta senza riordinarla per
+       sbaglio. Le due colonne sono tenute in riga da una griglia, cosi'
+       restano allineate anche quando un'etichetta va a capo.
        --------------------------------------------------------------- */
     function costruisciManiglia() {
       var box = optionsBox(screen, []);
@@ -805,21 +835,29 @@
 
       function paint() {
         box.innerHTML = '';
+        /* prima la colonna dei numeri: sta in griglia a riga fissa e non
+           viene mai riordinata, quindi non serve rinumerarla dopo */
         seq.forEach(function (entry, pos) {
+          box.appendChild(h('span', {
+            class: 'opt__pos',
+            'aria-hidden': 'true',
+            style: 'grid-row:' + (pos + 1),
+            text: String(pos + 1)
+          }));
+        });
+        /* poi le card, che sono le uniche cose che si trascinano */
+        seq.forEach(function (entry) {
           box.appendChild(h('div', {
-            class: 'rankItem',
+            class: 'opt opt--rank',
             'data-oi': entry.i,
             'aria-grabbed': 'false'
           }, [
-            h('span', { class: 'opt__pos', text: String(pos + 1) }),
-            h('div', { class: 'opt opt--rank' }, [
-              h('span', { class: 'opt__grip', 'aria-hidden': 'true' }, [icon('grip-vertical', 16)]),
-              h('span', {
-                class: 'opt__label',
-                'data-editable': screen.id + '.opt.' + entry.i,
-                text: optLabel(screen, entry.i, entry.o.label)
-              })
-            ])
+            h('span', { class: 'opt__grip', 'aria-hidden': 'true' }, [icon('grip-vertical', 16)]),
+            h('span', {
+              class: 'opt__label',
+              'data-editable': screen.id + '.opt.' + entry.i,
+              text: optLabel(screen, entry.i, entry.o.label)
+            })
           ]));
         });
       }
@@ -828,19 +866,9 @@
       makeSortable(box, function (order) {
         seq = order.map(function (i) { return indexed[i]; });
         salva(order);
-        Array.prototype.forEach.call(box.querySelectorAll('.rankItem'), function (n, pos) {
-          n.querySelector('.opt__pos').textContent = String(pos + 1);
-        });
-      }, { itemSelector: '.rankItem' });
+      }, { itemSelector: '.opt--rank' });
 
-      return h('div', { class: 'rankWrap' }, [
-        box,
-        h('div', {
-          class: 'rankScrollRail',
-          'aria-hidden': 'true',
-          title: 'Scorri qui'
-        })
-      ]);
+      return h('div', { class: 'rankWrap' }, [box]);
     }
 
     /* ---------------------------------------------------------------
@@ -1091,10 +1119,11 @@
 
     window.NavidaKeyboard.attach(input, ['Direttore creativo', 'Sviluppatore', 'Chef']);
 
-    // gli anelli entrano, poi si fermano: si può scrivere
+    /* Gli anelli entrano e si fermano, ma la tastiera NON sale da sola:
+       si apre solo toccando il campo. autoGrow resta, serve a dare al
+       campo l'altezza giusta se c'e' gia' una risposta salvata. */
     setTimeout(function () {
-      if (new URLSearchParams(window.location.search).get('autofocus') === '0') return;
-      try { input.focus(); autoGrow(); } catch (e) {}
+      try { autoGrow(); } catch (e) {}
     }, 1500);
 
     function avanti() {
@@ -1138,10 +1167,22 @@
   Screens.rankIntro = function (screen, progress) {
     var righe = (screen.demo || ['Stipendio', 'Flessibilità', 'Crescita']);
 
-    /* Stessa anatomia delle domande rank reali: numero fuori dalla card,
-       maniglia dentro la risposta e intera riga trascinabile. La mano vive
-       nella card, quindi ne eredita sempre il movimento. */
-    var lista = h('div', { class: 'rankDemo__list rankList' }, righe.map(function (t, i) {
+    /* Stessa anatomia delle domande rank reali: i numeri stanno in una
+       colonna a sinistra e restano fermi, si muovono solo le card. Cosi'
+       la dimostrazione spiega davvero cosa succede: il numero e' la
+       posizione in classifica, non un'etichetta della risposta.
+       La mano vive dentro la card, quindi ne eredita il movimento. */
+    var lista = h('div', { class: 'rankDemo__list' });
+
+    righe.forEach(function (t, i) {
+      lista.appendChild(h('span', {
+        class: 'opt__pos',
+        style: 'grid-row:' + (i + 1),
+        text: String(i + 1)
+      }));
+    });
+
+    righe.forEach(function (t, i) {
       var cardKids = [
         h('span', { class: 'opt__grip' }, [icon('grip-vertical', 16)]),
         h('span', { class: 'opt__label rankDemo__label', text: t })
@@ -1153,11 +1194,11 @@
           html: manina()
         }));
       }
-      return h('div', { class: 'rankItem rankDemo__row', 'data-i': String(i) }, [
-        h('span', { class: 'opt__pos', text: String(i + 1) }),
-        h('div', { class: 'opt opt--rank' }, cardKids)
-      ]);
-    }));
+      lista.appendChild(h('div', {
+        class: 'opt opt--rank rankDemo__card',
+        'data-i': String(i)
+      }, cardKids));
+    });
 
     var demo = h('div', { class: 'rankDemo', 'aria-hidden': 'true' }, [lista]);
 
@@ -1569,12 +1610,16 @@
 
     /* --- 3 · PROVA: il verdetto, e sotto una sola prova ------------- */
     } else if (variant === 'prova') {
+      /* come le varianti "voce" e "verdetto": qui comanda il verdetto,
+         quindi il titolo di servizio della schermata non va ripetuto */
+      body.className = 'body body--prova';
+      body.innerHTML = '';
       body.appendChild(h('div', { class: 'prova' }, [
         h('h2', { class: 'prova__frase', 'data-editable': screen.id + '.tip.0.title' },
           [conParoleTue(unoTitolo)]),
-        h('p', { class: 'prova__testo', 'data-editable': screen.id + '.tip.0.desc' },
-          [conParoleTue(unoTesto)])
-      ]));
+        unoTesto ? h('p', { class: 'prova__testo', 'data-editable': screen.id + '.tip.0.desc' },
+          [conParoleTue(unoTesto)]) : null
+      ].filter(Boolean)));
       if (window.NavidaPercorso) {
         var salita = NavidaPercorso.disegna([
           { nome: 'Oggi' },
@@ -1612,7 +1657,6 @@
 
     var footer = h('div', { class: 'footer' }, [
       cta(screen, T(screen, 'ctaPrimaria', screen.ctaPrimaria), function () { window.NavidaApp.next(); }),
-      h('p', { class: 'nota', 'data-editable': screen.id + '.ctaPrimariaNota', text: T(screen, 'ctaPrimariaNota', screen.ctaPrimariaNota) }),
       h('button', {
         class: 'linkbtn',
         'data-editable': screen.id + '.ctaSecondaria',
@@ -2058,19 +2102,74 @@
     }
 
     if (variant === 'serpentina') {
+      /* Stessa anatomia della lista — pallino a sinistra, testo a destra —
+         ma il pallino oscilla dentro la sua corsia e la linea li unisce
+         con curve morbide a S. Le tappe stanno nel flusso normale: niente
+         altezze fisse, niente coordinate cablate, quindi regge un numero
+         qualsiasi di tappe e i titoli che vanno a capo. */
+      var ONDA = 30;   /* di quanti pixel si sposta il pallino delle dispari */
       var curveSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
       curveSvg.setAttribute('class', 'careerCurve__line');
-      curveSvg.setAttribute('viewBox', '0 0 345 760');
       curveSvg.setAttribute('preserveAspectRatio', 'none');
       curveSvg.setAttribute('aria-hidden', 'true');
-      var curvePath = 'M47 36 L47 104 C47 156 85 184 149 184 L252 184 C302 184 323 218 323 270 L323 354 C323 406 288 438 228 438 L132 438 C76 438 48 472 48 526 L48 604 C48 660 88 694 148 694 L298 694';
-      curveSvg.innerHTML = '<path class="careerCurve__track" d="' + curvePath + '" />' +
-        '<path class="careerCurve__progress" d="' + curvePath + '" />';
+      curveSvg.innerHTML =
+        '<path class="careerCurve__track" fill="none" vector-effect="non-scaling-stroke" />' +
+        '<path class="careerCurve__progress" fill="none" vector-effect="non-scaling-stroke" />';
       var curve = h('div', { class: 'careerCurve' }, [curveSvg]);
       steps.forEach(function (step, i) {
-        curve.appendChild(stepButton(step, i, 'careerCurve__step careerCurve__step--' + (i + 1)));
+        var riga = stepButton(step, i, 'careerCurve__step');
+        riga.style.setProperty('--dx', (i % 2 ? ONDA : 0) + 'px');
+        curve.appendChild(riga);
       });
-      avviaPercorsoConsultabile(curve, Array.prototype.slice.call(curve.querySelectorAll('.careerCurve__step')), 4600);
+
+      /* La linea nasce dai centri veri dei pallini, misurati quando la
+         schermata e' in pagina: se cambia il numero di tappe o l'altezza
+         di una card, il tracciato la segue da solo. */
+      var tracciaCurva = function () {
+        var box = curve.getBoundingClientRect();
+        var dischi = Array.prototype.slice.call(curve.querySelectorAll('.careerStep__state'));
+        if (!box.width || dischi.length < 2) return false;
+        var punti = dischi.map(function (el) {
+          var r = el.getBoundingClientRect();
+          return { x: r.left - box.left + r.width / 2, y: r.top - box.top + r.height / 2 };
+        });
+        var dd = 'M ' + punti[0].x.toFixed(1) + ' ' + punti[0].y.toFixed(1);
+        for (var i = 1; i < punti.length; i++) {
+          var a = punti[i - 1], b = punti[i], k = (b.y - a.y) * .5;
+          dd += ' C ' + a.x.toFixed(1) + ' ' + (a.y + k).toFixed(1) +
+                ', ' + b.x.toFixed(1) + ' ' + (b.y - k).toFixed(1) +
+                ', ' + b.x.toFixed(1) + ' ' + b.y.toFixed(1);
+        }
+        curveSvg.setAttribute('viewBox', '0 0 ' + box.width.toFixed(1) + ' ' + box.height.toFixed(1));
+        Array.prototype.forEach.call(curveSvg.querySelectorAll('path'), function (p) {
+          p.setAttribute('d', dd);
+        });
+        /* a disegno finito il tratteggio non serve piu': se lo lasciassimo
+           con la lunghezza vecchia, un ridimensionamento taglierebbe la coda */
+        if (curve.style.getPropertyValue('--career-progress') === '1') {
+          var fatta = curveSvg.querySelector('.careerCurve__progress');
+          fatta.style.strokeDasharray = '';
+          fatta.style.strokeDashoffset = '';
+        }
+        return true;
+      };
+
+      (function attendi(tentativi) {
+        if (!curve.isConnected || !tracciaCurva()) {
+          if (tentativi > 90) return;
+          requestAnimationFrame(function () { attendi(tentativi + 1); });
+          return;
+        }
+        /* nasconde subito la linea gia' fatta: senza questo, per un
+           fotogramma si vedrebbe tutto il tracciato prima che parta */
+        var fatta = curveSvg.querySelector('.careerCurve__progress');
+        var lung = fatta.getTotalLength();
+        fatta.style.strokeDasharray = String(lung);
+        fatta.style.strokeDashoffset = String(lung);
+        avviaPercorsoConsultabile(curve, Array.prototype.slice.call(curve.querySelectorAll('.careerCurve__step')), 4600);
+        if (window.ResizeObserver) new ResizeObserver(tracciaCurva).observe(curve);
+      })(0);
+
       view = h('div', { class: 'careerView careerView--serpentina' }, [
         h('div', { class: 'careerView__compactHead' }, [
           h('strong', { text: '1 di 5 step completato' }),

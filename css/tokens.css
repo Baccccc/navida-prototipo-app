@@ -112,6 +112,41 @@
   /* --- Motion ----------------------------------------------------- */
   --ease: cubic-bezier(.22, .61, .36, 1);
   --dur: 260ms;
+
+  /* ==================================================================
+     AGGIUNTE PER LA FASE 3 E 4 (dashboard, catalogo, profilo)
+     Solo token nuovi: nessun valore qui sopra e' stato modificato,
+     perche' li usa anche il questionario. Vedi DESIGN-SYSTEM.md.
+     ================================================================== */
+
+  /* --- Colori di stato -------------------------------------------- */
+  /* verde "andato a buon fine": step completato, punti chiave, spunte */
+  --success: #16866b;
+  --success-bg: #16a08518;
+  /* rosso "attenzione": log out, elimina, segnala, pallino notifiche */
+  --danger: #fb2c36;
+  --danger-bg: #fb2c3618;
+
+  /* --- Misure delle icone ----------------------------------------- */
+  --ico-sm: 16px;    /* dentro una riga di testo: meta dati, freccine */
+  --ico-md: 20px;    /* dentro un quadratino colorato o una riga elenco */
+  --ico-lg: 24px;    /* pulsanti della barra in alto e della barra in basso */
+  --ico-chip: 40px;  /* il quadratino colorato che contiene l'icona da 20 */
+  --avatar-sm: 42px; /* l'avatar tondo nella barra in alto */
+
+  /* --- Tinte del blu di marca (prima erano otto alfa diverse) ------ */
+  --main-soft: #4240ba14;    /* fondo tenue: quadratini icona, riquadri */
+  --main-ring: #4240ba33;    /* anelli e bordi tenui */
+
+  /* --- Sopra la sfumatura di marca --------------------------------- */
+  --on-main-dim: #ffffff59;  /* traccia dell'anello di avanzamento */
+  --on-main-veil: #ffffff30; /* pastiglie e badge su foto o sfumatura */
+
+  /* --- Velo scuro sotto i pop up ---------------------------------- */
+  --scrim: #1e1a4d66;
+
+  /* --- Barra di navigazione in basso ------------------------------ */
+  --nav-h: 64px;
 }
 
 @media (prefers-reduced-motion: reduce) {
