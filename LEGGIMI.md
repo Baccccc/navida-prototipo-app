@@ -117,11 +117,15 @@ a cui si riferiscono.
 - La prima volta il prototipo chiede il tuo nome, poi se lo ricorda.
 - Ogni commento resta legato alla sua schermata: cambiando pagina compaiono
   quelli di quella pagina.
-- **Risolto** lo barra e lo sbiadisce, senza cancellarlo. Si può riaprire.
+- **Risolto** lo toglie dai foglietti e lo sposta nella sezione **Risolti**
+  del pannello, che si apre e si chiude. **Non viene cancellato:** lo rileggi
+  quando vuoi e lo riapri con **Riapri**. Così a sinistra resta solo quello
+  che c'è ancora da guardare, e il lavoro fatto non si perde.
 - **Elimina** chiede la parola d'ordine, così non si buttano via per sbaglio
   i commenti degli altri.
-- Sulla scheda c'è un pallino arancione con quanti commenti aperti ci sono in
-  tutto il prototipo, e sotto l'elenco delle altre schermate che ne hanno.
+- Sulla scheda c'è un pallino arancione con quanti commenti **aperti** ci sono
+  in tutto il prototipo, e sotto l'elenco delle altre schermate che ne hanno.
+  In fondo al pannello c'è il conto dei risolti.
 
 I commenti stanno nella tabella `navida_commenti` del database: come le
 modifiche, non si perdono ricaricando l'app. Sotto i 1240px di larghezza i

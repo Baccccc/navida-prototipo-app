@@ -22,6 +22,9 @@
     pronto: false,
     disponibile: false,
     lista: [],
+    /* i risolti non spariscono: restano in una sezione a parte del
+       pannello, chiusa finche' non la si apre */
+    mostraRisolti: false,
     _ultimaSchermata: null,
 
     /* ================================================================== */
@@ -175,6 +178,21 @@
       return this.lista.filter(function (c) { return c.schermata === id; });
     },
 
+    /** Quelli ancora da guardare, su questa schermata. */
+    apertiDiQuesta: function () {
+      return this.diQuesta().filter(function (c) { return !c.risolto; });
+    },
+
+    /** Quelli gia' sistemati, su questa schermata. */
+    risoltiDiQuesta: function () {
+      return this.diQuesta().filter(function (c) { return c.risolto; });
+    },
+
+    /** Quanti ne sono stati risolti in tutto il prototipo. */
+    risoltiTotali: function () {
+      return this.lista.filter(function (c) { return c.risolto; }).length;
+    },
+
     quando: function (c) {
       var d = new Date(c.quando);
       if (isNaN(d)) return '';
@@ -190,7 +208,10 @@
       var C = this;
       this._ultimaSchermata = window.NavidaApp.current().id;
 
-      var miei = this.diQuesta();
+      /* A sinistra restano solo i commenti aperti: quelli risolti si
+         rileggono dalla sezione "Risolti" del pannello. Cosi' lo schermo
+         resta pulito man mano che il lavoro va avanti. */
+      var miei = this.apertiDiQuesta();
       this.host.innerHTML = '';
       this.host.classList.toggle('is-vuoto', !miei.length);
 
@@ -198,15 +219,14 @@
 
       miei.forEach(function (c, i) {
         C.host.appendChild(h('div', {
-          class: 'cm-nota' + (c.risolto ? ' is-risolto' : ''),
+          class: 'cm-nota',
           style: 'animation-delay:' + (i * 60) + 'ms'
         }, [
           h('div', { class: 'cm-nota__testa' }, [
             h('span', { class: 'cm-nota__data', text: C.quando(c) })
           ]),
-          h('p', { class: 'cm-nota__testo', text: c.testo }),
-          c.risolto ? h('span', { class: 'cm-nota__tag' }, [icon('check', 11), 'Risolto']) : null
-        ].filter(Boolean)));
+          h('p', { class: 'cm-nota__testo', text: c.testo })
+        ]));
       });
 
       if (window.lucide) window.lucide.createIcons();
@@ -225,7 +245,6 @@
     pannello: function (p) {
       var C = this;
       var screen = window.NavidaApp.current();
-      var miei = this.diQuesta();
 
       /* --- scrivi ---------------------------------------------------- */
       var campo = h('textarea', {
@@ -252,30 +271,58 @@
       ]));
       p.appendChild(h('p', { class: 'ed-hint', text: 'Compare a sinistra dello schermo, sulla schermata corrente.' }));
 
-      /* --- quelli di questa schermata -------------------------------- */
-      p.appendChild(h('div', { class: 'ed-label', text: 'Su questa schermata (' + miei.length + ')' }));
+      /* Una riga di commento, uguale per gli aperti e per i risolti. */
+      function riga(c) {
+        return h('div', { class: 'ed-commento' + (c.risolto ? ' is-risolto' : '') }, [
+          h('div', { class: 'ed-commento__testa' }, [
+            h('span', { class: 'ed-commento__data', text: C.quando(c) })
+          ]),
+          h('p', { class: 'ed-commento__testo', text: c.testo }),
+          h('div', { class: 'ed-commento__azioni' }, [
+            h('button', {
+              class: 'ed-mini',
+              onclick: function () { C.risolvi(c.id); }
+            }, [icon(c.risolto ? 'rotate-ccw' : 'check', 12), c.risolto ? 'Riapri' : 'Risolto']),
+            h('button', {
+              class: 'ed-mini ed-mini--danger',
+              onclick: function () { C.cancella(c.id); }
+            }, [icon('x', 12), 'Elimina'])
+          ])
+        ]);
+      }
 
-      if (!miei.length) {
-        p.appendChild(h('div', { class: 'ed-empty', text: 'Ancora nessun commento.' }));
+      /* --- aperti su questa schermata -------------------------------- */
+      var aperti  = this.apertiDiQuesta();
+      var risolti = this.risoltiDiQuesta();
+
+      p.appendChild(h('div', { class: 'ed-label', text: 'Aperti su questa schermata (' + aperti.length + ')' }));
+
+      if (!aperti.length) {
+        p.appendChild(h('div', {
+          class: 'ed-empty',
+          text: risolti.length ? 'Qui e\u2019 tutto sistemato.' : 'Ancora nessun commento.'
+        }));
       } else {
-        miei.forEach(function (c) {
-          p.appendChild(h('div', { class: 'ed-commento' + (c.risolto ? ' is-risolto' : '') }, [
-            h('div', { class: 'ed-commento__testa' }, [
-              h('span', { class: 'ed-commento__data', text: C.quando(c) })
-            ]),
-            h('p', { class: 'ed-commento__testo', text: c.testo }),
-            h('div', { class: 'ed-commento__azioni' }, [
-              h('button', {
-                class: 'ed-mini',
-                onclick: function () { C.risolvi(c.id); }
-              }, [icon(c.risolto ? 'rotate-ccw' : 'check', 12), c.risolto ? 'Riapri' : 'Risolto']),
-              h('button', {
-                class: 'ed-mini ed-mini--danger',
-                onclick: function () { C.cancella(c.id); }
-              }, [icon('x', 12), 'Elimina'])
-            ])
-          ]));
-        });
+        aperti.forEach(function (c) { p.appendChild(riga(c)); });
+      }
+
+      /* --- risolti: restano qui, non si cancellano ------------------- */
+      if (risolti.length) {
+        p.appendChild(h('button', {
+          class: 'ed-risolti' + (this.mostraRisolti ? ' is-aperto' : ''),
+          onclick: function () {
+            C.mostraRisolti = !C.mostraRisolti;
+            window.NavidaEditor.paint();
+          }
+        }, [
+          icon(this.mostraRisolti ? 'chevron-down' : 'chevron-right', 13),
+          h('span', { text: 'Risolti su questa schermata' }),
+          h('span', { class: 'ed-risolti__n', text: String(risolti.length) })
+        ]));
+
+        if (this.mostraRisolti) {
+          risolti.forEach(function (c) { p.appendChild(riga(c)); });
+        }
       }
 
       /* --- le altre schermate che ne hanno --------------------------- */
@@ -295,6 +342,16 @@
             onclick: function () { window.NavidaApp.goTo(id); window.NavidaEditor.paint(); }
           });
         })));
+      }
+
+      var totRisolti = this.risoltiTotali();
+      if (totRisolti) {
+        p.appendChild(h('p', {
+          class: 'ed-hint',
+          text: 'In tutto il prototipo: ' + totRisolti +
+                (totRisolti === 1 ? ' commento risolto.' : ' commenti risolti.') +
+                ' Restano salvati, non vengono cancellati.'
+        }));
       }
 
       var info = this.info || {};
