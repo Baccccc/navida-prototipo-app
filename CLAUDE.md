@@ -17,11 +17,26 @@ Serve come proof of concept per gli investitori e come base editabile per il tea
   `js/icons.js`. Il prototipo deve funzionare anche offline.
 - **I colori e le spaziature stanno in `css/tokens.css`.** Usa le variabili CSS
   esistenti. Non scrivere valori esadecimali sparsi nei componenti.
+- **Ci sono due brand kit.** Quello del Figma sta in `css/tokens.css`. Il secondo,
+  chiamato "Maturo", sta tutto in `css/brand-maturo.css` e vive sotto
+  `[data-brand="maturo"]`. Si sceglie dalla barra di modifica, scheda **Colori**,
+  riquadro **Brand kit**. Se aggiungi un componente nuovo e vuoi che cambi anche
+  nel kit maturo, scrivi la regola **in `brand-maturo.css`**, non in `app.css`.
+  Non toccare mai `tokens.css` per il kit maturo: i due kit devono restare
+  confrontabili.
 - **La barra di modifica ha due forme.** Su desktop è il pannello laterale a
   destra. Su telefono è un pulsante hamburger fisso in alto a destra che apre
   le stesse schede a tutto schermo (`#edburger` e `#editor.is-mobile-open` in
   `js/editor.js` e `css/editor.css`). Se aggiungi una scheda, funziona da sola
   in entrambe le forme: non duplicare il codice.
+- **Una schermata può esistere in un solo brand kit.** Il campo `kit` in
+  `js/content.js` (`kit: 'maturo'` oppure `kit: 'originale'`) la fa sparire
+  dall'altro kit: il salto lo fa `shouldSkip` in `js/app.js`. Il campo
+  `kitTesti` cambia una singola frase solo in un kit. Allo stesso modo
+  `saltaSeVariante` e `varianteTesti` legano una schermata alla versione
+  scelta di un'altra: li usa la registrazione "compatta". Non duplicare
+  schermate per questo.
+
 - **L'interfaccia è solo mobile.** Su desktop vive dentro una cornice iPhone che
   si rimpicciolisce. Non progettare layout desktop.
 - **Rispetta le specifiche dell'UI kit** riportate in `LEGGIMI.md` (tabella
@@ -34,6 +49,7 @@ Serve come proof of concept per gli investitori e come base editabile per il tea
 | Testi, domande, risposte, ordine delle schermate | `js/content.js` |
 | Contenuti della Fase 3 | `js/fase3-content.js` |
 | Colori, font, raggi, spaziature | `css/tokens.css` |
+| Il secondo brand kit ("Maturo") | `css/brand-maturo.css` |
 | Layout e componenti | `css/app.css` |
 | Varianti di stile disponibili | `js/variants.js` |
 | Come si disegnano le schermate | `js/render.js`, `js/fase3-render.js` |

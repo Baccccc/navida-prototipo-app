@@ -1,0 +1,353 @@
+/* ==========================================================================
+   NAVIDA — Brand kit "Maturo"
+   ==========================================================================
+   Versione alternativa del brand kit. Si accende dalla barra di modifica,
+   scheda "Colori", riquadro "Brand kit". Nessuna regola qui dentro tocca il
+   brand kit originale: tutto vive sotto [data-brand="maturo"].
+
+   DA DOVE NASCE
+   Dalla schermata di accesso in versione "Essenziale". Quella pagina sembra
+   gia' un'app finita, le altre sembrano una bozza. Queste sono le otto cose
+   che la fanno funzionare, riportate su tutto il prototipo:
+
+     1. Forma a pastiglia su cio' che si tocca (pulsanti, campi, chip).
+     2. Campi senza bordo: un fondo grigio tenue e basta.
+     3. Titolo grande, allineato a sinistra, blu notte quasi nero.
+     4. Piu' aria: le distanze tra i blocchi crescono di un gradino.
+     5. Superfici piatte: niente ombre pesanti, niente bordi scuri.
+     6. Un solo pulsante nero: la seconda azione forte della pagina.
+     7. Testo legale piccolo, centrato, molto chiaro, in fondo.
+     8. Pulsanti tondi da 44px al posto delle frecce nude.
+
+   Le regole qui sotto sono raggruppate come le otto voci dell'elenco.
+   ========================================================================== */
+
+/* ==========================================================================
+   TOKEN — i valori di base cambiati dalla versione maturo
+   ========================================================================== */
+
+:root[data-brand="maturo"] {
+
+  /* --- 3. Testo: blu notte al posto dell'ardesia -------------------- */
+  /* Il titolo "Benvenuto" e' quasi nero con dentro il blu del marchio.
+     E' quello che fa sembrare la pagina stampata invece che disegnata. */
+  --text:             #1c1b33;
+  --text-highlighted: #100f24;
+  --text-toned:       #4a4963;
+  --text-muted:       #6d6c85;
+  --text-dimmed:      #9d9cb3;
+  --text-disabled:    #a8a7c4;
+  /* Titoli e risposte seguono i due testi qui sopra, cosi' se li cambi
+     dalla barra di modifica cambiano anche loro. */
+  --text-titolo:      var(--text-highlighted);
+  --text-risposta:    var(--text);
+
+  /* --- 5. Superfici piatte, un filo piu' calde ---------------------- */
+  --bg:            #fbfbfd;
+  --surface:       #ffffff;
+  --passivo:       #f2f2f7;
+  --gray-100:      #f1f1f6;   /* il grigio del campo email e dei social */
+  --bg-accented:   #ebebf2;
+  --light-outline: #eceaf6;
+  --disabled:      #dedcf0;
+
+  /* --- Marchio: stessa identita', un grado piu' profondo ------------ */
+  --main:             #3a38ab;
+  --main-2:           #6b21a8;
+  --risposte-bg:      #ebeafa;
+  --risposte-outline: #3a38ab;
+  --main-soft:        #3a38ab0f;
+  --main-ring:        #3a38ab29;
+
+  /* --- 1. Raggi: pastiglia su cio' che si tocca --------------------- */
+  /* Le card restano squadrate ma morbide: la pastiglia vale solo per i
+     comandi, altrimenti una lista lunga sembra un sacchetto di caramelle. */
+  --r-xs:   6px;
+  --r-sm:   8px;
+  --r-md:  14px;
+  --r-lg:  20px;
+  --r-xl:  28px;
+  --r-2xl: 34px;
+
+  /* --- 4. Piu' aria ------------------------------------------------- */
+  --gutter:     26px;
+  --option-gap: 10px;
+  --btn-h:      56px;
+  --btn-h-sm:   52px;
+
+  /* --- 5. Ombre quasi invisibili ------------------------------------ */
+  --shadow-sm:   0 1px 2px #1e1a4d0a;
+  --shadow-md:   0 6px 20px #1e1a4d0f;
+  --shadow-lg:   0 16px 44px #1e1a4d14;
+  --shadow-soft: 0 1px 0 #1e1a4d08;
+
+  /* --- Barra di avanzamento piu' spessa ----------------------------- */
+  --progress-h: 6px;
+
+  /* --- Movimento un filo piu' lungo, curva piu' morbida ------------- */
+  --ease: cubic-bezier(.32, .72, .28, 1);
+  --dur:  300ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root[data-brand="maturo"] { --dur: 1ms; }
+}
+
+/* ==========================================================================
+   1 · PASTIGLIA SU CIO' CHE SI TOCCA
+   ========================================================================== */
+
+[data-brand="maturo"] .btn,
+[data-brand="maturo"] .social {
+  border-radius: var(--r-full);
+}
+
+/* Il pulsante principale perde l'ombra e guadagna peso tipografico. */
+[data-brand="maturo"] .btn {
+  font-size: var(--fs-base);
+  font-weight: var(--fw-bold);
+  letter-spacing: -.005em;
+  box-shadow: none;
+}
+[data-brand="maturo"] .btn:hover { filter: brightness(1.06); }
+[data-brand="maturo"] .btn:active {
+  transform: scale(.98);
+  background: var(--main);
+  color: var(--text-on-main);
+  filter: brightness(.9);
+  box-shadow: none;
+}
+
+/* Il disattivato e' lavanda con scritta bianca: si legge che il pulsante
+   c'e', ma che non e' ancora il momento di premerlo. */
+[data-brand="maturo"] .btn[disabled] {
+  background: var(--disabled);
+  color: #ffffff;
+  box-shadow: none;
+}
+
+/* Outline e passivo: bordo tenue, mai nero. */
+[data-brand="maturo"] .btn--outline {
+  background: transparent;
+  color: var(--text-highlighted);
+  box-shadow: inset 0 0 0 1.5px var(--bg-accented);
+}
+[data-brand="maturo"] .btn--passivo { background: var(--passivo); color: var(--text-highlighted); }
+[data-brand="maturo"] .btn--soft    { background: var(--risposte-bg); color: var(--main); }
+
+/* ==========================================================================
+   2 · CAMPI SENZA BORDO
+   ========================================================================== */
+
+[data-brand="maturo"] .field__input,
+[data-brand="maturo"] .search input {
+  border: 0;
+  background: var(--gray-100);
+  border-radius: var(--r-full);
+  padding: 17px var(--sp-8);
+  font-size: var(--fs-base);
+  line-height: var(--lh-base);
+  box-shadow: none;
+}
+/* Il testo su piu' righe non puo' essere una pastiglia: si arrotonda e basta. */
+[data-brand="maturo"] textarea.field__input {
+  border-radius: var(--r-lg);
+  padding: var(--sp-7) var(--sp-8);
+}
+/* Il fuoco si vede da un anello interno, non da un bordo che compare. */
+[data-brand="maturo"] .field__input:focus,
+[data-brand="maturo"] .search input:focus {
+  background: var(--surface);
+  box-shadow: inset 0 0 0 2px var(--main);
+}
+[data-brand="maturo"] .field__input::placeholder { color: var(--text-dimmed); }
+
+/* La barra di ricerca e' un filo piu' bassa dei campi del modulo: serve
+   a filtrare la lista, non e' la domanda. Il testo parte dopo l'icona,
+   altrimenti "Cerca..." ci finisce sotto. */
+[data-brand="maturo"] .search input {
+  padding: 12px var(--sp-8) 12px 46px;
+  font-size: var(--fs-sm);
+}
+[data-brand="maturo"] .search__icon { left: 18px; }
+
+/* L'etichetta sopra il campo diventa una didascalia, non un titoletto. */
+[data-brand="maturo"] .field__label {
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  letter-spacing: .02em;
+  color: var(--text-muted);
+  padding-left: var(--sp-6);
+}
+
+/* Il campo dentro una risposta segue la stessa regola. */
+[data-brand="maturo"] .opt__inlineInput {
+  border-radius: var(--r-md);
+  background: #ffffff99;
+}
+
+/* ==========================================================================
+   3 · TITOLO GRANDE, A SINISTRA, BLU NOTTE
+   ========================================================================== */
+
+[data-brand="maturo"] .title {
+  font-size: var(--fs-3xl);
+  line-height: 38px;
+  font-weight: var(--fw-bold);
+  letter-spacing: -.022em;
+  color: var(--text-highlighted);
+}
+[data-brand="maturo"] .title--lg {
+  font-size: var(--fs-4xl);
+  line-height: 44px;
+}
+/* La domanda resta un gradino sotto al titolo di pagina: non deve gridare
+   piu' forte della risposta che devi dare. */
+[data-brand="maturo"] .title.title--question {
+  font-size: 27px;
+  line-height: 35px;
+  letter-spacing: -.018em;
+}
+[data-brand="maturo"] .lead {
+  color: var(--text-muted);
+  font-weight: var(--fw-normal);
+  line-height: 25px;
+}
+[data-brand="maturo"] .eyebrow { letter-spacing: .09em; }
+
+/* ==========================================================================
+   4 · PIU' ARIA
+   ========================================================================== */
+
+[data-brand="maturo"] .body       { gap: var(--sp-8); }
+[data-brand="maturo"] .footer     { gap: var(--sp-5); padding-top: var(--sp-8); }
+[data-brand="maturo"] .loginSocial{ gap: var(--sp-5); }
+
+/* Nelle domande a scelta multipla la riga sotto al titolo ("Scegli tutte
+   le risposte che vuoi") sta attaccata al titolo: e' una sua nota, non un
+   blocco a parte. Resta 8px di aria invece di 24. */
+[data-brand="maturo"] .body:has(.opt__check) > [data-varname="domanda"] + :is(.nota, .lead) {
+  margin-top: calc(var(--sp-7) * -1);
+}
+
+/* ==========================================================================
+   5 · SUPERFICI PIATTE
+   ========================================================================== */
+
+/* La risposta non e' piu' una scatola con bordo: e' una zona di colore.
+   Cosi' una lista di otto voci non sembra una gabbia. */
+[data-brand="maturo"] .opt {
+  border: 0;
+  background: var(--passivo);
+  border-radius: var(--r-lg);
+  padding: 14px var(--sp-8);
+  font-size: var(--fs-base);
+  line-height: var(--lh-base);
+  box-shadow: none;
+}
+[data-brand="maturo"] .opt.is-selected {
+  background: var(--risposte-bg);
+  box-shadow: inset 0 0 0 2px var(--main);
+}
+/* Quadrato con gli angoli morbidi, mai tondo: il tondo si legge come
+   "una sola risposta", il quadrato come "puoi sceglierne piu' di una". */
+[data-brand="maturo"] .opt__check {
+  border-radius: var(--r-xs);
+  border-width: 2px;
+  border-color: var(--text-dimmed);
+  background: transparent;
+}
+[data-brand="maturo"] .opt.is-selected .opt__check { border-color: var(--main); }
+
+/* La prima previsione non ha card: il verdetto sta sul fondo della
+   schermata, e il messaggio che si scrive sta nel fumetto della mascotte. */
+
+/* La barra di avanzamento si vede senza doverla cercare. */
+[data-brand="maturo"] .progress,
+[data-brand="maturo"] .progress__track,
+[data-brand="maturo"] .progress__fill { border-radius: var(--r-full); }
+
+/* Le linee divisorie si schiariscono: dividono senza tagliare. */
+[data-brand="maturo"] .divider::before,
+[data-brand="maturo"] .divider::after { background: var(--bg-accented); }
+[data-brand="maturo"] .divider {
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-medium);
+  color: var(--text-dimmed);
+}
+
+/* ==========================================================================
+   6 · UN SOLO PULSANTE NERO
+   ========================================================================== */
+
+/* I social sono grigi e piatti. Solo Apple resta nero: e' l'unico punto di
+   contrasto massimo della pagina, e per questo si vede. */
+[data-brand="maturo"] .social {
+  height: var(--btn-h);
+  border: 0;
+  background: var(--gray-100);
+  color: var(--text-highlighted);
+  font-size: var(--fs-base);
+  font-weight: var(--fw-semibold);
+  box-shadow: none;
+}
+[data-brand="maturo"] .social:hover { background: var(--bg-accented); }
+[data-brand="maturo"] .social--apple { background: #0b0b12; color: #ffffff; }
+[data-brand="maturo"] .social--apple:hover { background: #1d1d2b; }
+
+/* Il link di testo perde la sottolineatura fissa e prende il blu pieno. */
+[data-brand="maturo"] .linkbtn {
+  color: var(--main);
+  font-weight: var(--fw-semibold);
+  text-decoration: none;
+}
+[data-brand="maturo"] .linkbtn--forte {
+  font-weight: var(--fw-bold);
+  font-size: var(--fs-sm);
+}
+[data-brand="maturo"] .linkbtn:hover { text-decoration: underline; text-underline-offset: 4px; }
+
+/* Continuita': sotto al pulsante principale la seconda azione e' sempre un
+   pulsante, mai una scritta sola. Vale per tutte le schermate che la hanno
+   (".linkbtn--azione"). "Password dimenticata?" e simili restano link. */
+[data-brand="maturo"] .linkbtn--azione {
+  align-self: stretch;
+  width: 100%;
+  height: var(--btn-h);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 var(--sp-8);
+  border-radius: var(--r-full);
+  background: var(--passivo);
+  color: var(--text-highlighted);
+  font-size: var(--fs-base);
+  font-weight: var(--fw-bold);
+  text-decoration: none;
+  transition: background var(--dur) var(--ease), transform 120ms var(--ease);
+}
+[data-brand="maturo"] .linkbtn--azione:hover { background: var(--bg-accented); text-decoration: none; }
+[data-brand="maturo"] .linkbtn--azione:active { transform: scale(.98); }
+
+/* ==========================================================================
+   7 · TESTO LEGALE PICCOLO E CHIARO, IN FONDO
+   ========================================================================== */
+
+[data-brand="maturo"] .legal {
+  font-size: 11px;
+  line-height: 16px;
+  color: var(--text-dimmed);
+  max-width: 280px;
+  margin-inline: auto;
+}
+[data-brand="maturo"] .nota { color: var(--text-dimmed); }
+
+/* ==========================================================================
+   RITOCCHI SULLA SCHERMATA DI ACCESSO
+   ==========================================================================
+   Le due versioni (essenziale e compatta) hanno lo stesso aspetto.
+   ========================================================================== */
+
+[data-brand="maturo"] .login { gap: var(--sp-8); }
+[data-brand="maturo"] .login .title { font-size: var(--fs-4xl); line-height: 42px; }
+[data-brand="maturo"] .field__input--tondo { padding: 18px var(--sp-8); }

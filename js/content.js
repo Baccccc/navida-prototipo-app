@@ -26,7 +26,7 @@
    form        più campi nella stessa schermata
    loading     attesa animata
    result      risultato (prima proiezione)
-   login       registrazione / accesso (3 varianti)
+   login       registrazione / accesso (2 varianti)
    otp         codice di verifica via email
    preview     anteprima della linea di carriera
 
@@ -36,14 +36,24 @@
    options[].ico       nome icona Lucide (solo con listStyle 'grid')
    options[].chip      etichetta a destra, es. "Coming soon"
    options[].disabled  risposta non selezionabile
+   varianti            varianti di stile valide solo per questa schermata,
+                       es.  varianti: { domanda: 'titolo' }
+                       Vincono sulla predefinita di js/variants.js, e
+                       perdono contro le modifiche fatte dal team.
 
    FORMATTAZIONE DEI TESTI (schermate "info")
    -----------------------------------------
    body        \n manda a capo (il testo va a capo davvero)
-   lista       elenco puntato con spunta:  ['riga', 'riga']
-   listaNum    elenco numerato 1. 2. 3. con attacco in grassetto:
-                 [{ forte: 'Fai il test.', testo: 'L’abbiamo costruito con…' }]
+   lista       elenco puntato:  ['riga', 'riga']
+               listaIcone: ['clock', 'smile']  un'icona per riga
+   listaNum    elenco di passaggi con attacco in grassetto. Nella versione
+               "elenco" ogni passaggio ha un'icona (nome Lucide in ico),
+               non un numero:
+                 [{ ico: 'pencil', forte: 'Fai il test.', testo: 'L’abbiamo costruito con…' }]
    paragrafi   paragrafi con attacco in grassetto (stessa forma di listaNum)
+   Icone dell'elenco: solo nomi presenti in js/icons.js (Lucide), e mai due
+   uguali sulla stessa schermata. Se ne manca una o si ripete, l'app ne
+   sceglie da sola una libera.
    Nota: forte e testo restano modificabili uno per uno dal pannello Testi.
    ========================================================================== */
 
@@ -76,6 +86,18 @@ window.NAVIDA_CONTENT = {
   },
 
   /* ======================================================================
+     BARRE DI AVANZAMENTO
+     Ogni barra va dalla schermata "da" alla schermata "a", comprese:
+     è vuota all'inizio e si riempie del tutto sulla schermata "a".
+     Fuori da questi tratti la barra non si vede.
+     noProgress: true toglie la barra da una sola schermata del tratto.
+     ====================================================================== */
+  barre: [
+    { da: 'userType', a: 'tuoMomento' },
+    { da: 'introQuestionario', a: 'b3_q7' }
+  ],
+
+  /* ======================================================================
      FLUSSO — l'ordine di questo array è l'ordine delle schermate
      ====================================================================== */
   screens: [
@@ -94,7 +116,7 @@ window.NAVIDA_CONTENT = {
       id: 'welcome',
       chapter: 'intro',
       type: 'hero',
-      mascotte: 'salutare',
+      mascotte: 'saltare',
       eyebrow: 'Benvenuto su',
       title: 'Navida',
       body: 'Scopri dove puoi arrivare.',
@@ -105,7 +127,7 @@ window.NAVIDA_CONTENT = {
 
     {
       id: 'userType',
-      mascotte: 'indicare',
+      mascotte: 'lente-ingrandimento',
       chapter: 'intro',
       type: 'single',
       title: 'Cosa stai cercando?',
@@ -122,9 +144,8 @@ window.NAVIDA_CONTENT = {
       chapter: 'intro',
       type: 'info',
       mascotte: 'stretta-mano',
-      obStep: 1,
       title: 'Ciao, siamo Navida',
-      body: 'Non siamo l’ennesima app per cercare lavoro.\nCostruiamo con te un percorso di carriera e ti guidiamo, tappa dopo tappa.',
+      body: 'Uno spazio sicuro per capire davvero dove vuoi arrivare. Non siamo l’ennesima app di ricerca di lavoro: costruiamo su di te un percorso di carriera e ti guidiamo, tappa dopo tappa, fino al lavoro dei tuoi sogni.',
       cta: 'Continua'
     },
     {
@@ -132,12 +153,11 @@ window.NAVIDA_CONTENT = {
       chapter: 'intro',
       type: 'info',
       mascotte: 'tablet',
-      obStep: 2,
       title: 'Come funziona?',
       listaNum: [
-        { forte: 'Rispondi a qualche domanda.', testo: 'Poche e veloci, senza registrarti: avrai già una prima direzione.' },
-        { forte: 'Fai il test.', testo: 'L’abbiamo costruito insieme a psicologi del lavoro.' },
-        { forte: 'Il nostro algoritmo lavora per te.', testo: 'Ha imparato da migliaia di percorsi di carriera veri, e su quelli costruisce il tuo.' }
+        { ico: 'message-square', forte: 'Rispondi a qualche domanda.', testo: 'Poche e veloci, senza registrarti: avrai già una prima direzione.' },
+        { ico: 'pencil', forte: 'Fai il test.', testo: 'L’abbiamo costruito insieme a psicologi del lavoro.' },
+        { ico: 'sparkles', forte: 'Il nostro algoritmo lavora per te.', testo: 'Ha imparato da migliaia di percorsi di carriera veri, e su quelli costruisce il tuo.' }
       ],
       cta: 'Continua'
     },
@@ -147,7 +167,6 @@ window.NAVIDA_CONTENT = {
       type: 'info',
       /* niente mascotte: qui l'illustrazione e' il percorso che si disegna.
          Risponde al commento "va messa l'animazione della linea di carriera". */
-      obStep: 3,
       title: 'Da dove sei a dove vuoi arrivare',
       body: 'Ti mostriamo il percorso, tappa dopo tappa.',
       percorso: [
@@ -164,18 +183,20 @@ window.NAVIDA_CONTENT = {
       chapter: 'intro',
       type: 'info',
       mascotte: 'ok',
-      obStep: 4,
-      title: 'Quanto costa?',
+      title: 'Scoprirlo è gratis',
       paragrafi: [
-        { forte: 'Navida è gratis e senza pubblicità.', testo: 'Il test, la costruzione del tuo percorso e tutte le opportunità che trovi lungo le tappe non si pagano.' },
-        { forte: 'A pagamento c’è solo la consulenza.', testo: 'Se a un certo punto vuoi parlare con qualcuno — un coach, uno psicologo del lavoro, un commercialista — lo trovi nell’area Consulenza.' }
+        { ico: 'shield-check', forte: 'Navida è gratis e senza pubblicità.', testo: 'Il test, la costruzione del tuo percorso e tutte le opportunità che trovi lungo le tappe non si pagano.' },
+        { ico: 'users', forte: 'A pagamento c’è solo la consulenza.', testo: 'Se a un certo punto vuoi parlare con qualcuno — un coach, uno psicologo del lavoro, un commercialista — lo trovi nell’area Consulenza.' }
       ],
       cta: 'Iniziamo'
     },
 
     /* ---------- 1C · SCOPERTA (prima della registrazione) ----------- */
+    /* Con la registrazione "compatta" il nome non si chiede qui: lo
+       chiede la registrazione. Vedi 'registrazione'. */
     {
       id: 'nome',
+      saltaSeVariante: { registrazione: 'compatta' },
       chapter: 'scoperta',
       type: 'text',
       title: 'Prima di tutto, qual è il tuo nome?',
@@ -189,11 +210,14 @@ window.NAVIDA_CONTENT = {
       type: 'info',
       mascotte: 'salutare',
       title: 'Piacere, {nome}!',
+      /* con la registrazione "compatta" il nome arriva dopo */
+      varianteTesti: { registrazione: { compatta: { title: 'Piacere di conoscerti!' } } },
       body: 'Iniziamo con genere ed età. Ci servono per confrontare il tuo percorso con quelli di chi è partito da una situazione simile alla tua.',
       cta: 'Continua'
     },
     {
       id: 'genere',
+      mascotte: 'pace-e-cuore',
       chapter: 'scoperta',
       type: 'single',
       title: 'Come ti identifichi?',
@@ -229,7 +253,7 @@ window.NAVIDA_CONTENT = {
 
     {
       id: 'perche',
-      mascotte: 'indicare',
+      mascotte: 'pensare',
       chapter: 'scoperta',
       type: 'single',
       field: 'motivazione',
@@ -245,7 +269,7 @@ window.NAVIDA_CONTENT = {
 
     {
       id: 'obiettivo',
-      mascotte: 'indicare',
+      mascotte: 'toccare-la-luna',
       chapter: 'scoperta',
       type: 'single',
       field: 'obiettivo',
@@ -271,6 +295,7 @@ window.NAVIDA_CONTENT = {
 
     {
       id: 'titoloStudio',
+      mascotte: 'laureato',
       chapter: 'scoperta',
       type: 'singleText',
       field: 'titoloStudio',
@@ -288,6 +313,7 @@ window.NAVIDA_CONTENT = {
 
     {
       id: 'specializzazioni',
+      mascotte: 'laptop-seduto',
       chapter: 'scoperta',
       type: 'singleText',
       field: 'specializzazione',
@@ -304,7 +330,7 @@ window.NAVIDA_CONTENT = {
 
     {
       id: 'situazione',
-      mascotte: 'indicare',
+      mascotte: 'mappa-2',
       chapter: 'scoperta',
       type: 'single',
       field: 'situazione',
@@ -328,7 +354,7 @@ window.NAVIDA_CONTENT = {
       skipIf: { field: 'situazione', equals: 'primo' }
     },
 
-    /* ---------- MOMENTO WOW (da rifare) ---------------------------- */
+    /* ---------- MOMENTO WOW ---------------------------- */
     {
       id: 'tuoMomento',
       chapter: 'scoperta',
@@ -347,7 +373,7 @@ window.NAVIDA_CONTENT = {
       type: 'dream',
       field: 'lavoroSogni',
       wow: true,
-      frase: 'Qual è il lavoro che sogni?',
+      frase: 'Il lavoro che sogno di fare è...',
       descrizione: 'Scrivi di getto cosa ti piacerebbe diventare nella vita.',
       placeholder: 'Scrivi qui',
       cta: 'Continua'
@@ -366,43 +392,52 @@ window.NAVIDA_CONTENT = {
       chapter: 'scoperta',
       type: 'result',
       wow: true,
+      noProgress: true,
       title: 'Questa è la prima previsione del tuo percorso',
+      occhiello: 'La tua prima previsione',
       body: '',
+      /* Il consiglio e' il messaggio che il team ha scritto per la
+         prima proiezione. {primoPasso} oggi ha un testo di riserva: nella
+         versione finita lo scrive l'AI sul profilo della persona.
+         I vecchi "tre consigli" sono stati tolti: ne resta uno solo.
+         La riga sopra il pulsante ("Continua con la registrazione...")
+         e' stata tolta il 13/09/2026. */
+      /* la posa della mascotte che parla nel "Messaggio che si scrive" */
+      mascotte: 'salutare',
       tips: [
         {
-          title: 'Decidi se restare o cambiare',
-          description: 'Valuta se nella tua azienda esistono percorsi per diventare {lavoroSogni}. Se non li trovi, guarda fuori.'
-        },
-        {
-          title: 'Potenzia le competenze chiave',
-          description: 'Individua le skill fondamentali e inizia a formarti, anche con corsi brevi e certificazioni.'
-        },
-        {
-          title: 'Crea esperienze rilevanti',
-          description: 'Cerca progetti o collaborazioni dove applicarle. Documenta i risultati: saranno la tua carta vincente.'
+          title: 'La rotta è tracciata, {nome}!',
+          description: 'Da {ultimaPosizione} a {lavoroSogni} si arriva per tappe. La prima è {primoPasso}.'
         }
       ],
       ctaPrimaria: 'Completa la profilazione',
       ctaSecondaria: 'Continua a giocare'
     },
 
-    /* ---------- REGISTRAZIONE / ACCESSO ---------------------------- */
+    /* ---------- REGISTRAZIONE / ACCESSO ----------------------------
+       Una sola schermata per entrare e per registrarsi: se l'email o
+       l'account Google/Apple non ha ancora un profilo, si crea da solo.
+       Per questo non c'e' un pulsante "Registrati".
+       Due versioni (js/variants.js), uguali in tutti e due i brand kit:
+       - essenziale: chiede l'email, poi arriva il codice via email;
+       - compatta:   chiede nome e cognome. Salta la domanda sul nome
+                     nell'onboarding e il codice via email. */
     {
       id: 'registrazione',
       chapter: 'auth',
       type: 'login',
-      variante: 'sheet',
       title: 'Benvenuto',
       body: 'Accedi o registrati per continuare.',
-      titleC: 'Benvenuto',
-      bodyC: 'Scegli come vuoi accedere',
-      cta: 'Continua'
+      cta: 'Entra con l’email',
+      titleCompatta: 'Come ti chiami?',
+      ctaCompatta: 'Avanti'
     },
 
     {
       id: 'otp',
       chapter: 'auth',
       type: 'otp',
+      saltaSeVariante: { registrazione: 'compatta' },
       title: 'Controlla la tua email',
       body: 'Abbiamo inviato un codice a {email}',
       reinvia: 'Invia un nuovo codice',
@@ -417,13 +452,13 @@ window.NAVIDA_CONTENT = {
       chapter: 'test',
       type: 'info',
       mascotte: 'leggere',
-      noProgress: true,
       title: 'Prima di iniziare',
       lista: [
         'Questo test dura circa 8 minuti.',
         'Non ci sono risposte giuste o sbagliate.',
         'Rispondi di pancia, senza pensarci troppo.'
       ],
+      listaIcone: ['clock', 'smile', 'zap'],
       body: '',
       /* la vecchia schermata "Sei pronto?" e' stata tolta: il test parte da qui */
       cta: 'Inizia il test'
@@ -458,6 +493,7 @@ window.NAVIDA_CONTENT = {
     },
     {
       id: 'b1_categoria',
+      varianti: { domanda: 'titolo' },
       chapter: 'test',
       type: 'multi',
       blocco: 1,
@@ -469,6 +505,7 @@ window.NAVIDA_CONTENT = {
     },
     {
       id: 'b1_mansione',
+      varianti: { domanda: 'titolo' },
       chapter: 'test',
       type: 'multi',
       blocco: 1,
@@ -481,6 +518,7 @@ window.NAVIDA_CONTENT = {
     },
     {
       id: 'b1_livello',
+      mascotte: 'razzo',
       chapter: 'test',
       type: 'singleInfo',
       blocco: 1,
@@ -521,6 +559,7 @@ window.NAVIDA_CONTENT = {
     },
     {
       id: 'b2_rank1',
+      varianti: { domanda: 'titolo' },
       chapter: 'test',
       type: 'rank',
       blocco: 2,
@@ -539,6 +578,7 @@ window.NAVIDA_CONTENT = {
     },
     {
       id: 'b2_rank2',
+      varianti: { domanda: 'titolo' },
       chapter: 'test',
       type: 'rank',
       blocco: 2,
@@ -557,6 +597,7 @@ window.NAVIDA_CONTENT = {
     },
     {
       id: 'b2_rank3',
+      varianti: { domanda: 'titolo' },
       chapter: 'test',
       type: 'rank',
       blocco: 2,
@@ -575,6 +616,7 @@ window.NAVIDA_CONTENT = {
     },
     {
       id: 'b2_paure',
+      varianti: { domanda: 'titolo' },
       chapter: 'test',
       type: 'multi',
       blocco: 2,
@@ -598,6 +640,7 @@ window.NAVIDA_CONTENT = {
     },
     {
       id: 'b2_valori',
+      mascotte: 'stretta-mano',
       chapter: 'test',
       type: 'multi',
       blocco: 2,
@@ -620,7 +663,7 @@ window.NAVIDA_CONTENT = {
     },
     {
       id: 'b2_trasferimento',
-      mascotte: 'indicare',
+      mascotte: 'camminare-e-salutare',
       chapter: 'test',
       type: 'single',
       blocco: 2,
@@ -660,6 +703,7 @@ window.NAVIDA_CONTENT = {
     },
     {
       id: 'b3_q1',
+      varianti: { domanda: 'titolo' },
       chapter: 'test',
       type: 'single',
       blocco: 3,
@@ -678,6 +722,7 @@ window.NAVIDA_CONTENT = {
     },
     {
       id: 'b3_q2',
+      varianti: { domanda: 'titolo' },
       chapter: 'test',
       type: 'single',
       blocco: 3,
@@ -696,6 +741,7 @@ window.NAVIDA_CONTENT = {
     },
     {
       id: 'b3_q3',
+      varianti: { domanda: 'titolo' },
       chapter: 'test',
       type: 'single',
       blocco: 3,
@@ -714,6 +760,7 @@ window.NAVIDA_CONTENT = {
     },
     {
       id: 'b3_q4',
+      varianti: { domanda: 'titolo' },
       chapter: 'test',
       type: 'single',
       blocco: 3,
@@ -732,6 +779,7 @@ window.NAVIDA_CONTENT = {
     },
     {
       id: 'b3_q5',
+      varianti: { domanda: 'titolo' },
       chapter: 'test',
       type: 'single',
       blocco: 3,
@@ -750,6 +798,7 @@ window.NAVIDA_CONTENT = {
     },
     {
       id: 'b3_q6',
+      varianti: { domanda: 'titolo' },
       chapter: 'test',
       type: 'single',
       blocco: 3,
@@ -768,6 +817,7 @@ window.NAVIDA_CONTENT = {
     },
     {
       id: 'b3_q7',
+      varianti: { domanda: 'titolo' },
       chapter: 'test',
       type: 'single',
       blocco: 3,
@@ -799,7 +849,7 @@ window.NAVIDA_CONTENT = {
         'Colleghiamo le opportunità più adatte',
         'La tua rotta è quasi pronta'
       ],
-      durata: 7200
+      durata: 9000
     },
 
     {
@@ -818,16 +868,8 @@ window.NAVIDA_CONTENT = {
       cta: 'Vai alla dashboard',
       ctaNota: 'Continua nella Fase 3',
       href: 'fase3.html'
-    },
-
-    {
-      id: 'fine',
-      chapter: 'auth',
-      type: 'info',
-      mascotte: 'stretta-mano',
-      title: 'Fine del prototipo',
-      body: 'Dashboard, mappa e consulenza fanno parte della Fase 3.',
-      cta: 'Ricomincia'
     }
+    /* Niente schermata "Fine del prototipo": dopo la linea di carriera
+       si va dritti alla dashboard (fase3.html), anche con la freccia destra. */
   ]
 };

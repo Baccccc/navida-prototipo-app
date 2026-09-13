@@ -150,11 +150,12 @@
             var data = JSON.parse(fr.result);
             if (!data || !data.overrides) throw new Error('Non è una copia di Navida');
             S.overrides = Object.assign(
-              { text: {}, colors: {}, order: {}, variants: {}, page: {} },
+              { text: {}, colors: {}, order: {}, variants: {}, page: {}, brand: 'originale' },
               data.overrides
             );
             S.save();
             S.applyColors();
+            S.applyBrand();
             if (poi) poi();
           } catch (e) {
             alert('File non valido: ' + e.message);
@@ -181,11 +182,12 @@
         .then(function (data) {
           if (!data || !data.overrides) throw new Error('versione vuota');
           S.overrides = Object.assign(
-            { text: {}, colors: {}, order: {}, variants: {}, page: {} },
+            { text: {}, colors: {}, order: {}, variants: {}, page: {}, brand: 'originale' },
             data.overrides
           );
           S.save();
           S.applyColors();
+          S.applyBrand();
           Sync.push(S.overrides);
           if (poi) poi();
         })

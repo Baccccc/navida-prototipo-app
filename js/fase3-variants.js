@@ -17,7 +17,7 @@ window.NAVIDA_PAGE_VARIANTS.percorso = {
    altre due restano selezionabili dal pannello Versione. */
 window.NAVIDA_PAGE_VARIANTS.dashboard = {
   etichetta: 'Versione della Home',
-  predefinita: 'flusso',
+  predefinita: 'attiva',
   options: [
     { value: 'flusso', label: 'Da flusso' },
     { value: 'attiva', label: 'Con percorso' },

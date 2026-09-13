@@ -220,6 +220,31 @@
 .perc--curva .perc__nodo--poi .perc__seg { fill: var(--text-muted); }
 .perc--curva .perc__nodo--meta .perc__seg { fill: var(--text-on-main); }
 
+/* --- linea piena solo fino al prossimo passo ------------------------
+   Sotto c'e' tutta la strada tratteggiata: sono le tappe che stiamo
+   ancora calcolando. Sopra, il pezzo pieno arriva solo alla tappa 1. */
+.perc--curva .perc__tratto {
+  stroke: var(--text-dimmed);
+  stroke-width: 2.5;
+  stroke-dasharray: 1 7;
+  stroke-linecap: round;
+}
+.perc--curva .perc__pieno {
+  stroke: var(--main);
+  stroke-width: 3.5;
+  stroke-linecap: round;
+}
+/* il prossimo passo e' pieno: e' il punto su cui si agisce adesso */
+.perc--curva .perc__nodo--prossimo .perc__disco { fill: var(--main); }
+.perc--curva .perc__nodo--prossimo .perc__seg { fill: var(--text-on-main); }
+.perc--curva.perc--mini .perc__seg { font-size: 10px; }
+/* il traguardo resta visibile ma non pieno: la strada per arrivarci
+   e' ancora tratteggiata */
+.perc--parziale .perc__nodo--meta .perc__disco {
+  fill: var(--surface);
+  stroke: var(--main);
+}
+
 .curva__et {
   display: flex;
   justify-content: space-between;

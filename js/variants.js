@@ -28,6 +28,23 @@ window.NAVIDA_VARIANTS = {
     ]
   },
 
+  /* Come si disegnano le schermate di racconto (mascotte + testo).
+     Nasce dal riferimento Duolingo portato dal team: fumetto sopra la
+     mascotte per le frasi corte, mascotte sopra il testo per quelle
+     lunghe, fumetto in riga con elenco a icone quando ci sono punti. */
+  intro: {
+    etichetta: 'Schermata di racconto',
+    attr: 'data-variant',
+    predefinita: 'auto',
+    options: [
+      { value: 'auto',     label: 'Automatica (consigliata)' },
+      { value: 'fumetto',  label: 'Fumetto sopra la mascotte' },
+      { value: 'sopra',    label: 'Mascotte sopra, testo sotto' },
+      { value: 'elenco',   label: 'Fumetto in riga + elenco' },
+      { value: 'classica', label: 'Classica (com’era prima)' }
+    ]
+  },
+
   /* Da che lato stanno spunta e maniglia */
   latoControlli: {
     etichetta: 'Lato di spunta e maniglia',
@@ -43,7 +60,7 @@ window.NAVIDA_VARIANTS = {
   domanda: {
     etichetta: 'Come si presenta la domanda',
     attr: 'data-variant',
-    predefinita: 'titolo',
+    predefinita: 'mascotte',
     options: [
       { value: 'titolo',   label: 'Titolo semplice' },
       { value: 'mascotte', label: 'Mascotte con fumetto' }
@@ -90,38 +107,71 @@ window.NAVIDA_VARIANTS = {
     ]
   },
 
-  /* Mascotte (astronauta) — 12 pose reali in assets/ */
+  /* Mascotte (astronauta) — tutte le pose reali in assets/ */
   mascotte: {
     etichetta: 'Mascotte',
     attr: 'data-variant',
     predefinita: 'auto',
     options: [
-      { value: 'auto',         label: 'Come da progetto' },
-      { value: 'salutare',     label: 'Saluta' },
-      { value: 'indicare',     label: 'Indica' },
-      { value: 'saltare',      label: 'Salta' },
-      { value: 'tablet',       label: 'Tablet' },
-      { value: 'computer',     label: 'Computer' },
-      { value: 'ok',           label: 'Pollice su' },
-      { value: 'leggere',      label: 'Legge' },
-      { value: 'matita',       label: 'Matita' },
-      { value: 'calcolare',    label: 'Calcola' },
-      { value: 'volare',       label: 'Vola' },
-      { value: 'zaino',        label: 'Zaino strumenti' },
-      { value: 'stretta-mano', label: 'Stretta di mano' },
-      { value: 'nascosta',     label: 'Nascosta' }
-    ]
-  },
-
-  /* Card dei consigli nella prima proiezione */
-  tips: {
-    etichetta: 'Stile consigli',
-    attr: 'data-variant',
-    predefinita: 'default',
-    options: [
-      { value: 'default', label: 'Card' },
-      { value: 'plain',   label: 'Righe divise' },
-      { value: 'accent',  label: 'Colorate' }
+      { value: 'auto', label: 'Come da progetto' },
+      { value: 'salutare',                   label: 'Salutare' },
+      { value: 'indicare',                   label: 'Indice' },
+      { value: 'saltare',                    label: 'Saltare' },
+      { value: 'tablet',                     label: 'Tablet' },
+      { value: 'computer',                   label: 'Computer' },
+      { value: 'ok',                         label: 'OK' },
+      { value: 'leggere',                    label: 'Leggere' },
+      { value: 'matita',                     label: 'Matita' },
+      { value: 'calcolare',                  label: 'Calcolare' },
+      { value: 'volare',                     label: 'Volare' },
+      { value: 'zaino',                      label: 'Zaino strumenti' },
+      { value: 'stretta-mano',               label: 'Stringere la mano' },
+      { value: 'aiuto',                      label: 'Aiuto' },
+      { value: 'allarme',                    label: 'Allarme' },
+      { value: 'braccia-incrociate',         label: 'Braccia incrociate' },
+      { value: 'caffe-relax',                label: 'Caffe relax' },
+      { value: 'camminare-e-salutare',       label: 'Camminare e salutare' },
+      { value: 'clessidra',                  label: 'Clessidra' },
+      { value: 'coriandoli',                 label: 'Coriandoli' },
+      { value: 'cronometro-corsa',           label: 'Cronometro corsa' },
+      { value: 'cuffia-2',                   label: 'Cuffia 2' },
+      { value: 'cuffie',                     label: 'Cuffie' },
+      { value: 'cyber-security',             label: 'Cyber Security' },
+      { value: 'dormire',                    label: 'Dormire' },
+      { value: 'festeggiare',                label: 'Festeggiare' },
+      { value: 'foto',                       label: 'Foto' },
+      { value: 'freddo',                     label: 'Freddo' },
+      { value: 'freddo-braccia-incrociate',  label: 'Freddo braccia incrociate' },
+      { value: 'giardinaggio',               label: 'Giardinaggio' },
+      { value: 'jetpack',                    label: 'Jetpack' },
+      { value: 'laptop-sdraiato',            label: 'Laptop sdraiato' },
+      { value: 'laptop-seduto',              label: 'Laptop seduto' },
+      { value: 'laureato',                   label: 'Laureato' },
+      { value: 'lente-ingrandimento',        label: 'Lente ingrandimento' },
+      { value: 'mappa',                      label: 'Mappa' },
+      { value: 'mappa-2',                    label: 'Mappa 2' },
+      { value: 'meccanico',                  label: 'Meccanico' },
+      { value: 'meditazione',                label: 'Meditazione' },
+      { value: 'megafono',                   label: 'Megafono' },
+      { value: 'non-so',                     label: 'Non so' },
+      { value: 'pace-e-cuore',               label: 'Pace e cuore' },
+      { value: 'palloncini',                 label: 'Palloncini' },
+      { value: 'pensare',                    label: 'Pensare' },
+      { value: 'pianeta-palloncino',         label: 'Pianeta palloncino' },
+      { value: 'pioggia-ombrello',           label: 'Pioggia ombrello' },
+      { value: 'pizza',                      label: 'Pizza' },
+      { value: 'pregare',                    label: 'Pregare' },
+      { value: 'prendere-la-stella',         label: 'Prendere la stella' },
+      { value: 'razzo',                      label: 'Razzo' },
+      { value: 'regalo',                     label: 'Regalo' },
+      { value: 'reggere-pianeta',            label: 'Reggere pianeta' },
+      { value: 'relax-sedia',                label: 'Relax sedia' },
+      { value: 'skateboard',                 label: 'Skateboard' },
+      { value: 'snack-su-saturno',           label: 'Snack su Saturno' },
+      { value: 'supereroe',                  label: 'Supereroe' },
+      { value: 'toccare-la-luna',            label: 'Toccare la luna' },
+      { value: 'trofeo',                     label: 'Trofeo' },
+      { value: 'nascosta', label: 'Nascosta' }
     ]
   },
 
@@ -162,16 +212,19 @@ window.NAVIDA_VARIANTS = {
 window.NAVIDA_PAGE_VARIANTS = {
   fineTest: {
     etichetta: 'Animazione di “Il tuo percorso sta prendendo forma”',
+    /* E' un'attesa, non uno spettacolo: le due versioni nello spazio girano
+       in loop finche' la risposta non e' pronta. "Step che si compongono"
+       e' stata tolta da Bac. */
     predefinita: 'spazio',
     options: [
-      { value: 'spazio',       label: 'Viaggio nello spazio' },
-      { value: 'costruzione', label: 'Step che si compongono' },
-      { value: 'linea',        label: 'Linea che si disegna' }
+      { value: 'spazio', label: 'Navicella ferma, stelle che scorrono' },
+      { value: 'tappe',  label: 'Navicella che passa 5 tappe' },
+      { value: 'linea',  label: 'Linea che si disegna' }
     ]
   },
   preview: {
     etichetta: 'Versione di “La tua linea di carriera”',
-    predefinita: 'lista',
+    predefinita: 'serpentina',
     options: [
       { value: 'lista',       label: 'Lista Figma' },
       { value: 'serpentina', label: 'Serpentina' },
@@ -188,39 +241,27 @@ window.NAVIDA_PAGE_VARIANTS = {
       { value: 'portale',     label: 'Portale' }
     ]
   },
-  elaborazione: {
-    etichetta: 'Animazione di elaborazione',
-    /* "l'astronauta che cambia veste e lavoro": e' la versione con i
-       mestieri, non le pose generiche. Richiesta del team. */
-    predefinita: 'professioni',
-    options: [
-      { value: 'professioni', label: 'Cambia mestiere' },
-      { value: 'mascotte',    label: 'Pose esistenti' }
-    ]
-  },
+  /* Restano le tre versioni scelte dal team. In tutte la domanda e' un
+     titolo vero: si legge con il lettore di schermo e si modifica dalla
+     scheda "Testi". Le altre (orbite, costellazione, portale, tunnel,
+     nebulosa, pensiero) sono state tolte dalla scelta. */
   lavoroSogni: {
     etichetta: 'Animazione del lavoro dei sogni',
-    predefinita: 'orbite',
+    predefinita: 'targhetta',
     options: [
-      { value: 'orbite',        label: 'Orbita tipografica' },
-      { value: 'costellazione', label: 'Costellazione' },
-      { value: 'portale',       label: 'Portale' },
-      { value: 'tunnel',        label: 'Tunnel cinetico' }
+      { value: 'targhetta', label: 'Targhetta da lavoro' },
+      { value: 'insegna',   label: 'Insegna al neon' },
+      { value: 'orizzonte', label: 'Orizzonte all’alba' }
     ]
   },
+  /* Restano solo due versioni. Le altre (centrata, social first,
+     copertina, pagina semplice e le tre a popup) sono state tolte. */
   registrazione: {
     etichetta: 'Versione della schermata di accesso',
     predefinita: 'essenziale',
     options: [
-      { value: 'essenziale', label: 'Essenziale' },
-      { value: 'compatta',   label: 'Compatta' },
-      { value: 'centrata',   label: 'Centrata' },
-      { value: 'social',     label: 'Social first' },
-      { value: 'copertina',  label: 'Con copertina' },
-      { value: 'pagina',     label: 'Pagina semplice' },
-      { value: 'sheet',      label: 'Bottom sheet' },
-      { value: 'popup',      label: 'Popup centrato' },
-      { value: 'header',     label: 'Sheet header viola' }
+      { value: 'essenziale', label: 'Essenziale · email' },
+      { value: 'compatta',   label: 'Compatta · nome e cognome' }
     ]
   },
   welcome: {
@@ -244,17 +285,16 @@ window.NAVIDA_PAGE_VARIANTS = {
     ]
   },
   /* Il team ha chiesto un consiglio solo, e un codice visivo diverso da
-     quello delle schermate di domanda. Le prime tre versioni rispondono
-     a questo; le ultime due restano per confronto. */
+     quello delle schermate di domanda. Bac ha tolto "Verdetto grande" e
+     le due vecchie (tre consigli, messaggio unico). Il 13/09/2026 ha
+     tolto anche "Navida ti parla". Una scelta salvata che punta a lei
+     torna da sola alla versione predefinita. */
   previsione: {
     etichetta: 'Versione della prima proiezione',
-    predefinita: 'voce',
+    predefinita: 'prova',
     options: [
-      { value: 'voce',     label: 'Navida ti parla' },
-      { value: 'verdetto', label: 'Verdetto grande' },
-      { value: 'prova',    label: 'Verdetto con prova' },
-      { value: 'tips',     label: 'Tre consigli (vecchia)' },
-      { value: 'single',   label: 'Messaggio unico (vecchia)' }
+      { value: 'prova',  label: 'Verdetto con prova' },
+      { value: 'scrive', label: 'Messaggio che si scrive' }
     ]
   }
 };

@@ -14,6 +14,9 @@ window.NAVIDA_CONTENT = {
     indietro: 'Indietro'
   },
 
+  /* Freccia sinistra sulla dashboard: torna all'ultima schermata del questionario. */
+  indietroHref: 'index.html?screen=preview',
+
   screens: [
     {
       id: 'dashboard',

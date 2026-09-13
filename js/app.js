@@ -18,10 +18,43 @@
 
     current: function () { return C.screens[S.index]; },
 
+    /** Versione scelta per una schermata, ma solo se esiste ancora in
+        js/variants.js. Una scelta vecchia salvata dal team (es. "popup")
+        ripiega sulla versione predefinita. */
+    variante: function (id) {
+      var def = window.NAVIDA_PAGE_VARIANTS && window.NAVIDA_PAGE_VARIANTS[id];
+      if (!def) return S.pageVariant(id, '');
+      var v = S.pageVariant(id, def.predefinita);
+      var ok = def.options.some(function (o) { return o.value === v; });
+      return ok ? v : def.predefinita;
+    },
+
     /** La schermata va saltata? (es. "ultima posizione" per chi cerca il primo lavoro) */
     shouldSkip: function (screen) {
-      if (!screen || !screen.skipIf) return false;
+      if (!screen) return false;
+      /* Schermate legate a un brand kit: fuori da quel kit non esistono. */
+      if (screen.kit && screen.kit !== S.brandKit()) return true;
+      /* Schermate legate alla versione di un'altra schermata. Con la
+         registrazione "compatta" spariscono la domanda sul nome e il
+         codice via email. */
+      if (screen.saltaSeVariante) {
+        for (var id in screen.saltaSeVariante) {
+          if (App.variante(id) === screen.saltaSeVariante[id]) return true;
+        }
+      }
+      if (!screen.skipIf) return false;
       return S.answer(screen.skipIf.field) === screen.skipIf.equals;
+    },
+
+    /** Il primo indice utile a partire da i, guardando avanti e poi indietro. */
+    primoUtile: function (i) {
+      var n = C.screens.length;
+      var j = i;
+      while (j < n && this.shouldSkip(C.screens[j])) j++;
+      if (j < n) return j;
+      j = i;
+      while (j >= 0 && this.shouldSkip(C.screens[j])) j--;
+      return j < 0 ? 0 : j;
     },
 
     /* ------------------------------------------------------------------ */
@@ -30,7 +63,14 @@
       var i = S.index;
       do { i++; } while (i < C.screens.length && this.shouldSkip(C.screens[i]));
 
-      if (i >= C.screens.length) { this.restart(); return; }
+      if (i >= C.screens.length) {
+        /* Oltre l'ultima schermata: se ha un "href" (la linea di carriera
+           porta alla dashboard) si va li', altrimenti si ricomincia. */
+        var ultima = this.current();
+        if (ultima && ultima.href) { window.location.href = ultima.href; return; }
+        this.restart();
+        return;
+      }
       S.direction = 'forward';
       S.index = i;
       this.render();
@@ -40,7 +80,11 @@
       if (this._pending) { clearTimeout(this._pending); this._pending = null; }
       var i = S.index;
       do { i--; } while (i > 0 && this.shouldSkip(C.screens[i]));
-      if (i < 0) return;
+      if (i < 0) {
+        /* Prima della prima schermata: la Fase 3 torna alla linea di carriera. */
+        if (C.indietroHref) window.location.href = C.indietroHref;
+        return;
+      }
       S.direction = 'back';
       S.index = i;
       this.render();
@@ -50,6 +94,8 @@
       if (this._pending) { clearTimeout(this._pending); this._pending = null; }
       var i = C.screens.findIndex(function (s) { return s.id === id; });
       if (i === -1) return;
+      /* se il bersaglio non esiste in questo kit, prende la prima utile */
+      i = this.primoUtile(i);
       S.direction = i > S.index ? 'forward' : 'back';
       S.index = i;
       this.render();
@@ -102,9 +148,34 @@
     },
 
     /* ------------------------------------------------------------------
-       Avanzamento proporzionale, calcolato sul capitolo corrente.
+       Avanzamento proporzionale.
+       Se il contenuto ha "barre", la barra va da una schermata all'altra
+       (vedi C.barre in js/content.js). Altrimenti si calcola sul capitolo.
        ------------------------------------------------------------------ */
     progress: function (screen) {
+      var canBack = S.index > 0;
+
+      if (C.barre) {
+        var ids = C.screens.map(function (s) { return s.id; });
+        var qui = ids.indexOf(screen.id);
+        var tratto = null;
+        C.barre.forEach(function (b) {
+          var da = ids.indexOf(b.da), a = ids.indexOf(b.a);
+          if (da > -1 && a >= da && qui >= da && qui <= a) tratto = C.screens.slice(da, a + 1);
+        });
+        if (!tratto || screen.noProgress) {
+          return { value: 0, total: 1, canBack: canBack, hidden: true };
+        }
+        var passi = tratto.filter(function (s) { return !s.noProgress && !App.shouldSkip(s); });
+        var n = passi.findIndex(function (s) { return s.id === screen.id; });
+        return {
+          value: passi.length ? (n + 1) / passi.length : 0,
+          total: passi.length || 1,
+          canBack: canBack,
+          hidden: n === -1
+        };
+      }
+
       var chapter = screen.chapter;
       var list = C.screens.filter(function (s) {
         return s.chapter === chapter && !s.noProgress && !App.shouldSkip(s);
@@ -112,21 +183,20 @@
       var pos = list.findIndex(function (s) { return s.id === screen.id; });
       var hidden = chapter === 'intro' || chapter === 'auth' || screen.noProgress || pos === -1;
 
-      // le schede di onboarding hanno una loro barra su 4 passi
-      if (screen.obStep) {
-        return { value: screen.obStep / 4, total: 4, canBack: S.index > 0, hidden: false };
-      }
-
       return {
         value: list.length ? (pos + 1) / list.length : 0,
         total: list.length || 1,
-        canBack: S.index > 0,
+        canBack: canBack,
         hidden: hidden
       };
     },
 
     /* ------------------------------------------------------------------ */
     render: function () {
+      /* Il kit puo' essere cambiato mentre eri su una schermata che in
+         quel kit non esiste: qui si scivola sulla prima buona. */
+      if (this.shouldSkip(this.current())) S.index = this.primoUtile(S.index);
+
       var screen = this.current();
       var host = document.getElementById('app');
       host.innerHTML = '';
@@ -138,11 +208,6 @@
       if (window.NavidaKeyboard) window.NavidaKeyboard.reset();
 
       var tipo = screen.type;
-      // la schermata di accesso ha anche le vecchie versioni a popup
-      var POPUP = ['sheet', 'popup', 'header'];
-      if (tipo === 'login' && POPUP.indexOf(S.pageVariant(screen.id, 'centrata')) !== -1) {
-        tipo = 'loginPopup';
-      }
 
       var renderer = R.screens[tipo];
       if (!renderer) {
@@ -154,20 +219,16 @@
       }
 
       // queste schermate occupano tutto lo spazio, senza margini
-      if (screen.type === 'hero' || tipo === 'loginPopup' || screen.type === 'splash' ||
+      if (screen.type === 'hero' || screen.type === 'splash' ||
           screen.type === 'dream' || screen.type === 'circles' || screen.type === 'loading' || screen.fullBleed) {
         wrap.style.padding = '0';
-      }
-
-      // il badge resta solo sulle schermate wow che non sono ancora state rifatte
-      if (screen.wow && screen.type !== 'loading' && screen.type !== 'circles') {
-        wrap.appendChild(R.h('div', { class: 'wowBadge', text: 'Sezione ludica · da rifare' }));
       }
 
       host.appendChild(wrap);
 
       var device = document.querySelector('.device');
-      var isSpaceJourney = screen.type === 'loading' && S.pageVariant(screen.id, 'spazio') === 'spazio';
+      var isSpaceJourney = (screen.type === 'loading' && S.pageVariant(screen.id, 'spazio') !== 'linea') ||
+        (screen.type === 'circles' && S.pageVariant(screen.id, '') === 'notte');
       if (device) device.classList.toggle('device--space', isSpaceJourney);
 
       if (window.lucide && window.lucide.createIcons) window.lucide.createIcons();
@@ -250,6 +311,7 @@
     // prima prova a prendere le modifiche condivise dal server, poi disegna
     window.NavidaSync.pull(S, function () {
       S.applyColors();
+      S.applyBrand();
       // ogni pezzo è opzionale: se un file non carica, l'app parte lo stesso
       if (window.NavidaEditor) window.NavidaEditor.init();
       App.init();

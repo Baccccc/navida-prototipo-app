@@ -54,6 +54,20 @@
     { id: 'commenti', label: 'Commenti', ico: 'message-square' }
   ];
 
+  /* Le due versioni del brand kit. La seconda vive in css/brand-maturo.css. */
+  var BRAND_KIT = [
+    {
+      value: 'originale',
+      label: 'Originale',
+      nota: 'Il kit preso dal Figma: bordi netti, angoli a 12px, campi con bordo.'
+    },
+    {
+      value: 'maturo',
+      label: 'Maturo',
+      nota: 'Preso dalla schermata di accesso "Essenziale": pastiglie, campi senza bordo, titolo grande blu notte, piu’ aria.'
+    }
+  ];
+
   var COLORI = [
     { token: '--main',             label: 'Primario' },
     { token: '--bg',               label: 'Sfondo' },
@@ -294,11 +308,13 @@
       }
 
       /* scorciatoie di navigazione, sempre in fondo al pannello.
-         Portano alla primissima e all'ultimissima schermata del flusso,
-         quali che siano: aggiungendo la dashboard in fondo a content.js,
-         "Fine" ci arriverà da sola. */
+         "Inizio" porta alla primissima schermata. "Fine" porta al viaggio
+         nello spazio (fineTest): finita l'animazione arriva da solo alla
+         linea di carriera, e da li' si va alla dashboard. In fase3.html
+         fineTest non c'e': "Fine" porta all'ultima schermata. */
       var prima = C.screens[0];
-      var ultima = C.screens[C.screens.length - 1];
+      var ultima = C.screens.find(function (s) { return s.id === 'fineTest'; }) ||
+        C.screens[C.screens.length - 1];
 
       this.host.appendChild(h('div', { class: 'ed-foot' }, [
         h('button', {
@@ -503,6 +519,26 @@
 
     /* --- Colori ------------------------------------------------------- */
     panelColori: function (p) {
+
+      /* Brand kit: due versioni dell'aspetto generale di tutta l'app.
+         Vedi css/brand-maturo.css per cosa cambia e perche'. */
+      var brand = S.brandKit();
+      p.appendChild(h('div', { class: 'ed-label', text: 'Brand kit' }));
+      p.appendChild(h('div', { class: 'ed-seg' }, BRAND_KIT.map(function (b) {
+        return h('button', {
+          class: 'ed-chip' + (brand === b.value ? ' is-active' : ''),
+          onclick: function () {
+            S.setBrand(b.value);
+            window.NavidaApp.render();
+            Editor.paint();
+          }
+        }, [b.label]);
+      })));
+      p.appendChild(h('p', {
+        class: 'ed-hint',
+        text: (BRAND_KIT.filter(function (b) { return b.value === brand; })[0] || {}).nota || ''
+      }));
+
       p.appendChild(h('div', { class: 'ed-label', text: 'Colori del tema' }));
       p.appendChild(h('div', { class: 'ed-colors' }, COLORI.map(function (c) {
         var cur = S.overrides.colors[c.token] ||
@@ -520,22 +556,70 @@
     },
 
     /* --- Mascotte ----------------------------------------------------- */
+    mascFiltro: '',
     panelMascotte: function (p, screen) {
       var def = VAR.mascotte;
       var cur = S.variant(screen.id, 'mascotte', def.predefinita);
 
+      function scegli(valore) {
+        S.setVariant(screen.id, 'mascotte', valore);
+        window.NavidaApp.render();
+        Editor.paint();
+      }
+
+      /* Le due voci speciali restano pulsanti di testo. */
+      var speciali = def.options.filter(function (o) {
+        return o.value === 'auto' || o.value === 'nascosta';
+      });
+      var pose = def.options.filter(function (o) {
+        return o.value !== 'auto' && o.value !== 'nascosta';
+      });
+
       p.appendChild(h('div', { class: 'ed-label', text: 'Scegli la mascotte' }));
-      p.appendChild(h('div', { class: 'ed-seg' }, def.options.map(function (o) {
+      p.appendChild(h('div', { class: 'ed-seg' }, speciali.map(function (o) {
         return h('button', {
           class: 'ed-chip' + (cur === o.value ? ' is-active' : ''),
           text: o.label,
-          onclick: function () {
-            S.setVariant(screen.id, 'mascotte', o.value);
-            window.NavidaApp.render();
-            Editor.paint();
-          }
+          onclick: function () { scegli(o.value); }
         });
       })));
+
+      /* Ricerca: con tante pose serve un filtro. */
+      var cerca = h('input', {
+        class: 'ed-search',
+        type: 'search',
+        placeholder: 'Cerca una posa...',
+        value: Editor.mascFiltro
+      });
+      p.appendChild(cerca);
+
+      var griglia = h('div', { class: 'ed-mascGrid' }, pose.map(function (o) {
+        var fig = h('figure', { class: 'ed-masc' + (cur === o.value ? ' is-active' : '') });
+        var img = h('img', { src: 'assets/mascotte-' + o.value + '.png', alt: o.label, loading: 'lazy' });
+        fig.appendChild(img);
+        fig.appendChild(h('figcaption', { text: o.label }));
+        var b = h('button', {
+          class: 'ed-mascBtn',
+          title: o.label,
+          onclick: function () { scegli(o.value); }
+        }, [fig]);
+        b.setAttribute('data-nome', o.label.toLowerCase());
+        return b;
+      }));
+      p.appendChild(griglia);
+
+      p.appendChild(h('div', { class: 'ed-count', text: pose.length + ' pose disponibili' }));
+
+      function filtra() {
+        var q = cerca.value.trim().toLowerCase();
+        Editor.mascFiltro = cerca.value;
+        Array.prototype.forEach.call(griglia.children, function (b) {
+          var ok = !q || b.getAttribute('data-nome').indexOf(q) !== -1;
+          b.style.display = ok ? '' : 'none';
+        });
+      }
+      cerca.addEventListener('input', filtra);
+      if (Editor.mascFiltro) filtra();
 
       p.appendChild(h('div', { class: 'ed-actions' }, [
         h('button', {

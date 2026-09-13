@@ -26,13 +26,14 @@
       colors: {},    // "--main" -> "#4240ba"
       order: {},     // "screenId" -> [2,0,1,...]
       variants: {},  // "screenId:nomeVariante" -> "valore"
-      page: {}       // "screenId" -> "varianteDiPagina"
+      page: {},      // "screenId" -> "varianteDiPagina"
+      brand: 'originale'  // quale brand kit: "originale" | "maturo"
     },
 
     /* --- modifiche IN BOZZA (visibili solo a chi le sta facendo) -----
        Restano qui finché non si preme "Applica". */
     draft: {
-      text: {}, colors: {}, order: {}, variants: {}, page: {}
+      text: {}, colors: {}, order: {}, variants: {}, page: {}, brand: null
     },
 
     /* --- modalità dell'editor --------------------------------------- */
@@ -70,8 +71,9 @@
     },
 
     reset: function () {
-      this.overrides = { text: {}, colors: {}, order: {}, variants: {}, page: {} };
-      this.draft = { text: {}, colors: {}, order: {}, variants: {}, page: {} };
+      this.overrides = { text: {}, colors: {}, order: {}, variants: {}, page: {}, brand: 'originale' };
+      this.draft = { text: {}, colors: {}, order: {}, variants: {}, page: {}, brand: null };
+      this.applyBrand();
       try { localStorage.removeItem(KEY); } catch (e) {}
     },
 
@@ -94,6 +96,7 @@
       ['text', 'colors', 'order', 'variants', 'page'].forEach(function (k) {
         n += Object.keys(d[k]).length;
       });
+      if (d.brand) n += 1;
       return n;
     },
 
@@ -104,6 +107,7 @@
         Object.keys(d[k]).forEach(function (key) { o[k][key] = d[k][key]; });
         d[k] = {};
       });
+      if (d.brand) { o.brand = d.brand; d.brand = null; }
       this.save();
       if (window.NavidaSync) window.NavidaSync.push(this.overrides);
     },
@@ -113,8 +117,9 @@
       Object.keys(this.draft.colors).forEach(function (k) {
         document.documentElement.style.removeProperty(k);
       });
-      this.draft = { text: {}, colors: {}, order: {}, variants: {}, page: {} };
+      this.draft = { text: {}, colors: {}, order: {}, variants: {}, page: {}, brand: null };
       this.applyColors();
+      this.applyBrand();
     },
 
     exportJSON: function () {
@@ -129,9 +134,10 @@
       var data = JSON.parse(raw);
       if (!data || !data.overrides) throw new Error('File non valido');
       this.overrides = Object.assign(
-        { text: {}, colors: {}, order: {}, variants: {}, page: {} },
+        { text: {}, colors: {}, order: {}, variants: {}, page: {}, brand: 'originale' },
         data.overrides
       );
+      this.applyBrand();
       this.save();
     },
 
@@ -164,6 +170,31 @@
     setColor: function (token, value) {
       this.draft.colors[token] = value;
       document.documentElement.style.setProperty(token, value);
+      this.tocca();
+    },
+
+    /* ================================================================
+       BRAND KIT
+       ================================================================
+       Due versioni dell'aspetto generale. Il file css/brand-maturo.css
+       si accende da solo quando <html> porta data-brand="maturo".
+       ================================================================ */
+
+    /** Quale brand kit e' attivo adesso (bozza compresa). */
+    brandKit: function () {
+      return this.draft.brand || this.overrides.brand || 'originale';
+    },
+
+    /** Scrive la scelta su <html>: da li' il CSS fa il resto. */
+    applyBrand: function () {
+      var v = this.brandKit();
+      if (v === 'originale') document.documentElement.removeAttribute('data-brand');
+      else document.documentElement.setAttribute('data-brand', v);
+    },
+
+    setBrand: function (valore) {
+      this.draft.brand = valore;
+      this.applyBrand();
       this.tocca();
     },
 

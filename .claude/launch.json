@@ -3,9 +3,23 @@
   "configurations": [
     {
       "name": "navida-prototipo",
-      "runtimeExecutable": "npx",
-      "runtimeArgs": ["--yes", "serve", "-l", "5177", "."],
-      "port": 5177
+      "runtimeExecutable": "python",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8123"
+      ],
+      "port": 8123
+    },
+    {
+      "name": "navida-anteprima",
+      "runtimeExecutable": "python",
+      "runtimeArgs": [
+        "-c",
+        "import os, functools, http.server; h = functools.partial(http.server.SimpleHTTPRequestHandler, directory='.'); http.server.test(HandlerClass=h, port=int(os.environ.get('PORT', '8140')), bind='127.0.0.1')"
+      ],
+      "port": 8140,
+      "autoPort": true
     }
   ]
 }

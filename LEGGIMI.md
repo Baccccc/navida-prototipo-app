@@ -104,7 +104,9 @@ può esportare in JSON.
 
 Cliccando **Testi**, **Ordine** o **Elemento** la modalità si attiva subito.
 In fondo al pannello ci sono due scorciatoie: **Inizio del questionario** e
-**Fine del questionario** (che compila da sola tutte le risposte).
+**Fine del questionario**. "Fine" compila da sola tutte le risposte e apre il
+viaggio nello spazio (`fineTest`). Finita l'animazione, arriva da sola alla
+linea di carriera. Da lì **Vai alla dashboard** (o la freccia destra) apre `fase3.html`.
 
 ---
 
@@ -133,13 +135,82 @@ foglietti non compaiono, per non stringere lo schermo del telefono.
 
 ---
 
+### Registrazione: una schermata, due versioni
+
+C'è **una sola schermata** per entrare e per registrarsi. Non c'è il
+pulsante “Registrati”: se l'email o l'account Google/Apple non ha ancora un
+profilo, il profilo si crea da solo. In alto c'è solo la solita freccia
+indietro.
+
+Le due versioni hanno lo stesso aspetto e valgono in tutti e due i brand kit.
+Si sceglie dalla barra di modifica, sulla schermata di accesso.
+
+| Versione | Cosa chiede | Pulsanti | Dopo |
+|---|---|---|---|
+| **Essenziale** (predefinita) | *Benvenuto* · l'email | Entra con l'email · Continua con Google · Continua con Apple | codice via email |
+| **Compatta** | *Come ti chiami?* · nome e cognome | Avanti · Continua con Google · Continua con Apple | niente codice: si va avanti |
+
+Con la versione **compatta** il nome lo chiede la registrazione. Per questo
+**sparisce la domanda “Prima di tutto, qual è il tuo nome?”**, il saluto dopo
+diventa *“Piacere di conoscerti!”* e **sparisce il codice via email**.
+
+I pulsanti social sono una scorciatoia da demo: riempiono con dati finti
+quello che manca e vanno avanti.
+
+La vecchia registrazione a passi (nome, poi email, poi password, stile
+Duolingo) è stata tolta.
+
+**Come funziona sotto.** Una schermata di `js/content.js` può portare:
+- `kit: 'maturo'` o `kit: 'originale'`: fuori da quel kit non esiste;
+- `saltaSeVariante: { registrazione: 'compatta' }`: sparisce con quella
+  versione di un'altra schermata;
+- `kitTesti` o `varianteTesti`: cambia una frase solo in un kit o solo con
+  una versione.
+
+Il salto lo fa `shouldSkip` in `js/app.js`. Se il team aveva salvato una
+versione che non esiste più (es. “popup”), si vede quella predefinita.
+
 ### Versioni alternative già pronte
 
 | Schermata | Versioni |
 |---|---|
 | **Apertura** | Alone lavanda · Copertina + card · Notturna |
-| **Accesso** | Centrata · Social first · Con copertina · Pagina semplice — più le tre vecchie a popup, tenute per confronto |
-| **Prima proiezione** | Tre consigli · Messaggio unico |
+| **Accesso** | Essenziale · Compatta |
+| **Prima proiezione** | Verdetto con prova (attiva) · Messaggio che si scrive |
+
+Nella prima proiezione:
+- **Verdetto con prova** non ha card intorno: testo corto sul fondo e sotto il
+  grafico *Oggi → 1 → 2 → 3 → il ruolo che sogni*. La linea è piena solo fino
+  alla tappa 1 (il prossimo passo), poi è tratteggiata: sono le tappe che
+  stiamo ancora calcolando. Nel codice è l'opzione `pienaFino` della versione
+  `curva` in `js/percorso.js`.
+- **Messaggio che si scrive** sta nel fumetto della mascotte che parla. Prima
+  i tre puntini, poi le parole una alla volta.
+- Sopra il pulsante non c'è più la riga *"Continua con la registrazione…"*.
+
+Le vecchie versioni (Verdetto grande, Tre consigli, Messaggio unico, Navida ti
+parla) sono state tolte.
+
+Nel kit **Maturo** la seconda azione sotto il pulsante principale (es.
+*Continua a giocare*) è sempre un pulsante vero, mai solo una scritta. Nel
+codice ha la classe `linkbtn--azione`.
+
+### Schermate di racconto (mascotte e testo)
+
+Le schermate che hanno solo mascotte e testo — *Ciao, siamo Navida*, *Come
+funziona*, *Scoprirlo è gratis*, *Piacere*, *Ci siamo*, e le altre — usano
+un disegno solo, sullo stile dei reference Duolingo portati dal team.
+
+| Versione | Com'è fatta | Quando |
+|---|---|---|
+| **Fumetto sopra la mascotte** | Frase corta dentro un fumetto, mascotte sotto, pulsante in basso | Testi brevi |
+| **Mascotte sopra, testo sotto** | Mascotte in alto, titolo e testo sotto, tutto centrato | Testi lunghi |
+| **Fumetto in riga + elenco** | Mascotte piccola col fumetto di fianco, poi un punto per riga con quadratino colorato | Testi a punti |
+
+La scelta è nella barra di modifica, scheda **Elemento**, riquadro *Schermata
+di racconto*. La versione **Automatica** (quella attiva) sceglie da sola:
+punti → elenco, testo lungo → mascotte sopra, testo corto → fumetto.
+C'è anche **Classica**, il disegno di prima, tenuto per confronto.
 
 Fra le varianti della lista risposte c'è **Card con icone**: griglia a due colonne
 con icona colorata, sullo stile dei reference. È già attiva su *Cosa stai cercando*,
@@ -163,6 +234,7 @@ index.html
 fase3.html            dashboard, linea di carriera, catalogo e notifiche
 css/
   tokens.css          colori, font, spaziature, raggi — presi dalle variabili Figma
+  brand-maturo.css    secondo brand kit "Maturo": si accende da Colori → Brand kit
   app.css             layout mobile, cornice iPhone, tutti i componenti
   editor.css          barra di modifica
   fase3.css           componenti specifici della Fase 3
@@ -197,8 +269,8 @@ Per aggiungere una domanda basta copiare un oggetto esistente, cambiare
 1. **Ingresso** (7) — splash, benvenuto, scelta tipo utente, 4 schede di onboarding
 2. **Fase 1 · Scoperta** (16) — nome, genere, età, motivazione, obiettivo, titolo di
    studio, specializzazioni, situazione lavorativa, lavoro dei sogni, prima proiezione
-3. **Accesso e chiusura** (4) — registrazione (più versioni), codice via email,
-   anteprima della linea di carriera, fine del prototipo
+3. **Accesso e chiusura** (4) — registrazione (due versioni), codice via email,
+   anteprima della linea di carriera (poi si va alla dashboard in `fase3.html`)
 4. **Fase 2 · Questionario** (24) — introduzione + 3 blocchi:
    - Blocco 1 · anagrafica, categoria professionale, mansioni, livello di responsabilità
    - Blocco 2 · 3 ordinamenti, paure, valori, trasferimento, sogno aperto
@@ -208,7 +280,13 @@ Più **15 schermate** in `fase3.html`: dashboard, mappa, consulenza, notifiche,
 percorso, catalogo, dettaglio, filtri, impostazioni del contenuto e le sei del profilo.
 5. **Chiusura** (2) — anteprima della linea di carriera
 
-Le barre di avanzamento sono **proporzionali** al numero di schermate del capitolo.
+Ci sono **due barre di avanzamento**, scritte in `barre` in `js/content.js`:
+
+1. da **Cosa stai cercando?** (`userType`) a **Ora tocca a te** (`tuoMomento`);
+2. da **Prima di iniziare** (`introQuestionario`) a **Per cosa vieni criticato di più?** (`b3_q7`).
+
+Ogni barra è **proporzionale** al numero di schermate del suo tratto e si
+riempie del tutto sull'ultima. Fuori dai due tratti la barra non si vede.
 
 Alla fine del questionario il pulsante **Vedi il tuo percorso** apre `fase3.html`.
 La Fase 3 comprende dashboard, linea di carriera con quattro versioni, catalogo,
@@ -241,14 +319,38 @@ Ricostruita com'è oggi nel Figma (schermate *Animaz ludica 1-12*):
    Al centro il campo di testo e la sua descrizione. **La tastiera non sale da
    sola:** si apre solo toccando il campo.
 3. Premuto **Continua**, la tastiera scende e gli anelli riprendono a girare.
-4. **`elaborazione`** — l'astronauta cambia veste e mestiere: le mascotte si
-   avvicendano al centro dello schermo, tutte della stessa dimensione e tutte
-   in piedi, senza etichette. L'attesa dura sempre lo stesso tempo (5,4
-   secondi) qualunque sia il numero di pose della variante scelta.
+4. **`elaborazione`** — un'attesa semplice, come un loader. Resta solo il
+   titolo *"Un momento · Stiamo esplorando le possibilità"* e l'astronauta che
+   cambia veste. Il cambio è uno scatto con una breve pausa vuota. Niente nomi
+   dei mestieri, niente contatore, niente barra, una sola versione.
+   L'attesa dura circa 6 secondi.
+   Codice in `professioni()` di `js/wow.js`, stile in `css/wow.css`.
 5. **`previsione`** — un consiglio solo, con la firma di Navida.
 
 Resta col badge *"da rifare"* perché il design va ripensato insieme: intanto si
 comporta come il progetto attuale.
+
+### Tre versioni della schermata del sogno
+
+Nella barra di modifica, scheda **Versione**, `lavoroSogni` offre tre scelte.
+Le altre sei sono state tolte dalla scelta il 13/09/2026. Il loro codice resta
+in `js/wow.js`, ma nessuno lo chiama. Una scelta salvata che punta a una
+versione tolta torna da sola alla Targhetta.
+
+In tutte e tre la domanda è un titolo vero: si legge, si modifica dalla scheda
+**Testi** e resta ferma mentre si scrive. Il chip *"da rifare"* non c'è più.
+
+| Versione | Cosa si vede | Barra in alto |
+|---|---|---|
+| **Targhetta da lavoro** (predefinita) | Un badge scende dal cordino e dondola; il campo è la riga del ruolo. La riga d'aiuto sta piccola dentro il badge | Nascosta |
+| Insegna al neon | Notte, la domanda si accende a sfarfallii, il campo è un tubo di luce. La riga d'aiuto sta sopra il pulsante | Visibile |
+| Orizzonte all'alba | Mezzo sole sorge dalla riga su cui scrivi. La riga d'aiuto sta sopra il pulsante | Nascosta |
+
+Per vederle una a una senza passare dal questionario:
+`index.html?screen=lavoroSogni&variant=targhetta` (poi `insegna`, `orizzonte`).
+
+Il codice sta in `js/wow.js` (le scene), `css/wow.css` (gli stili, in fondo al
+file) e `js/variants.js` (l'elenco delle versioni).
 
 **La tastiera finta** sale ogni volta che un campo di testo prende il fuoco, su
 tutte le schermate: il prototipo si comporta come un telefono vero. Si scrive
@@ -275,14 +377,14 @@ Valori presi uno per uno dal component set Figma, non stimati a occhio:
 
 | Componente | Spec |
 |---|---|
-| **Risposta** | 345×40, raggio 12, padding 10/24, gap 8 · default `#ffffff` bordo `#ebe9f7` · scelta `#e3e3f9` bordo `#392eaa` · testo 14/20 Medium `#314158` |
+| **Risposta** | 345×40, raggio 12, padding 10/24, gap 8 · default `#ffffff` bordo `#ebe9f7` · scelta `#e3e3f9` bordo `#392eaa` · testo 16/24 Medium `#1c1b33` (preso dal kit Maturo, era 14/20 `#314158`) |
 | **Risposta +info** | 64 di altezza da selezionata |
 | **Risposta +testo** | 85 di altezza, campo interno 297×37 raggio 12, bianco al 40% |
 | **Checkbox** | 14×16 (non 18×18) |
 | **Barra avanzamento** | 185×4 · track `#1e1a4d` al 12% · riempimento sfumato `#8c2895` → `#3118a0` |
 | **Pulsante** | 6 stati: CTA `#4340b3` · Disattivata `#dddded` **con testo bianco** · Passivo `#f3f4f6`/`#314158` · Premuto `#314158` con bordo nero · Outline `#fafbfc` bordo `#314158` · Transparent |
 | **Dimensioni pulsante** | Full page 345×48 · 345×52 · Half page 172×48 · 172×52 · Small 72×48 · 128×52 |
-| **Titolo** | 24/32 SemiBold `#314158`, centrato, larghezza testo 297 |
+| **Titolo** | 30/38 Bold `#100f24`, centrato, larghezza testo 297 (preso dal kit Maturo, era 24/32 `#314158`) |
 
 ## Responsività
 

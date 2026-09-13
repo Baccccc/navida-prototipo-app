@@ -1,18 +1,14 @@
-METTI QUI LE MASCOTTE ESPORTATE DA FIGMA
+MASCOTTE DELL'APP
 
-Nomi esatti richiesti:
-  mascotte-salutare.png
-  mascotte-tablet.png
-  mascotte-saltare.png
-  mascotte-indicare.png
-  mascotte-computer.png
+I file si chiamano  mascotte-<posa>.png  e stanno in questa cartella.
+L'elenco completo delle pose e' in  js/mascotte.js  (variabile POSE).
 
-Come esportarle (30 secondi):
-  1. Apri "Prototipo interattivo Navida" -> pagina "Schermate statiche"
-  2. Sezione UI kit -> component set "Mascotte" (5 varianti)
-  3. Seleziona tutte e 5 le varianti
-  4. Pannello destro -> Export -> PNG -> 2x -> Export
-  5. Rinomina i file come sopra e mettili in questa cartella
+Per aggiungere una posa nuova:
+  1. Copia il PNG qui, con nome  mascotte-<nome>.png
+  2. Aggiungi <nome> a POSE, LABEL e RATIO in js/mascotte.js
+  3. Aggiungi la voce in js/variants.js -> mascotte.options
+
+Le immagini originali si trovano in  ..\..\Mascotte
 
 Se preferisci SVG o WebP, cambia la costante FORMATO in js/mascotte.js.
 Finche' i file non ci sono, l'app mostra un segnaposto tratteggiato.

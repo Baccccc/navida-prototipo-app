@@ -243,6 +243,7 @@ alte quanto serve.
 | Voglio cambiare… | File |
 |---|---|
 | un colore, una misura di testo, una spaziatura, un raggio | `css/tokens.css` |
+| l'aspetto del secondo brand kit ("Maturo") | `css/brand-maturo.css` |
 | come è fatta una schermata della Fase 3 o del profilo | `css/fase3.css` |
 | come è fatto il questionario | `css/app.css` |
 | il disegno di un'icona, o aggiungerne una | `js/icons.js`, o `ICONE_FASE3` in `js/fase3-render.js` |

@@ -42,6 +42,10 @@
   --text-highlighted: #0f172b;
   --text-on-main: #ffffff;
   --text-disabled: #a3a3c2;
+  /* Titoli e testo delle risposte: blu notte quasi nero, presi dal kit
+     Maturo perche' si leggono meglio dell'ardesia #314158 (richiesta di Bac). */
+  --text-titolo: #100f24;
+  --text-risposta: #1c1b33;
 
   /* --- Coppie tematiche ------------------------------------------- */
   --tema-1-text: #4240ba; --tema-1-bg: #4240ba26;

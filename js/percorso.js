@@ -158,6 +158,46 @@
     requestAnimationFrame(fotogramma);
   }
 
+  /* Disegna solo il primo pezzo della linea, lungo `pezzo`, e accende i
+     pallini che raggiunge. I pallini dopo, quelli sul tratteggio, si
+     accendono uno alla volta quando il pezzo pieno e' arrivato. */
+  function animaPezzo(linea, nodi, pezzo, fino) {
+    var L = linea.getTotalLength();
+    linea.style.strokeDasharray = pezzo + ' ' + (L + 10);
+
+    function accendiResto(pausa) {
+      nodi.forEach(function (n, i) {
+        if (i <= fino) return;
+        if (!pausa) { n.classList.add('is-on'); return; }
+        setTimeout(function () { n.classList.add('is-on'); }, (i - fino) * pausa);
+      });
+    }
+
+    if (ridotte()) {
+      linea.style.strokeDashoffset = '0';
+      nodi.forEach(function (n, i) { if (i <= fino) n.classList.add('is-on'); });
+      accendiResto(0);
+      return;
+    }
+
+    var durata = 1100;
+    var inizio = null;
+    linea.style.strokeDashoffset = String(pezzo);
+
+    function fotogramma(ora) {
+      if (inizio == null) inizio = ora;
+      var t = Math.min(1, (ora - inizio) / durata);
+      var av = 1 - Math.pow(1 - t, 3);
+      linea.style.strokeDashoffset = String(pezzo * (1 - av));
+      nodi.forEach(function (n, i) {
+        if (i <= fino && av >= i / Math.max(1, fino)) n.classList.add('is-on');
+      });
+      if (t < 1) requestAnimationFrame(fotogramma);
+      else { linea.style.strokeDashoffset = '0'; accendiResto(180); }
+    }
+    requestAnimationFrame(fotogramma);
+  }
+
   /* ======================================================================
      LA LINEA DIETRO LE TAPPE
      ======================================================================
@@ -321,8 +361,13 @@
     var W = 300, H = mini ? 130 : 190;
     var y0 = H - (mini ? 26 : 40), y1 = mini ? 24 : 34;
     var R = mini ? 7 : 13;
+    /* pienaFino: la linea e' piena solo fino a quel pallino (il prossimo
+       passo) e tratteggiata dopo. Senza, la linea e' piena tutta. */
+    var pienaFino = opt.pienaFino == null ? null : opt.pienaFino;
+    var ultimoIdx = Math.max(1, steps.length - 1);
 
-    var root = d('div', 'perc perc--curva' + (mini ? ' perc--mini' : ''));
+    var root = d('div', 'perc perc--curva' + (mini ? ' perc--mini' : '') +
+                        (pienaFino != null ? ' perc--parziale' : ''));
     var svg = s('svg', {
       class: 'perc__svg',
       viewBox: '0 0 ' + W + ' ' + H,
@@ -331,16 +376,25 @@
     });
 
     var dd = 'M 26 ' + y0 + ' C 128 ' + y0 + ', 150 ' + y1 + ', ' + (W - 26) + ' ' + y1;
+    var linea;
 
-    /* il grigio sotto e' "senza percorso": serve solo come confronto */
-    svg.appendChild(s('path', {
-      class: 'perc__piatta',
-      d: 'M 26 ' + y0 + ' C 140 ' + (y0 - 4) + ', 190 ' + (y0 - 10) + ', ' + (W - 26) + ' ' + (y0 - 16),
-      fill: 'none'
-    }));
-
-    var linea = s('path', { class: 'perc__linea', d: dd, fill: 'none' });
-    svg.appendChild(linea);
+    if (pienaFino == null) {
+      /* il grigio sotto e' "senza percorso": serve solo come confronto */
+      svg.appendChild(s('path', {
+        class: 'perc__piatta',
+        d: 'M 26 ' + y0 + ' C 140 ' + (y0 - 4) + ', 190 ' + (y0 - 10) + ', ' + (W - 26) + ' ' + (y0 - 16),
+        fill: 'none'
+      }));
+      linea = s('path', { class: 'perc__linea', d: dd, fill: 'none' });
+      svg.appendChild(linea);
+    } else {
+      /* sotto tutta la strada tratteggiata, sopra il pezzo pieno.
+         Il pezzo pieno non porta la classe perc__linea: cosi' la regola
+         "riduci animazioni" non lo allunga fino al traguardo. */
+      svg.appendChild(s('path', { class: 'perc__tratto', d: dd, fill: 'none' }));
+      linea = s('path', { class: 'perc__pieno', d: dd, fill: 'none' });
+      svg.appendChild(linea);
+    }
     root.appendChild(svg);
 
     /* i pallini si appoggiano sulla curva, calcolati sul path vero.
@@ -350,17 +404,24 @@
     steps.forEach(function (st, i) {
       var ultimo = i === steps.length - 1;
       var stato = ultimo ? 'meta' : (i === 0 ? 'ora' : 'poi');
+      if (pienaFino != null && !ultimo && i > 0) {
+        stato = i < pienaFino ? 'ora' : (i === pienaFino ? 'prossimo' : 'poi');
+      }
+      /* un pallino con il suo segno scritto (es. "1") e' piu' grande,
+         anche nella versione mini: il numero deve leggersi */
+      var conSegno = st.segno != null;
+      var raggio = ultimo ? R + 3 : (conSegno && mini ? 10 : R);
       var g = s('g', { class: 'perc__nodo perc__nodo--' + stato });
-      g.appendChild(s('circle', { class: 'perc__disco', r: ultimo ? R + 3 : R }));
-      /* nella versione mini i pallini sono troppo piccoli per un numero:
-         li' restano punti puliti, senza tratteggio */
-      if (!mini) {
+      g.appendChild(s('circle', { class: 'perc__disco', r: raggio }));
+      /* nella versione mini i pallini senza segno sono troppo piccoli
+         per un numero: li' restano punti puliti */
+      if (!mini || conSegno) {
         var seg = s('text', {
           class: 'perc__seg',
           'text-anchor': 'middle',
           'dominant-baseline': 'central'
         });
-        seg.textContent = String(i + 1);
+        seg.textContent = conSegno ? String(st.segno) : String(i + 1);
         g.appendChild(seg);
       }
       svg.appendChild(g);
@@ -382,7 +443,11 @@
         if (t) { t.setAttribute('x', p.x); t.setAttribute('y', p.y); }
       });
 
-      animaLinea(linea, nodi, mini ? 2800 : 3200, { avanzamento: 0, L: 0 });
+      if (pienaFino == null) {
+        animaLinea(linea, nodi, mini ? 2800 : 3200, { avanzamento: 0, L: 0 });
+      } else {
+        animaPezzo(linea, nodi, L * Math.min(pienaFino, ultimoIdx) / ultimoIdx, pienaFino);
+      }
       root.classList.add('is-on');
     });
 

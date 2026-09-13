@@ -266,19 +266,21 @@ input, textarea { font-family: inherit; }
   text-align: center;
 }
 
+/* Il titolo prende misura e colore del kit Maturo: 30/38 blu notte
+   al posto di 24/32 ardesia. Richiesta di Bac, vale in tutte le schermate. */
 .title {
-  font-size: var(--fs-2xl);
-  line-height: var(--lh-2xl);
+  font-size: var(--fs-3xl);
+  line-height: 38px;
   font-weight: var(--fw-bold);
   letter-spacing: -.005em;
-  color: var(--text);
+  color: var(--text-titolo);
   text-align: center;
   margin: 0;
   padding: 0 var(--gutter);
   text-wrap: balance;
 }
 .title--left { text-align: left; padding: 0; }
-.title--lg { font-size: var(--fs-3xl); line-height: var(--lh-3xl); }
+.title--lg { font-size: var(--fs-4xl); line-height: 44px; }
 
 /* Le domande hanno un gradino tipografico dedicato: più leggibili senza
    ingrandire anche titoli informativi, login e risultati. */
@@ -395,9 +397,10 @@ input, textarea { font-family: inherit; }
   border-radius: var(--r-md);
   background: var(--surface);
   border: 1px solid var(--light-outline);
-  color: var(--text);
-  font-size: var(--fs-sm);
-  line-height: var(--lh-sm);
+  /* testo della risposta 16/24 blu notte, come nel kit Maturo */
+  color: var(--text-risposta);
+  font-size: var(--fs-base);
+  line-height: var(--lh-base);
   font-weight: var(--fw-medium);
   text-align: left;
   transition: background var(--dur) var(--ease), border-color var(--dur) var(--ease),
@@ -506,7 +509,9 @@ input, textarea { font-family: inherit; }
   font-variant-numeric: tabular-nums;
   user-select: none;
 }
-.opt__pos[style*="grid-row:1"] { color: var(--main); }
+/* il podio: i primi tre posti hanno il colore del brand.
+   I numeri sono i primi figli della lista, quindi basta nth-child. */
+.opt__pos:nth-child(-n+3) { color: var(--main); }
 
 
 /* ---- 2 · PODIO -----------------------------------------------------
@@ -585,7 +590,7 @@ input, textarea { font-family: inherit; }
   background: var(--surface);
   font: inherit;
   text-align: left;
-  color: var(--text);
+  color: var(--text-risposta);
   cursor: pointer;
   transition: border-color var(--dur) var(--ease), transform 120ms var(--ease);
 }
@@ -743,8 +748,10 @@ input, textarea { font-family: inherit; }
   border-radius: var(--r-md);
   align-self: center;
 }
+/* stessa dimensione delle risposte di solo testo, come nelle card */
 .options[data-variant="riga"] .opt__label {
-  font-size: var(--fs-base);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
   font-weight: var(--fw-semibold);
 }
 .options[data-variant="riga"] .opt.is-selected {
@@ -760,6 +767,9 @@ input, textarea { font-family: inherit; }
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--sp-6);
+  /* con .options--pieno il box e' alto quanto la schermata: senza questo
+     le righe si allungherebbero per riempirlo e le card diventano enormi */
+  align-content: start;
 }
 .options[data-variant="grid"] .opt {
   flex-direction: column;
@@ -784,9 +794,11 @@ input, textarea { font-family: inherit; }
   align-items: center;
   text-align: center;
 }
+/* stessa dimensione delle risposte di solo testo: le card non devono
+   sembrare un secondo livello di lettura */
 .options[data-variant="grid"] .opt__label {
-  font-size: var(--fs-xs);
-  line-height: var(--lh-xs);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
   font-weight: var(--fw-semibold);
 }
 /* nelle card la spunta non serve: la selezione si vede dal fondo e dal bordo */
@@ -832,6 +844,15 @@ input, textarea { font-family: inherit; }
   flex-direction: column;
   gap: var(--sp-6);
   padding-top: var(--sp-7);
+}
+
+/* riga di accompagnamento sopra il bottone della prima proiezione */
+.footer__nota {
+  margin: 0;
+  text-align: center;
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+  color: var(--text-soft, #62748e);
 }
 
 .btn {
@@ -952,6 +973,8 @@ textarea.field__input { min-height: 84px; resize: none; }
 .search__icon {
   position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
   color: var(--text-dimmed); pointer-events: none;
+  /* flex: senza, la riga di testo allunga lo span e l'icona scende */
+  display: flex;
 }
 .search input {
   width: 100%;
@@ -1365,34 +1388,6 @@ textarea.field__input { min-height: 84px; resize: none; }
 }
 .loader__stack { position: relative; display: grid; place-items: center; }
 
-/* --- risultato / tips ---------------------------------------------- */
-.tips { display: flex; flex-direction: column; gap: var(--sp-6); overflow-y: auto; }
-.tip {
-  background: var(--surface);
-  border: 1px solid var(--light-outline);
-  border-radius: var(--r-lg);
-  padding: var(--sp-7);
-  display: flex; flex-direction: column; gap: 6px;
-}
-.tip__n {
-  width: 24px; height: 24px; border-radius: var(--r-full);
-  background: var(--risposte-bg); color: var(--main);
-  display: grid; place-items: center;
-  font-size: var(--fs-xs); font-weight: var(--fw-bold);
-}
-.tip__title { font-size: var(--fs-base); font-weight: var(--fw-semibold); color: var(--text); }
-.tip__desc { font-size: var(--fs-sm); line-height: var(--lh-sm); color: var(--text-toned); }
-
-/* entrata a cascata: prima il primo consiglio, poi il secondo, poi il terzo */
-.tip--in { animation: tip-in 520ms var(--ease) both; }
-@keyframes tip-in {
-  from { opacity: 0; transform: translateY(14px) scale(.98); }
-  to   { opacity: 1; transform: none; }
-}
-
-.tips[data-variant="plain"] .tip { border: 0; background: transparent; padding: 0 0 var(--sp-6); border-bottom: 1px solid var(--light-outline); border-radius: 0; }
-.tips[data-variant="accent"] .tip { background: var(--risposte-bg); border-color: transparent; }
-
 /* --- linea di carriera --------------------------------------------- */
 .path { display: flex; flex-direction: column; gap: 0; overflow-y: auto; }
 .pathStep { display: flex; gap: var(--sp-7); }
@@ -1421,30 +1416,12 @@ textarea.field__input { min-height: 84px; resize: none; }
 }
 .path[data-variant="compact"] .pathStep__obj { display: none; }
 
-/* --- login: pagina normale ------------------------------------------ */
-.loginHead { display: flex; flex-direction: column; gap: var(--sp-4); }
-.loginHead__logo { width: 72px; height: 98px; margin-bottom: var(--sp-2); }
-.loginHead__logo > div { width: 100%; height: 100%; }
-.loginForm { display: flex; flex-direction: column; gap: var(--sp-6); width: 100%; }
-.linkbtn--right { align-self: flex-end; padding: 2px 0; font-size: var(--fs-xs); }
-.loginSocial { display: flex; flex-direction: column; gap: var(--sp-5); }
-
-/* Essenziale (rif. Cuvva) */
-.loginTop {
-  position: absolute;
-  top: var(--header-top); left: var(--gutter); right: var(--gutter);
-  display: flex; align-items: center; justify-content: space-between;
-  z-index: 3;
-}
-.loginTop__round {
-  width: 44px; height: 44px;
-  border-radius: var(--r-full);
-  background: var(--gray-100);
-  color: var(--text-highlighted);
-  display: grid; place-items: center;
-}
-.login--essenziale { margin-top: 92px; gap: var(--sp-7); }
-.login--essenziale .title { font-size: var(--fs-3xl); line-height: var(--lh-3xl); }
+/* --- login: una schermata per entrare o registrarsi ----------------
+   Due versioni con lo stesso aspetto: "essenziale" (email) e
+   "compatta" (nome e cognome). In alto c'e' la solita freccia indietro.
+   Campi e pulsanti a pastiglia, grigi e senza bordo. Apple resta nero. */
+.login .title { font-size: var(--fs-3xl); line-height: var(--lh-3xl); }
+.loginCampi { display: flex; flex-direction: column; gap: var(--sp-5); }
 .field__input--tondo {
   border: 0;
   background: var(--gray-100);
@@ -1452,174 +1429,15 @@ textarea.field__input { min-height: 84px; resize: none; }
   padding: 18px var(--sp-8);
   font-size: var(--fs-base);
 }
-.login--essenziale .btn { border-radius: var(--r-full); height: var(--btn-h); }
-.login--essenziale .social { border-radius: var(--r-full); height: var(--btn-h); background: var(--gray-100); border: 0; }
+.login .btn { border-radius: var(--r-full); height: var(--btn-h); }
+.login .social { border-radius: var(--r-full); height: var(--btn-h); background: var(--gray-100); border: 0; }
 /* senza questa riga il fondo chiaro qui sopra vinceva sul nero di Apple e
    restava la scritta bianca su grigio: illeggibile */
-.login--essenziale .social--apple { background: #000; color: #fff; }
-.linkbtn--forte { font-weight: var(--fw-bold); text-decoration: none; }
+.login .social--apple { background: #000; color: #fff; }
+.loginSocial { display: flex; flex-direction: column; gap: var(--sp-5); }
 
-/* Compatta (rif. Duolingo) */
-.loginBar {
-  display: flex; align-items: center; gap: var(--sp-6);
-  height: 32px; flex: 0 0 auto;
-}
-.loginBar__back { width: 32px; height: 32px; display: grid; place-items: center; color: var(--text-muted); }
-.loginBar__title {
-  flex: 1 1 auto; text-align: center;
-  font-size: var(--fs-lg); font-weight: var(--fw-bold);
-  color: var(--text-muted);
-  margin-right: 32px;
-}
-.login--compatta { gap: var(--sp-6); }
-.fieldGroup {
-  border: 1px solid var(--light-outline);
-  border-radius: var(--r-md);
-  overflow: hidden;
-  background: var(--gray-100);
-}
-.field__input--unito {
-  border: 0;
-  border-radius: 0;
-  background: transparent;
-  padding: 16px var(--sp-7);
-  font-size: var(--fs-base);
-}
-.fieldGroup .field__input--unito + .field__input--unito {
-  border-top: 1px solid var(--light-outline);
-}
-.login--compatta .btn { text-transform: uppercase; letter-spacing: .03em; }
-.login--compatta .social { text-transform: uppercase; font-size: var(--fs-xs); letter-spacing: .04em; }
-
-/* 1 · centrata */
-.login--centrata { gap: var(--sp-6); }
-.login--centrata .loginHead__logo { margin-bottom: var(--sp-2); }
-.login--centrata .field__label { text-align: left; }
-
-/* 2 · social first */
-.login--social { gap: var(--sp-7); }
-
-/* 3 · con copertina */
-.login__cover {
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 42%;
-  background: linear-gradient(160deg, var(--main) 0%, var(--main-2) 100%);
-  display: grid;
-  place-items: center;
-}
-.login__coverArt { width: 130px; height: 176px; }
-.login__coverArt > div { width: 100%; height: 100%; }
-.login__back {
-  position: absolute;
-  top: var(--header-top); left: var(--gutter);
-  width: 32px; height: 32px;
-  display: grid; place-items: center;
-  border-radius: var(--r-full);
-  background: #ffffff2e;
-  color: #fff;
-}
-.login__sheet {
-  position: absolute;
-  left: 0; right: 0; bottom: 0;
-  top: 36%;
-  background: var(--surface);
-  border-radius: var(--r-2xl) var(--r-2xl) 0 0;
-  padding: var(--sp-9) var(--gutter) 40px;
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-6);
-  overflow-y: auto;
-  box-shadow: 0 -8px 32px #1e1a4d1f;
-}
-
-/* --- login: vecchie varianti a popup -------------------------------- */
-.loginBg {
-  position: absolute; inset: 0;
-  background: var(--bg);
-}
-.loginBg--dim::after {
-  content: '';
-  position: absolute; inset: 0;
-  background: #1e1a4d66;
-  backdrop-filter: blur(2px);
-}
-
-.sheet {
-  position: absolute;
-  left: 0; right: 0;
-  bottom: 0;
-  background: var(--surface);
-  border-radius: var(--r-xl) var(--r-xl) 0 0;
-  padding: var(--sp-8) var(--gutter) var(--sp-10);
-  display: flex; flex-direction: column; gap: var(--sp-6);
-  box-shadow: var(--shadow-lg);
-  z-index: 10;
-  animation: sheet-in 320ms var(--ease);
-}
+/* lo usano i fogli che salgono dal basso in css/fase3.css */
 @keyframes sheet-in { from { transform: translateY(24px); opacity: 0; } to { transform: none; opacity: 1; } }
-
-.modal {
-  position: absolute;
-  left: var(--gutter); right: var(--gutter);
-  top: 50%; transform: translateY(-50%);
-  background: var(--surface);
-  border-radius: var(--r-xl);
-  padding: var(--sp-8);
-  display: flex; flex-direction: column; gap: var(--sp-6);
-  box-shadow: var(--shadow-lg);
-  z-index: 10;
-  animation: modal-in 320ms var(--ease);
-}
-@keyframes modal-in { from { transform: translateY(-46%) scale(.96); opacity: 0; } to { transform: translateY(-50%) scale(1); opacity: 1; } }
-
-.sheet__head { display: flex; align-items: flex-start; justify-content: space-between; }
-.sheet__title { font-size: var(--fs-2xl); line-height: var(--lh-2xl); font-weight: var(--fw-bold); color: var(--text-highlighted); margin: 0; }
-.sheet__sub { font-size: var(--fs-sm); line-height: var(--lh-sm); color: var(--text-toned); margin: 0; }
-.sheet__close { color: var(--text-dimmed); }
-
-.sheetHeader {
-  background: linear-gradient(135deg, var(--main), var(--main-2));
-  margin: calc(var(--sp-8) * -1) calc(var(--gutter) * -1) 0;
-  padding: var(--sp-8) var(--gutter);
-  border-radius: var(--r-xl) var(--r-xl) 0 0;
-  color: #fff;
-  display: flex; flex-direction: column; gap: 4px;
-  position: relative;
-}
-.sheetHeader__logo {
-  width: 40px; height: 40px; border-radius: var(--r-md);
-  background: #ffffff2e; display: grid; place-items: center;
-  font-weight: var(--fw-bold); font-size: var(--fs-lg); margin-bottom: var(--sp-4);
-}
-.sheetHeader h2 { margin: 0; font-size: var(--fs-2xl); line-height: var(--lh-2xl); font-weight: var(--fw-bold); }
-.sheetHeader p { margin: 0; font-size: var(--fs-sm); opacity: .82; }
-.sheetHeader__close { position: absolute; top: var(--sp-8); right: var(--gutter); color: #fff; opacity: .8; }
-
-.inputRow { position: relative; display: flex; align-items: center; }
-.inputRow input {
-  width: 100%;
-  border: 1px solid var(--light-outline);
-  border-radius: var(--r-md);
-  padding: 13px 44px 13px var(--sp-7);
-  font-size: var(--fs-sm);
-  color: var(--text);
-  outline: none;
-  background: var(--surface);
-}
-.inputRow input:focus { border-color: var(--risposte-outline); }
-.inputRow__action {
-  position: absolute; right: 8px;
-  width: 30px; height: 30px; border-radius: var(--r-sm);
-  display: grid; place-items: center;
-  color: var(--text-dimmed);
-}
-.inputRow__go {
-  position: absolute; right: 8px;
-  width: 30px; height: 30px; border-radius: var(--r-sm);
-  display: grid; place-items: center;
-  background: var(--risposte-bg); color: var(--main);
-}
 
 .divider { display: flex; align-items: center; gap: var(--sp-6); color: var(--text-dimmed); font-size: var(--fs-xs); }
 .divider::before, .divider::after { content: ''; height: 1px; flex: 1; background: var(--light-outline); }
@@ -1696,16 +1514,6 @@ textarea.field__input { min-height: 84px; resize: none; }
   text-align: center;
   z-index: 60;
   animation: pop 240ms var(--ease);
-}
-
-.wowBadge {
-  position: absolute; top: 96px; left: 50%; transform: translateX(-50%);
-  font-size: 10px; letter-spacing: .08em; text-transform: uppercase;
-  font-weight: var(--fw-bold);
-  color: var(--contrast-2);
-  background: var(--tema-5-bg);
-  padding: 4px 10px; border-radius: var(--r-full);
-  z-index: 20;
 }
 
 /* modalità di modifica */
@@ -1794,105 +1602,53 @@ textarea.field__input { min-height: 84px; resize: none; }
   font-weight: var(--fw-semibold);
 }
 
-/* ---- 1 · VOCE ------------------------------------------------------ */
-.body--voce {
+/* ---- 1 · MESSAGGIO CHE SI SCRIVE -----------------------------------
+   La mascotte parla. Il fumetto e la mascotte sono quelli delle
+   schermate di racconto (.ob--fumetto .ob__bolla): qui si aggiungono
+   solo i tre puntini e le parole che entrano una alla volta. */
+.body--scrive .ob__bolla { max-width: 320px; }
+.scrive { text-align: left; }
+.scrive__puntini {
+  position: absolute;
+  top: var(--sp-7);
+  left: var(--sp-8);
   display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: var(--sp-8);
-  position: relative;
-  background:
-    radial-gradient(120% 80% at 12% 0%, #6b21a81f 0%, transparent 58%),
-    radial-gradient(120% 90% at 96% 22%, #4085b31f 0%, transparent 62%);
-  border-radius: var(--r-xl);
-  padding: var(--sp-8) var(--sp-7);
+  gap: 6px;
+  animation: scrive-via 200ms var(--ease) 1200ms both;
 }
-.voce {
-  background: var(--surface);
-  border: 1px solid var(--light-outline);
-  border-radius: var(--r-xl);
-  box-shadow: var(--shadow-lg);
-  padding: var(--sp-8);
-  text-align: left;
-  animation: voce-in 620ms cubic-bezier(.16, 1, .3, 1) both;
-}
-@keyframes voce-in {
-  from { opacity: 0; transform: translateY(14px) scale(.97); }
-  to   { opacity: 1; transform: none; }
-}
-.voce__firma {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-4);
-  font-size: var(--fs-sm);
-  line-height: var(--lh-sm);
-  font-weight: var(--fw-semibold);
-  color: var(--main);
-  margin-bottom: var(--sp-6);
-}
-.voce__logo {
-  width: 22px; height: 22px;
+.scrive__puntini i {
+  width: 8px; height: 8px;
   border-radius: var(--r-full);
-  background: var(--tema-1-bg);
-  display: grid; place-items: center;
+  background: var(--main);
+  animation: scrive-punto 900ms ease-in-out infinite;
 }
-.voce__title {
-  font-size: var(--fs-xl);
-  line-height: var(--lh-xl);
-  font-weight: var(--fw-semibold);
-  color: var(--text-highlighted);
-  text-align: left;
-  margin: 0 0 var(--sp-6);
+.scrive__puntini i:nth-child(2) { animation-delay: 150ms; }
+.scrive__puntini i:nth-child(3) { animation-delay: 300ms; }
+@keyframes scrive-punto {
+  0%, 60%, 100% { opacity: .25; transform: translateY(0); }
+  30%           { opacity: 1;   transform: translateY(-3px); }
 }
-.voce__testo {
-  font-size: var(--fs-base);
-  line-height: var(--lh-base);
-  color: var(--text-toned);
-  margin: 0;
-  /* il testo entra dentro la card gia' aperta: e' Navida che scrive */
-  animation: voce-testo 520ms var(--ease) 260ms both;
+@keyframes scrive-via {
+  to { opacity: 0; visibility: hidden; }
 }
-@keyframes voce-testo {
-  from { opacity: 0; transform: translateY(6px); }
-  to   { opacity: 1; transform: none; }
+.scrive .parola {
+  animation: scrive-parola 260ms var(--ease) both;
 }
-.voce__mascotte {
-  width: 74px;
-  align-self: flex-end;
-  margin: calc(var(--sp-8) * -1) var(--sp-4) 0 0;
+@keyframes scrive-parola {
+  from { opacity: 0; filter: blur(3px); }
+  to   { opacity: 1; filter: none; }
 }
+/* in modalita' "Testi" il messaggio si vede subito, intero */
+.scrive.is-scritto,
+.scrive.is-scritto .parola { animation: none; }
+.scrive.is-scritto .scrive__puntini { display: none; }
 
-/* ---- 2 · VERDETTO -------------------------------------------------- */
-.body--verdetto {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: var(--sp-7);
-  text-align: left;
-}
-.verdetto__frase {
-  font-size: var(--fs-3xl);
-  line-height: var(--lh-3xl);
-  font-weight: var(--fw-bold);
-  letter-spacing: -.02em;
-  color: var(--text-highlighted);
-  text-wrap: balance;
-  margin: 0;
-  animation: verdetto-in 700ms cubic-bezier(.16, 1, .3, 1) both;
-}
-.verdetto__sotto {
-  font-size: var(--fs-base);
-  line-height: var(--lh-base);
-  color: var(--text-toned);
-  margin: 0;
-  animation: verdetto-in 700ms cubic-bezier(.16, 1, .3, 1) 220ms both;
-}
 @keyframes verdetto-in {
   from { opacity: 0; transform: translateY(12px); }
   to   { opacity: 1; transform: none; }
 }
 
-/* ---- 3 · PROVA ----------------------------------------------------- */
+/* ---- 2 · PROVA ----------------------------------------------------- */
 .prova {
   text-align: left;
   align-self: stretch;
@@ -1901,6 +1657,26 @@ textarea.field__input { min-height: 84px; resize: none; }
 /* il verdetto e' il titolo della schermata: prende la misura dei titoli
    dell'UI kit (24/32) invece di restare piu' piccolo del titolo di servizio */
 .body--prova { justify-content: center; }
+/* l'occhiello dice subito cos'e' la frase sotto */
+.prova__occhiello {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 var(--sp-5);
+  padding: 4px 10px 4px 8px;
+  border-radius: var(--r-full);
+  background: var(--risposte-bg);
+  color: var(--main);
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  font-weight: var(--fw-semibold);
+}
+/* le parole tue si leggono come evidenziate a mano */
+.prova .tua {
+  background: linear-gradient(transparent 58%, var(--risposte-bg) 58%);
+  padding: 0 2px;
+  border-radius: 2px;
+}
 .prova__frase {
   font-size: var(--fs-2xl);
   line-height: var(--lh-2xl);
@@ -1915,19 +1691,17 @@ textarea.field__input { min-height: 84px; resize: none; }
   color: var(--text-toned);
   margin: 0;
 }
+/* niente card intorno al grafico: sta sul fondo, come il testo */
 .prova__grafico {
-  margin-top: var(--sp-7);
-  padding: var(--sp-7) var(--sp-6) var(--sp-6);
-  background: var(--surface);
-  border: 1px solid var(--light-outline);
-  border-radius: var(--r-lg);
-  box-shadow: var(--shadow-soft);
+  margin-top: var(--sp-8);
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .voce, .voce__testo, .verdetto__frase, .verdetto__sotto, .prova {
+  .prova, .scrive {
     animation-duration: 1ms;
   }
+  .scrive .parola { animation: none; }
+  .scrive__puntini { display: none; }
 }
 
 /* --- elenco numerato con attacco in grassetto (schermate info) ------ */
@@ -1944,3 +1718,202 @@ textarea.field__input { min-height: 84px; resize: none; }
 .listNum__n { color: var(--main); font-weight: var(--fw-semibold); flex: 0 0 auto; }
 .listNum__txt strong { color: var(--text-highlighted); font-weight: var(--fw-semibold); }
 .body--center .lead--left { align-self: stretch; }
+
+/* ======================================================================
+   SCHERMATE DI RACCONTO — mascotte e testo (variante "intro")
+   ----------------------------------------------------------------------
+   Tre disegni, uno per ogni quantita' di testo:
+     .ob--fumetto  frase corta nel fumetto, mascotte sotto
+     .ob--sopra    mascotte in alto, testo sotto, tutto centrato
+     .ob--elenco   mascotte piccola col fumetto di fianco, poi i punti
+   L'elenco a icone (.oblist) vale anche per i consigli della prima
+   proiezione: e' lo stesso codice visivo.
+   ====================================================================== */
+
+.body--ob { gap: var(--sp-7); }
+
+/* --- il fumetto ---------------------------------------------------- */
+.ob__bolla {
+  position: relative;
+  background: var(--surface);
+  border: 2px solid var(--light-outline);
+  border-radius: var(--r-lg);
+  padding: var(--sp-7) var(--sp-8);
+  animation: bubble-in 360ms var(--ease) both;
+}
+
+.ob__title {
+  margin: 0;
+  padding: 0;
+  font-size: var(--fs-xl);
+  line-height: var(--lh-xl);
+  font-weight: var(--fw-bold);
+  color: var(--text);
+  text-align: left;
+  text-wrap: balance;
+}
+.ob__lead {
+  margin: var(--sp-5) 0 0;
+  font-size: var(--fs-base);
+  line-height: var(--lh-base);
+  font-weight: var(--fw-medium);
+  color: var(--text-toned);
+  text-align: left;
+  white-space: pre-line;
+}
+
+/* --- 1 · fumetto sopra la mascotte --------------------------------- */
+.ob--fumetto {
+  justify-content: center;
+  align-items: center;
+  gap: 0;
+}
+.ob--fumetto .ob__bolla {
+  max-width: 300px;
+  margin-bottom: 26px;
+}
+/* la codina punta in giu', verso la mascotte */
+.ob--fumetto .ob__bolla::before,
+.ob--fumetto .ob__bolla::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  width: 0; height: 0;
+  border: 11px solid transparent;
+  border-bottom: 0;
+  transform: translateX(-50%);
+}
+.ob--fumetto .ob__bolla::before {
+  bottom: -11px;
+  border-top-color: var(--light-outline);
+}
+.ob--fumetto .ob__bolla::after {
+  bottom: -8px;
+  border-top-color: var(--surface);
+}
+/* la misura la da' l'altezza: cosi' le pose alte (numeri, oggetti
+   sopra la testa) non diventano giganti rispetto al fumetto */
+.ob--fumetto .ob__mascotte {
+  width: auto;
+  height: 196px;
+  margin: 0;
+}
+
+/* --- 2 · mascotte sopra, testo sotto -------------------------------- */
+.ob--sopra {
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  gap: var(--sp-7);
+}
+.ob--sopra .ob__mascotte {
+  width: auto;
+  height: var(--mascotte-h);
+  margin: 0 0 var(--sp-3);
+}
+.ob--sopra .title { padding: 0; }
+.ob--sopra .lead { max-width: 320px; }
+
+/* --- 3 · fumetto in riga e elenco ----------------------------------- */
+.ob--elenco {
+  justify-content: flex-start;
+  gap: var(--sp-9);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  margin-top: var(--sp-8);
+}
+.ob--elenco::-webkit-scrollbar { display: none; }
+
+.ob__riga {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-7);
+  flex: 0 0 auto;
+}
+.ob__mini {
+  width: auto;
+  height: 92px;
+  margin: 0;
+  flex: 0 0 auto;
+}
+.ob__bolla--riga {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: var(--sp-6) var(--sp-7);
+}
+/* qui la codina punta a sinistra, verso la mascotte */
+.ob__bolla--riga::before,
+.ob__bolla--riga::after {
+  content: '';
+  position: absolute;
+  top: 24px;
+  width: 0; height: 0;
+  border: 10px solid transparent;
+  border-left: 0;
+}
+.ob__bolla--riga::before { left: -12px; border-right-color: var(--light-outline); }
+.ob__bolla--riga::after  { left: -9px;  border-right-color: var(--surface); }
+
+.ob--elenco .ob__title {
+  font-size: var(--fs-lg);
+  line-height: var(--lh-lg);
+}
+.ob--elenco .lead { max-width: none; }
+
+/* --- l'elenco a icone ---------------------------------------------- */
+.oblist {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-8);
+  flex: 0 0 auto;
+}
+.oblist__item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-6);
+  text-align: left;
+  animation: ob-punto-in 420ms var(--ease) both;
+}
+@keyframes ob-punto-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: none; }
+}
+.oblist__ico {
+  flex: 0 0 auto;
+  width: var(--ico-chip);
+  height: var(--ico-chip);
+  border-radius: var(--r-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--tema-1-bg);
+  color: var(--tema-1-text);
+}
+.oblist__ico[data-tema="2"] { background: var(--tema-2-bg); color: var(--tema-2-text); }
+.oblist__ico[data-tema="3"] { background: var(--tema-3-bg); color: var(--tema-3-text); }
+.oblist__ico[data-tema="4"] { background: var(--tema-4-bg); color: var(--tema-4-text); }
+.oblist__ico[data-tema="5"] { background: var(--tema-5-bg); color: var(--tema-5-text); }
+/* il quadratino parte dove parte il testo del titolo del punto:
+   si salta lo spazio che la riga lascia sopra le lettere */
+.oblist__ico { margin-top: calc((var(--lh-base) - var(--fs-base)) / 2); }
+.oblist__txt {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+.oblist__forte {
+  font-size: var(--fs-base);
+  line-height: var(--lh-base);
+  font-weight: var(--fw-bold);
+  color: var(--text-highlighted);
+}
+.oblist__testo {
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+  font-weight: var(--fw-medium);
+  color: var(--text-muted);
+}

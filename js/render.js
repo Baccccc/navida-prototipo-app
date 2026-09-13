@@ -75,7 +75,11 @@
           nome: 'tu',
           lavoroSogni: 'il ruolo che sogni',
           titoloStudio: 'il tuo titolo di studio',
-          email: 'la tua email'
+          email: 'la tua email',
+          ultimaPosizione: 'dove sei oggi',
+          /* Nella versione finita questo passo lo scrive l'AI sul
+             profilo della persona. Qui resta un testo di riserva. */
+          primoPasso: 'un corso breve sulle competenze che ti mancano'
         };
         return def[key] || m;
       }
@@ -83,10 +87,24 @@
     });
   }
 
-  /** Testo modificabile dal team. */
+  /**
+   * Testo modificabile dal team.
+   * Se la schermata porta `kitTesti`, il testo del brand kit attivo
+   * prende il posto di quello di partenza.
+   * Se porta `varianteTesti`, vale lo stesso per la versione scelta di
+   * un'altra schermata: con la registrazione "compatta" il nome si
+   * chiede dopo, quindi "Piacere, {nome}!" diventa "Piacere di conoscerti!".
+   */
   function T(screen, key, fallback) {
-    var path = screen.id + '.' + key;
-    return S.text(path, fallback);
+    var perKit = screen.kitTesti && screen.kitTesti[S.brandKit()];
+    if (perKit && perKit[key] != null) fallback = perKit[key];
+    if (screen.varianteTesti && window.NavidaApp) {
+      Object.keys(screen.varianteTesti).forEach(function (id) {
+        var perVar = screen.varianteTesti[id][window.NavidaApp.variante(id)];
+        if (perVar && perVar[key] != null) fallback = perVar[key];
+      });
+    }
+    return S.text(screen.id + '.' + key, fallback);
   }
 
   /** Crea un nodo di testo modificabile in modalità "Testi". */
@@ -100,15 +118,26 @@
     });
     if (opts.variant) {
       node.setAttribute('data-varname', opts.variant);
-      node.setAttribute('data-variant', S.variant(screen.id, opts.variant, VAR[opts.variant].predefinita));
-      applyVariantClass(node, opts.variant, screen.id);
+      node.setAttribute('data-variant', variante(screen, opts.variant));
+      applyVariantClass(node, opts.variant, screen);
     }
     return node;
   }
 
+  /**
+   * Variante di un elemento, in ordine di precedenza:
+   * 1. la modifica del team (barra di modifica / server)
+   * 2. la scelta scritta nella schermata:  varianti: { domanda: 'titolo' }
+   * 3. la predefinita del gruppo in js/variants.js
+   */
+  function variante(screen, name, base) {
+    var sua = screen && screen.varianti && screen.varianti[name];
+    return S.variant(screen.id, name, sua || base || VAR[name].predefinita);
+  }
+
   /** Alcune varianti agiscono su classi, non solo su data-variant. */
-  function applyVariantClass(node, name, screenId) {
-    var v = S.variant(screenId, name, VAR[name].predefinita);
+  function applyVariantClass(node, name, screen) {
+    var v = variante(screen, name);
     if (name === 'title') {
       node.classList.toggle('title--left', v === 'left');
       node.classList.toggle('title--lg', v === 'lg');
@@ -124,7 +153,7 @@
      ====================================================================== */
 
   function header(screen, progress) {
-    var vName = S.variant(screen.id, 'progress', VAR.progress.predefinita);
+    var vName = variante(screen, 'progress');
     var bar;
 
     if (vName === 'dots') {
@@ -165,7 +194,7 @@
   }
 
   function mascotte(screen, cls) {
-    var v = S.variant(screen.id, 'mascotte', VAR.mascotte.predefinita);
+    var v = variante(screen, 'mascotte');
     var pose = v === 'auto' ? (screen.mascotte || 'indicare') : v;
     if (v === 'nascosta' || (!screen.mascotte && v === 'auto')) return null;
 
@@ -188,7 +217,7 @@
       disabled: !!disabled,
       onclick: onClick
     }, [h('span', { 'data-editable': screen.id + '.cta', text: label })]);
-    applyVariantClass(b, 'cta', screen.id);
+    applyVariantClass(b, 'cta', screen);
     return b;
   }
 
@@ -198,10 +227,21 @@
     var box = h('div', {
       class: 'options',
       'data-varname': 'answerList',
-      'data-variant': S.variant(screen.id, 'answerList', base),
-      'data-lato': S.variant(screen.id, 'latoControlli', VAR.latoControlli.predefinita)
+      'data-variant': variante(screen, 'answerList', base),
+      'data-lato': variante(screen, 'latoControlli')
     }, kids);
     return box;
+  }
+
+  /* Pose "da domanda" per le schermate senza una mascotte scelta in
+     content.js. Si pesca sempre la stessa per la stessa schermata,
+     cosi' non cambia a ogni ridisegno. */
+  var POSE_DOMANDA = ['pensare', 'non-so', 'lente-ingrandimento', 'indicare', 'megafono'];
+
+  function posaDomanda(screen) {
+    var n = 0, id = String(screen.id || '');
+    for (var i = 0; i < id.length; i++) n = (n * 31 + id.charCodeAt(i)) % 997;
+    return POSE_DOMANDA[n % POSE_DOMANDA.length];
   }
 
   /**
@@ -209,20 +249,26 @@
    * che te la chiede dentro un fumetto.
    */
   function intestazione(screen, extraCls) {
-    var v = S.variant(screen.id, 'domanda', VAR.domanda.predefinita);
+    var v = variante(screen, 'domanda');
     var titolo = editable('h1', 'title title--question ' + (extraCls || ''), screen, 'title', screen.title, { variant: 'title' });
 
-    if (v !== 'mascotte') {
+    // la posa scelta dalla barra di modifica vince su quella del progetto
+    var vm = variante(screen, 'mascotte');
+    if (v !== 'mascotte' || vm === 'nascosta') {
       titolo.setAttribute('data-varname', 'domanda');
       return titolo;
     }
+    var posa = (vm && vm !== 'auto') ? vm : (screen.mascotte || posaDomanda(screen));
+
+    // le pose larghe (es. due astronauti) prendono un po' piu' di spazio
+    var box = h('div', { class: 'ask__mascotte' }, [window.NavidaMascotte.elemento(posa)]);
+    var r = window.NavidaMascotte.ratio[posa];
+    if (r > 0.74) box.style.width = Math.min(Math.round(84 * r), 100) + 'px';
 
     titolo.classList.remove('title');
     titolo.classList.add('bubble__testo');
     return h('div', { class: 'ask', 'data-varname': 'domanda' }, [
-      h('div', { class: 'ask__mascotte' }, [
-        window.NavidaMascotte.elemento(screen.mascotte || 'indicare')
-      ]),
+      box,
       h('div', { class: 'bubble' }, [titolo])
     ]);
   }
@@ -472,7 +518,7 @@
       if (screen.footerLink) {
         // stile Duolingo: secondo pulsante con contorno, non un link
         box.appendChild(h('button', {
-          class: secondarioPieno ? 'btn btn--outline' : 'linkbtn',
+          class: secondarioPieno ? 'btn btn--outline' : 'linkbtn linkbtn--azione',
           'data-editable': screen.id + '.footerLink',
           onclick: function () {
             if (S.mode) return;
@@ -525,8 +571,175 @@
     return root;
   };
 
-  /* --- info ---------------------------------------------------------- */
-  Screens.info = function (screen, progress) {
+  /* --- info: le schermate di racconto (mascotte + testo) --------------
+     Tre disegni, scelti dalla variante "intro" (js/variants.js). Il
+     riferimento e' il modo in cui Duolingo racconta l'onboarding:
+
+       fumetto  frase corta dentro un fumetto, mascotte sotto
+       sopra    mascotte in alto, testo sotto, tutto centrato
+       elenco   mascotte piccola col fumetto di fianco, poi i punti
+
+     "auto" sceglie da sola guardando cosa contiene la schermata.
+     "classica" e' il disegno di prima, tenuto per confronto. */
+
+  /** Quale disegno usare quando la variante e' "auto". */
+  function introAuto(screen) {
+    if (screen.lista || screen.listaNum || screen.paragrafi) return 'elenco';
+    if (screen.percorso || !screen.mascotte) return 'sopra';
+    var titolo = T(screen, 'title', screen.title) || '';
+    var testo = T(screen, 'body', screen.body) || '';
+    /* oltre questa lunghezza il fumetto diventa un muro di testo */
+    return (titolo.length + testo.length) > 120 ? 'sopra' : 'fumetto';
+  }
+
+  /** Lista, elenco numerato e paragrafi diventano tutti "punti". */
+  function introPunti(screen) {
+    var punti = [];
+    (screen.lista || []).forEach(function (item, i) {
+      var k = screen.id + '.lista.' + i;
+      var ico = (screen.listaIcone || [])[i];
+      punti.push({ forte: S.text(k, item), testo: '', keyForte: k, ico: ico });
+    });
+    (screen.listaNum || []).forEach(function (item, i) {
+      var kf = screen.id + '.listaNum.' + i + '.forte';
+      var kt = screen.id + '.listaNum.' + i + '.testo';
+      /* niente numeri: ogni passaggio ha la sua icona (campo ico) */
+      punti.push({
+        forte: S.text(kf, item.forte), testo: S.text(kt, item.testo),
+        keyForte: kf, keyTesto: kt, ico: item.ico || 'sparkles'
+      });
+    });
+    (screen.paragrafi || []).forEach(function (item, i) {
+      var pf = screen.id + '.paragrafi.' + i + '.forte';
+      var pt = screen.id + '.paragrafi.' + i + '.testo';
+      punti.push({
+        forte: S.text(pf, item.forte), testo: S.text(pt, item.testo),
+        keyForte: pf, keyTesto: pt, ico: item.ico
+      });
+    });
+    return punti;
+  }
+
+  /**
+   * L'elenco a icone: quadratino colorato, titolo in grassetto e
+   * descrizione sotto. Lo usano le schermate di racconto e i consigli
+   * della prima proiezione, cosi' il codice visivo resta uno solo.
+   */
+  /* Icone di riserva per l'elenco, tutte Lucide gia' in js/icons.js.
+     Servono quando un punto non ha l'icona, o ne ha una gia' usata
+     sulla stessa pagina: nella stessa schermata un'icona non si ripete. */
+  var ICONE_RISERVA = ['sparkles', 'target', 'lightbulb', 'compass', 'trending-up',
+                       'heart', 'users', 'eye', 'leaf', 'sun', 'layers', 'smile'];
+
+  function elencoIcone(punti) {
+    var usate = {};
+    punti.forEach(function (p) {
+      if (p.ico && window.NAVIDA_ICONS[p.ico] && !usate[p.ico]) usate[p.ico] = p;
+    });
+    punti.forEach(function (p) {
+      if (p.ico && usate[p.ico] === p) return;
+      var libera = ICONE_RISERVA.filter(function (n) { return !usate[n] && window.NAVIDA_ICONS[n]; })[0];
+      p.ico = libera || 'check';
+      usate[p.ico] = p;
+    });
+
+    return h('ul', { class: 'oblist' }, punti.map(function (p, i) {
+      var segno = icon(p.ico, 20);
+
+      var testi = [h('strong', {
+        class: 'oblist__forte',
+        'data-editable': p.keyForte,
+        text: interp(p.forte)
+      })];
+      if (p.testo) {
+        testi.push(h('span', {
+          class: 'oblist__testo',
+          'data-editable': p.keyTesto,
+          text: interp(p.testo)
+        }));
+      }
+
+      return h('li', {
+        class: 'oblist__item',
+        style: 'animation-delay:' + (140 + i * 120) + 'ms'
+      }, [
+        h('span', { class: 'oblist__ico', 'data-tema': String((i % 5) + 1) }, [segno]),
+        h('div', { class: 'oblist__txt' }, testi)
+      ]);
+    }));
+  }
+
+  /** Anteprima corta della linea di carriera (la usa ob3). */
+  function introPercorso(screen, body) {
+    if (!screen.percorso || !window.NavidaPercorso) return;
+    var stile = variante(screen, 'path');
+    if (NavidaPercorso.modi.indexOf(stile) === -1) stile = 'serpentina';
+    var mini = NavidaPercorso.disegna(screen.percorso, {
+      variante: stile,
+      mini: true,
+      attiva: screen.percorsoAttiva == null ? 1 : screen.percorsoAttiva
+    });
+    mini.setAttribute('data-varname', 'path');
+    mini.setAttribute('data-variant', stile);
+    body.appendChild(mini);
+  }
+
+  /** 1 - Fumetto sopra la mascotte, tutto al centro della schermata. */
+  function introFumetto(screen) {
+    var body = h('div', { class: 'body body--ob ob ob--fumetto' });
+    var bolla = h('div', { class: 'ob__bolla' }, [
+      editable('h1', 'ob__title', screen, 'title', screen.title, { variant: 'title' })
+    ]);
+    if (T(screen, 'body', screen.body)) {
+      bolla.appendChild(editable('p', 'ob__lead', screen, 'body', screen.body));
+    }
+    body.appendChild(bolla);
+
+    var m = mascotte(screen);
+    if (m) { m.classList.add('ob__mascotte'); body.appendChild(m); }
+    return body;
+  }
+
+  /** 2 - Mascotte in alto, occhiello e testo sotto, tutto centrato. */
+  function introSopra(screen) {
+    var body = h('div', { class: 'body body--ob ob ob--sopra' });
+
+    var m = mascotte(screen);
+    if (m) { m.classList.add('ob__mascotte'); body.appendChild(m); }
+
+    if (screen.eyebrow) body.appendChild(editable('div', 'eyebrow', screen, 'eyebrow', screen.eyebrow));
+    body.appendChild(editable('h1', 'title', screen, 'title', screen.title, { variant: 'title' }));
+    if (T(screen, 'body', screen.body)) {
+      body.appendChild(editable('p', 'lead', screen, 'body', screen.body));
+    }
+    introPercorso(screen, body);
+    return body;
+  }
+
+  /** 3 - Mascotte piccola col fumetto di fianco, poi l'elenco a icone. */
+  function introElenco(screen) {
+    var body = h('div', { class: 'body body--ob ob ob--elenco' });
+
+    var riga = h('div', { class: 'ob__riga' });
+    var m = mascotte(screen);
+    if (m) { m.classList.add('ob__mini'); riga.appendChild(m); }
+    riga.appendChild(h('div', { class: 'ob__bolla ob__bolla--riga' }, [
+      editable('h1', 'ob__title', screen, 'title', screen.title, { variant: 'title' })
+    ]));
+    body.appendChild(riga);
+
+    var punti = introPunti(screen);
+    if (punti.length) body.appendChild(elencoIcone(punti));
+
+    if (T(screen, 'body', screen.body)) {
+      body.appendChild(editable('p', 'lead lead--left', screen, 'body', screen.body));
+    }
+    introPercorso(screen, body);
+    return body;
+  }
+
+  /** 4 - Il disegno di prima, tenuto per confronto. */
+  function introClassica(screen) {
     var body = h('div', { class: 'body body--center' });
 
     var m = mascotte(screen);
@@ -586,23 +799,25 @@
       });
     }
 
-    var bodyText = T(screen, 'body', screen.body);
-    if (bodyText) body.appendChild(editable('p', 'lead', screen, 'body', screen.body));
+    if (T(screen, 'body', screen.body)) body.appendChild(editable('p', 'lead', screen, 'body', screen.body));
+    introPercorso(screen, body);
+    return body;
+  }
 
-    /* anteprima corta della linea di carriera: la usa ob3, che deve far
-       vedere il percorso mentre lo racconta invece di descriverlo */
-    if (screen.percorso && window.NavidaPercorso) {
-      var stilePerc = S.variant(screen.id, 'path', VAR.path.predefinita);
-      if (NavidaPercorso.modi.indexOf(stilePerc) === -1) stilePerc = 'serpentina';
-      var mini = NavidaPercorso.disegna(screen.percorso, {
-        variante: stilePerc,
-        mini: true,
-        attiva: screen.percorsoAttiva == null ? 1 : screen.percorsoAttiva
-      });
-      mini.setAttribute('data-varname', 'path');
-      mini.setAttribute('data-variant', stilePerc);
-      body.appendChild(mini);
-    }
+  Screens.info = function (screen, progress) {
+    var stile = variante(screen, 'intro');
+    /* "Ora tocca a te" ha la sua animazione: resta com'era */
+    if (screen.id === 'tuoMomento') stile = 'classica';
+    if (stile === 'auto') stile = introAuto(screen);
+
+    var body =
+      stile === 'fumetto' ? introFumetto(screen) :
+      stile === 'elenco' ? introElenco(screen) :
+      stile === 'sopra' ? introSopra(screen) :
+      introClassica(screen);
+
+    body.setAttribute('data-varname', 'intro');
+    body.setAttribute('data-variant', stile);
 
     if (screen.nota) body.appendChild(editable('p', 'nota', screen, 'nota', screen.nota));
 
@@ -779,7 +994,7 @@
     }
     if (screen.footerLink) {
       footer.appendChild(h('button', {
-        class: 'linkbtn',
+        class: 'linkbtn linkbtn--azione',
         'data-editable': screen.id + '.footerLink',
         text: T(screen, 'footerLink', screen.footerLink),
         onclick: function () {
@@ -813,7 +1028,7 @@
       ? start.map(function (i) { return indexed[i]; })
       : S.ordered(screen.id, indexed);
 
-    var modo = S.variant(screen.id, 'rank', VAR.rank.predefinita);
+    var modo = variante(screen, 'rank');
 
     function salva(order) {
       S.setAnswer(screen.field, order);
@@ -1090,10 +1305,24 @@
   Screens.dream = function (screen, progress) {
     var value = S.answer(screen.field, '');
     var ctaBtn;
-    var variant = S.pageVariant(screen.id, 'orbite');
+    /* Una scelta salvata prima puo' puntare a una versione tolta:
+       in quel caso si torna alla predefinita. */
+    var sceltaSogno = PAGEVAR.lavoroSogni;
+    var variant = S.pageVariant(screen.id, sceltaSogno.predefinita);
+    if (!sceltaSogno.options.some(function (o) { return o.value === variant; })) {
+      variant = sceltaSogno.predefinita;
+    }
 
-    var art = window.NavidaWow.sogno(T(screen, 'frase', screen.frase), variant);
+    var frase = T(screen, 'frase', screen.frase);
+    var art = window.NavidaWow.sogno(frase, variant);
     art.classList.add('dreamArt--enter');
+
+    /* Nelle versioni nuove la domanda non e' piu' solo disegnata dentro
+       l'animazione: e' un titolo vero, quindi si legge anche con un
+       lettore di schermo e si modifica dalla scheda "Testi". */
+    var domanda = window.NavidaWow.domandaVisibile(variant)
+      ? h('h1', { class: 'dream__q', 'data-editable': screen.id + '.frase', text: frase })
+      : null;
 
     var input = h('textarea', {
       class: 'dream__input',
@@ -1119,6 +1348,19 @@
 
     window.NavidaKeyboard.attach(input, ['Direttore creativo', 'Sviluppatore', 'Chef']);
 
+    /* Nebulosa: toccare un mestiere che fluttua lo scrive nel campo.
+       Serve a chi resta bloccato davanti al foglio bianco. */
+    if (variant === 'nebulosa') {
+      art.addEventListener('click', function (e) {
+        var scelto = e.target.closest && e.target.closest('[data-mestiere]');
+        if (!scelto) return;
+        input.value = scelto.getAttribute('data-mestiere');
+        input.dispatchEvent(new Event('input'));
+        art.querySelectorAll('.is-scelto').forEach(function (n) { n.classList.remove('is-scelto'); });
+        scelto.classList.add('is-scelto');
+      });
+    }
+
     /* Gli anelli entrano e si fermano, ma la tastiera NON sale da sola:
        si apre solo toccando il campo. autoGrow resta, serve a dare al
        campo l'altezza giusta se c'e' gia' una risposta salvata. */
@@ -1132,35 +1374,42 @@
       input.blur();
       art.classList.remove('dreamArt--enter');
       art.classList.add('dreamArt--exit');
+      if (root) root.classList.add('is-exit');
       if (ctaBtn) ctaBtn.disabled = true;
       setTimeout(function () { window.NavidaApp.next(); }, 900);
     }
 
     ctaBtn = cta(screen, T(screen, 'cta', screen.cta || C.ui.continua), avanti, !value.trim());
 
+    var desc = screen.descrizione
+      ? h('p', {
+          class: 'dream__desc',
+          'data-editable': screen.id + '.descrizione',
+          text: T(screen, 'descrizione', screen.descrizione)
+        })
+      : null;
+
+    /* Nella targhetta la riga d'aiuto sta dentro il badge. Nelle altre
+       scende appena sopra il pulsante, piccola: non ruba la scena. */
+    var descNelBadge = variant === 'targhetta';
+
     var root = h('div', { class: 'dream dream--' + variant }, [
       header(screen, progress),
       art,
       h('div', { class: 'dream__center' }, [
+        domanda,
         input,
-        screen.descrizione
-          ? h('p', {
-              class: 'dream__desc',
-              'data-editable': screen.id + '.descrizione',
-              text: T(screen, 'descrizione', screen.descrizione)
-            })
-          : null
+        descNelBadge ? desc : null
       ].filter(Boolean)),
-      h('div', { class: 'dream__footer' }, [ctaBtn])
+      h('div', { class: 'dream__footer' }, [descNelBadge ? null : desc, ctaBtn].filter(Boolean))
     ]);
 
     return root;
   };
 
-  /* --- elaborazione: mascotte e professioni a rotazione ---------------- */
-  Screens.circles = function (screen) {
-    var variante = S.pageVariant(screen.id, 'mascotte');
-    return window.NavidaWow.professioni(variante, function () { window.NavidaApp.next(); });
+  /* --- elaborazione: attesa con la mascotte che cambia veste ---------- */
+  Screens.circles = function () {
+    return window.NavidaWow.professioni(function () { window.NavidaApp.next(); });
   };
 
   /* --- spiegazione del riordino, con dimostrazione animata ------------ */
@@ -1335,46 +1584,6 @@
     return icon('circle', size || 18);
   }
 
-  /* Fa crescere la linea con un solo avanzamento e accende gli step
-     quando la punta della linea raggiunge davvero la loro posizione. */
-  function avviaCostruzione(root, durata) {
-    var nodes = Array.prototype.slice.call(root.querySelectorAll('.loadingBuild__step'));
-    var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    var started = false;
-
-    function ready() {
-      if (started) return;
-      if (!root.isConnected) { requestAnimationFrame(ready); return; }
-      started = true;
-      if (reduced) {
-        root.style.setProperty('--build-progress', '1');
-        nodes.forEach(function (node) { node.classList.add('is-on'); });
-        return;
-      }
-
-      var start = null;
-      var next = 0;
-      var last = Math.max(1, nodes.length - 1);
-      root.classList.add('is-building');
-
-      function frame(now) {
-        if (start == null) start = now;
-        var time = Math.min(1, (now - start) / durata);
-        var progress = time < .5
-          ? 4 * time * time * time
-          : 1 - Math.pow(-2 * time + 2, 3) / 2;
-        root.style.setProperty('--build-progress', String(progress));
-        while (next < nodes.length && progress >= next / last) {
-          nodes[next].classList.add('is-on');
-          next++;
-        }
-        if (time < 1) requestAnimationFrame(frame);
-      }
-      requestAnimationFrame(frame);
-    }
-    requestAnimationFrame(ready);
-  }
-
   function avviaPercorsoConsultabile(root, nodes, durata) {
     var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     var started = false;
@@ -1428,27 +1637,9 @@
     var steps = source ? careerSteps(source) : [];
     var art;
 
-    if (variant === 'linea' && window.NavidaPercorso) {
+    if (window.NavidaPercorso) {
       art = NavidaPercorso.disegna(steps, { variante: 'serpentina', attiva: 1, durata: 6200 });
       art.classList.add('loadingPath__serpentina');
-    } else {
-      art = h('div', { class: 'loadingBuild' }, [
-        h('span', { class: 'loadingBuild__rail', 'aria-hidden': 'true' })
-      ].concat(steps.map(function (step, i) {
-        var stato = i === 0 ? 'done' : (i === 1 ? 'active' : (i === steps.length - 1 ? 'goal' : 'todo'));
-        return h('div', {
-          class: 'loadingBuild__step loadingBuild__step--' + stato,
-          style: '--i:' + i
-        }, [
-          h('span', { class: 'loadingBuild__dot' }, [careerIcon(stato, 16)]),
-          h('span', { class: 'loadingBuild__copy' }, [
-            h('small', { text: 'Step ' + (i + 1) }),
-            h('strong', { text: step.nome }),
-            h('span', { text: step.durata })
-          ])
-        ]);
-      })));
-      avviaCostruzione(art, 5600);
     }
 
     var scene = h('section', {
@@ -1464,76 +1655,172 @@
         }))
       ]),
       art
-    ]);
+    ].filter(Boolean));
     return scene;
   }
 
   /* --- loading -------------------------------------------------------- */
+  /* "Il tuo percorso sta prendendo forma" e' un'attesa: l'app prepara la
+     risposta e cerca gli annunci. Le due versioni nello spazio girano in
+     loop e mostrano solo il titolo, senza sottotitolo, frasi di stato o
+     pulsante. Nel prototipo si va avanti da soli dopo "durata", oppure
+     toccando lo schermo. */
+  function titoloAttesa(screen) {
+    return h('div', { class: 'journey__copy' }, [
+      editable('h1', 'journey__title', screen, 'title', screen.title, { variant: 'title' }),
+      h('span', { class: 'journey__dots', 'aria-hidden': 'true' }, [h('i', {}), h('i', {}), h('i', {})])
+    ]);
+  }
+
+  /* Versione "spazio": la navicella resta al centro e dondola un poco.
+     A dare il movimento sono le stelle che scorrono dietro. */
+  function scenaNavicella(screen) {
+    return h('section', { class: 'journey journey--ferma', role: 'status', 'aria-label': screen.title }, [
+      h('img', { class: 'journey__space', src: 'assets/percorso/spazio-navida.webp', alt: '' }),
+      h('div', { class: 'journey__stars journey__stars--far', 'aria-hidden': 'true' }),
+      h('div', { class: 'journey__stars journey__stars--near', 'aria-hidden': 'true' }),
+      h('div', { class: 'journey__streaks', 'aria-hidden': 'true' }, [1, 2, 3, 4, 5].map(function (i) {
+        return h('span', { class: 'journey__streak journey__streak--' + i });
+      })),
+      h('div', { class: 'journey__ship' }, [
+        h('img', { class: 'journey__rocket', src: 'assets/percorso/razzo-navida.webp', alt: 'Astronauta Navida in viaggio nello spazio' })
+      ]),
+      titoloAttesa(screen)
+    ]);
+  }
+
+  /* Versione "tappe": la navicella passa da 5 tappe, una alla volta.
+     Arrivata all'ultima, tutto sfuma e il giro riparte dalla prima. */
+  function scenaTappe(screen, reduced) {
+    var NS = 'http://www.w3.org/2000/svg';
+    var tratti = [
+      'M70 430 C130 430 240 410 240 350',
+      'M240 350 C240 290 80 310 80 250',
+      'M80 250 C80 190 240 210 240 150',
+      'M240 150 C240 95 150 105 150 50'
+    ];
+    var punti = [[70, 430], [240, 350], [80, 250], [240, 150], [150, 50]];
+
+    var svg = document.createElementNS(NS, 'svg');
+    svg.setAttribute('class', 'journey__map');
+    svg.setAttribute('viewBox', '0 0 320 480');
+    svg.setAttribute('aria-hidden', 'true');
+    svg.innerHTML = '' +
+      '<path class="journey__track" d="' + tratti.join(' ') + '"/>' +
+      '<g class="journey__play">' +
+        tratti.map(function (d) {
+          return '<path class="journey__trail" pathLength="1" d="' + d + '"/>';
+        }).join('') +
+        punti.map(function (p, i) {
+          return '<g class="journey__stop' + (i === punti.length - 1 ? ' journey__stop--goal' : '') + '" transform="translate(' + p[0] + ' ' + p[1] + ')">' +
+            '<circle class="journey__stopHalo" r="15"/><circle class="journey__stopDot" r="6.5"/></g>';
+        }).join('') +
+        '<g class="journey__pilot"><image href="assets/percorso/razzo-navida.webp" x="-33" y="-30" width="66" height="60"/></g>' +
+      '</g>';
+
+    var scene = h('section', { class: 'journey journey--tappe', role: 'status', 'aria-label': screen.title }, [
+      h('div', { class: 'journey__stars journey__stars--still', 'aria-hidden': 'true' }),
+      svg,
+      titoloAttesa(screen)
+    ]);
+
+    var play = svg.querySelector('.journey__play');
+    var trail = Array.prototype.slice.call(svg.querySelectorAll('.journey__trail'));
+    var stops = Array.prototype.slice.call(svg.querySelectorAll('.journey__stop'));
+    var pilot = svg.querySelector('.journey__pilot');
+
+    function metti(seg, p, raggiunte, opacita, bob) {
+      trail.forEach(function (path, i) {
+        path.style.strokeDashoffset = String(i < seg ? 0 : (i === seg ? 1 - p : 1));
+      });
+      stops.forEach(function (stop, i) { stop.classList.toggle('is-on', i < raggiunte); });
+      var path = trail[seg];
+      var len = path.getTotalLength();
+      var a = path.getPointAtLength(Math.max(0, p * len - .5));
+      var b = path.getPointAtLength(Math.min(len, p * len + .5));
+      var pt = path.getPointAtLength(p * len);
+      /* il disegno del razzo punta in alto a destra (-45 gradi) */
+      var angolo = Math.atan2(b.y - a.y, b.x - a.x) * 180 / Math.PI + 45;
+      pilot.setAttribute('transform', 'translate(' + pt.x.toFixed(2) + ' ' + (pt.y + bob).toFixed(2) + ') rotate(' + angolo.toFixed(2) + ')');
+      play.style.opacity = String(opacita);
+    }
+
+    var MUOVI = 950, SOSTA = 380, INIZIO = 450, FINE = 900, SPARISCI = 450, VUOTO = 200;
+    var passo = MUOVI + SOSTA;
+    var ciclo = INIZIO + tratti.length * passo + FINE + SPARISCI + VUOTO;
+    var start = null;
+
+    function frame(now) {
+      if (!svg.isConnected) {
+        if (start == null) requestAnimationFrame(frame);
+        return; // la schermata e' stata chiusa: il loop si ferma
+      }
+      if (reduced) { metti(tratti.length - 1, 1, punti.length, 1, 0); return; }
+      if (start == null) start = now;
+
+      var t = (now - start) % ciclo;
+      var seg = 0, p = 0, raggiunte = 1, opacita = Math.min(1, t / 300);
+      if (t >= INIZIO) {
+        var u = t - INIZIO;
+        var k = Math.floor(u / passo);
+        if (k < tratti.length) {
+          var v = u - k * passo;
+          var x = Math.min(1, v / MUOVI);
+          seg = k;
+          p = x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+          raggiunte = k + 1 + (v >= MUOVI ? 1 : 0);
+        } else {
+          var w = u - tratti.length * passo;
+          seg = tratti.length - 1; p = 1; raggiunte = punti.length;
+          opacita = w < FINE ? 1 : Math.max(0, 1 - (w - FINE) / SPARISCI);
+        }
+      }
+      metti(seg, p, raggiunte, opacita, Math.sin(now / 280) * 1.6);
+      requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+
+    return scene;
+  }
+
   Screens.loading = function (screen, progress) {
-    var status = (screen.status && screen.status.length ? screen.status : [
-      'Mettiamo a fuoco il punto di partenza',
-      'Colleghiamo le opportunità più adatte',
-      'La tua rotta è quasi pronta'
-    ]).filter(Boolean);
+    var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     var variant = screen.id === 'fineTest'
       ? S.pageVariant(screen.id, PAGEVAR.fineTest.predefinita)
       : 'spazio';
-
-    var durata = screen.durata || 7200;
-    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      durata = Math.min(durata, 2600);
+    /* una scelta salvata che non esiste piu' (es. "costruzione") torna alla predefinita */
+    if (!PAGEVAR.fineTest.options.some(function (o) { return o.value === variant; })) {
+      variant = PAGEVAR.fineTest.predefinita;
     }
 
-    if (variant !== 'spazio') {
+    var durata = screen.durata || 9000;
+    if (reduced) durata = Math.min(durata, 2600);
+
+    var timer = setTimeout(function () { window.NavidaApp.next(); }, durata);
+    window.NavidaApp._pending = timer;
+    function avanti() { clearTimeout(timer); window.NavidaApp.next(); }
+
+    if (variant === 'linea') {
+      var status = (screen.status && screen.status.length ? screen.status : [
+        'Mettiamo a fuoco il punto di partenza',
+        'Colleghiamo le opportunità più adatte',
+        'La tua rotta è quasi pronta'
+      ]).filter(Boolean);
       var pathScene = loadingPathScene(screen, variant, status);
-      var pathTimer = setTimeout(function () { window.NavidaApp.next(); }, durata);
-      window.NavidaApp._pending = pathTimer;
       pathScene.appendChild(h('button', {
         class: 'loadingPath__skip',
         text: 'Salta l’attesa',
-        onclick: function () { clearTimeout(pathTimer); window.NavidaApp.next(); }
+        onclick: avanti
       }));
       return pathScene;
     }
 
-    var statusHost = h('div', { class: 'journey__status', 'aria-live': 'polite' },
-      status.map(function (testo, i) {
-        return h('span', { class: 'journey__statusLine journey__statusLine--' + (i + 1), text: testo });
-      })
-    );
-
-    var route = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-    route.setAttribute('class', 'journey__route');
-    route.setAttribute('viewBox', '0 0 393 852');
-    route.setAttribute('preserveAspectRatio', 'none');
-    route.setAttribute('aria-hidden', 'true');
-    route.innerHTML = '' +
-      '<path class="journey__routeGlow" pathLength="1" d="M58 708 C84 578 263 603 296 466 C324 350 236 306 276 178"/>' +
-      '<path class="journey__routeLine" pathLength="1" d="M58 708 C84 578 263 603 296 466 C324 350 236 306 276 178"/>';
-
-    var scene = h('section', { class: 'journey', role: 'status', 'aria-label': screen.title }, [
-      h('img', { class: 'journey__space', src: 'assets/percorso/spazio-navida.webp', alt: '' }),
-      route,
-      h('div', { class: 'journey__star journey__star--one', 'aria-hidden': 'true' }),
-      h('div', { class: 'journey__star journey__star--two', 'aria-hidden': 'true' }),
-      h('img', { class: 'journey__planet journey__planet--violet', src: 'assets/percorso/pianeta-viola.webp', alt: '' }),
-      h('img', { class: 'journey__planet journey__planet--gold', src: 'assets/percorso/pianeta-anelli.webp', alt: '' }),
-      h('img', { class: 'journey__rocket', src: 'assets/percorso/razzo-navida.webp', alt: 'Astronauta Navida in viaggio nello spazio' }),
-      h('img', { class: 'journey__earth', src: 'assets/percorso/terra-partenza.webp', alt: '' }),
-      h('div', { class: 'journey__copy' }, [
-        editable('h1', 'journey__title', screen, 'title', screen.title, { variant: 'title' }),
-        screen.body ? editable('p', 'journey__lead', screen, 'body', screen.body) : null,
-        statusHost
-      ].filter(Boolean))
-    ]);
-
-    var t = setTimeout(function () { window.NavidaApp.next(); }, durata);
-    window.NavidaApp._pending = t;
-    scene.appendChild(h('button', {
-      class: 'journey__skip',
-      text: 'Salta l’attesa',
-      onclick: function () { clearTimeout(t); window.NavidaApp.next(); }
-    }));
+    var scene = variant === 'tappe' ? scenaTappe(screen, reduced) : scenaNavicella(screen);
+    scene.addEventListener('click', function (e) {
+      /* non disturbare chi sta modificando il titolo dalla barra */
+      if (e.target.closest('[data-editable]') || document.querySelector('.is-editing')) return;
+      avanti();
+    });
     return scene;
   };
 
@@ -1571,50 +1858,75 @@
     }
 
     var uno = screen.tips[0];
-    var unoTitolo = S.text(screen.id + '.tip.0.title', uno.title);
+    var unoTitolo = interp(S.text(screen.id + '.tip.0.title', uno.title));
     var unoTesto = interp(S.text(screen.id + '.tip.0.desc', uno.description));
 
-    /* --- 1 · VOCE: Navida ti parla ---------------------------------
-       Un messaggio firmato dentro una card, su un fondo che cambia
-       rispetto alle schermate di domanda. Si legge come una risposta,
-       non come un risultato di sistema. */
-    if (variant === 'voce') {
-      body.className = 'body body--voce';
+    /* --- 1 · MESSAGGIO CHE SI SCRIVE -------------------------------
+       La mascotte parla: il messaggio sta nel suo fumetto, con la
+       codina che punta verso di lei. Prima compaiono i tre puntini,
+       come in una chat quando l'altro sta scrivendo. Poi il messaggio
+       entra parola per parola. Il fumetto e' lo stesso delle schermate
+       di racconto (.ob__bolla), cosi' il codice visivo resta uno. */
+    if (variant === 'scrive') {
+      body.className = 'body body--ob ob ob--fumetto body--scrive';
       body.innerHTML = '';
-      /* la firma dice gia' chi parla: il titolo della schermata qui
-         sarebbe una ripetizione, quindi il consiglio diventa la frase */
-      var bolla = h('div', { class: 'voce' }, [
-        h('div', { class: 'voce__firma' }, [
-          h('span', { class: 'voce__logo' }, [icon('sparkles', 14)]),
-          h('span', { text: 'Navida' })
-        ]),
-        h('h1', { class: 'voce__title', 'data-editable': screen.id + '.tip.0.title' },
-          [conParoleTue(unoTitolo)]),
-        h('p', { class: 'voce__testo', 'data-editable': screen.id + '.tip.0.desc' },
-          [conParoleTue(unoTesto)])
-      ]);
-      body.appendChild(bolla);
-      var mAst = mascotte({ id: screen.id, mascotte: 'volare' });
-      if (mAst) { mAst.classList.add('voce__mascotte'); body.appendChild(mAst); }
 
-    /* --- 2 · VERDETTO: la frase e' la schermata --------------------- */
-    } else if (variant === 'verdetto') {
-      body.className = 'body body--verdetto';
-      body.innerHTML = '';
-      body.appendChild(h('h1', {
-        class: 'verdetto__frase',
-        'data-editable': screen.id + '.tip.0.title'
-      }, [conParoleTue(unoTitolo)]));
-      body.appendChild(h('p', { class: 'verdetto__sotto', 'data-editable': screen.id + '.tip.0.desc' },
-        [conParoleTue(unoTesto)]));
+      /* Ogni parola diventa un pezzetto che entra un attimo dopo la
+         precedente. Le parole "tue" entrano intere. Restituisce il
+         ritardo da cui deve partire il blocco dopo. */
+      var PUNTINI_MS = 1300, PASSO_MS = 55;
+      function aParole(nodo, da) {
+        var t = da;
+        Array.prototype.slice.call(nodo.childNodes).forEach(function (n) {
+          if (n.nodeType === 3) {
+            var frag = document.createDocumentFragment();
+            n.textContent.split(/(\s+)/).forEach(function (pezzo) {
+              if (!pezzo) return;
+              if (/^\s+$/.test(pezzo)) { frag.appendChild(document.createTextNode(pezzo)); return; }
+              frag.appendChild(h('span', { class: 'parola', style: 'animation-delay:' + t + 'ms', text: pezzo }));
+              t += PASSO_MS;
+            });
+            nodo.replaceChild(frag, n);
+          } else {
+            n.classList.add('parola');
+            n.style.animationDelay = t + 'ms';
+            t += PASSO_MS;
+          }
+        });
+        return t;
+      }
 
-    /* --- 3 · PROVA: il verdetto, e sotto una sola prova ------------- */
-    } else if (variant === 'prova') {
-      /* come le varianti "voce" e "verdetto": qui comanda il verdetto,
-         quindi il titolo di servizio della schermata non va ripetuto */
+      var sTitolo = conParoleTue(unoTitolo);
+      var sTesto = conParoleTue(unoTesto);
+      var dopoTitolo = aParole(sTitolo, PUNTINI_MS);
+      aParole(sTesto, dopoTitolo + 250);
+
+      body.appendChild(h('div', {
+        /* mentre si modificano i testi il messaggio e' gia' tutto scritto */
+        class: 'ob__bolla scrive' + (S.mode ? ' is-scritto' : '')
+      }, [
+        h('div', { class: 'scrive__puntini', 'aria-hidden': 'true' }, [h('i'), h('i'), h('i')]),
+        h('h2', { class: 'ob__title scrive__title', 'data-editable': screen.id + '.tip.0.title' }, [sTitolo]),
+        h('p', { class: 'ob__lead scrive__testo', 'data-editable': screen.id + '.tip.0.desc' }, [sTesto])
+      ]));
+      var parla = mascotte(screen);
+      if (parla) { parla.classList.add('ob__mascotte'); body.appendChild(parla); }
+
+    /* --- 2 · PROVA: il verdetto, e sotto una sola prova -------------
+       Niente card intorno: il testo sta sul fondo della schermata.
+       Il grafico mostra oggi, le tappe 1-2-3 e il ruolo che sogni. La
+       linea e' piena solo fino alla tappa 1, il prossimo passo; il
+       resto e' tratteggiato perche' e' ancora da costruire. */
+    } else {
+      /* qui comanda il verdetto, quindi il titolo di servizio della
+         schermata non va ripetuto. Un occhiello piccolo dice cos'e'. */
       body.className = 'body body--prova';
       body.innerHTML = '';
       body.appendChild(h('div', { class: 'prova' }, [
+        h('div', { class: 'prova__occhiello' }, [
+          icon('sparkles', 14),
+          editable('span', '', screen, 'occhiello', screen.occhiello || 'La tua prima previsione')
+        ]),
         h('h2', { class: 'prova__frase', 'data-editable': screen.id + '.tip.0.title' },
           [conParoleTue(unoTitolo)]),
         unoTesto ? h('p', { class: 'prova__testo', 'data-editable': screen.id + '.tip.0.desc' },
@@ -1623,342 +1935,125 @@
       if (window.NavidaPercorso) {
         var salita = NavidaPercorso.disegna([
           { nome: 'Oggi' },
+          { segno: '1' },
+          { segno: '2' },
+          { segno: '3' },
           { nome: interp('{lavoroSogni}') || 'Il ruolo che sogni' }
-        ], { variante: 'curva', mini: true });
+        ], { variante: 'curva', mini: true, pienaFino: 1 });
         salita.classList.add('prova__grafico');
         body.appendChild(salita);
       }
-
-    } else if (variant === 'single') {
-      body.appendChild(h('div', { class: 'tips', 'data-varname': 'tips', 'data-variant': S.variant(screen.id, 'tips', 'accent') }, [
-        h('div', { class: 'tip' }, [
-          h('div', { class: 'tip__title', 'data-editable': screen.id + '.tip.0.title', text: unoTitolo }),
-          h('div', { class: 'tip__desc', 'data-editable': screen.id + '.tip.0.desc', text: unoTesto })
-        ])
-      ]));
-    } else {
-      // i consigli entrano uno dopo l'altro, come nell'ultima animazione ludica
-      var tips = h('div', {
-        class: 'tips',
-        'data-varname': 'tips',
-        'data-variant': S.variant(screen.id, 'tips', VAR.tips.predefinita)
-      }, screen.tips.map(function (t, i) {
-        return h('div', {
-          class: 'tip tip--in',
-          style: 'animation-delay:' + (400 + i * 550) + 'ms'
-        }, [
-          h('div', { class: 'tip__n', text: String(i + 1) }),
-          h('div', { class: 'tip__title', 'data-editable': screen.id + '.tip.' + i + '.title', text: S.text(screen.id + '.tip.' + i + '.title', t.title) }),
-          h('div', { class: 'tip__desc', 'data-editable': screen.id + '.tip.' + i + '.desc', text: interp(S.text(screen.id + '.tip.' + i + '.desc', t.description)) })
-        ]);
-      }));
-      body.appendChild(tips);
     }
 
     var footer = h('div', { class: 'footer' }, [
+      /* una riga di accompagnamento sopra il bottone: dice alla persona
+         cosa succede se va avanti */
+      screen.nota ? editable('p', 'footer__nota', screen, 'nota', screen.nota) : null,
       cta(screen, T(screen, 'ctaPrimaria', screen.ctaPrimaria), function () { window.NavidaApp.next(); }),
+      /* nel kit Maturo diventa un pulsante vero: vedi brand-maturo.css */
       h('button', {
-        class: 'linkbtn',
+        class: 'linkbtn linkbtn--azione',
         'data-editable': screen.id + '.ctaSecondaria',
         text: T(screen, 'ctaSecondaria', screen.ctaSecondaria),
         onclick: function () { if (!S.mode) window.NavidaApp.goTo('lavoroSogni'); }
       })
-    ]);
+    ].filter(Boolean));
 
     return [header(screen, progress), body, footer];
   };
 
-  /* --- login: pagina normale, a tutto schermo ------------------------- */
+  /* --- login: una sola schermata per entrare o registrarsi -------------
+     Non c'e' "Registrati": se l'email o l'account Google/Apple non ha
+     ancora un profilo, il profilo si crea da solo. In alto c'e' solo la
+     solita freccia indietro.
+     Due versioni (js/variants.js), con lo stesso aspetto:
+     - essenziale: solo l'email, poi il codice via email;
+     - compatta:   nome e cognome, senza codice via email (js/app.js). */
   Screens.login = function (screen, progress) {
-    var email = S.answer('email', '');
-    var pwd = S.answer('password', '');
+    var compatta = window.NavidaApp.variante(screen.id) === 'compatta';
     var goBtn;
+    var pronto;
+    var campi;
 
-    function valido() {
-      return /\S+@\S+\.\S+/.test(email) && pwd.length >= 6;
-    }
-    function aggiorna() {
-      S.setAnswer('email', email);
-      S.setAnswer('password', pwd);
-      if (goBtn) goBtn.disabled = !valido();
-    }
     function avanti() {
+      if (S.mode || !pronto()) return;
+      window.NavidaApp.next();
+    }
+
+    /* I pulsanti social sono una scorciatoia da demo, non un vero
+       accesso: riempiono con dati finti quello che manca. */
+    function conSocial() {
       if (S.mode) return;
+      if (!S.answer('nome')) S.setAnswer('nome', 'Marco');
+      if (!S.answer('cognome')) S.setAnswer('cognome', 'Rossi');
       if (!S.answer('email')) S.setAnswer('email', 'marco.rossi@example.com');
       window.NavidaApp.next();
     }
 
-    var emailInput = h('input', {
-      class: 'field__input', type: 'email', inputmode: 'email',
-      placeholder: 'nome@esempio.it', value: email, autocomplete: 'email'
-    });
-    emailInput.addEventListener('input', function () { email = emailInput.value; aggiorna(); });
-    window.NavidaKeyboard.attach(emailInput, ['marco@', 'gmail.com', 'libero.it']);
-
-    var pwdInput = h('input', {
-      class: 'field__input', type: 'password',
-      placeholder: 'Almeno 6 caratteri', value: pwd, autocomplete: 'current-password'
-    });
-    pwdInput.addEventListener('input', function () { pwd = pwdInput.value; aggiorna(); });
-    window.NavidaKeyboard.attach(pwdInput);
-
-    var variant = S.pageVariant(screen.id, PAGEVAR.registrazione.predefinita);
-
-    var campi = h('div', { class: 'loginForm' }, [
-      h('div', { class: 'field' }, [
-        h('label', { class: 'field__label', text: 'Email' }),
-        emailInput
-      ]),
-      h('div', { class: 'field' }, [
-        h('label', { class: 'field__label', text: 'Password' }),
-        pwdInput
-      ]),
-      h('button', { class: 'linkbtn linkbtn--right', text: 'Password dimenticata?' })
-    ]);
-
-    var social = h('div', { class: 'loginSocial' }, [
-      h('button', { class: 'social social--wide', onclick: avanti }, [googleIcon(), 'Continua con Google']),
-      h('button', { class: 'social social--wide social--apple', onclick: avanti }, [appleIcon('#fff'), 'Continua con Apple'])
-    ]);
-
-    goBtn = cta(screen, T(screen, 'cta', screen.cta), avanti, !valido());
-
-    var titolo = editable('h1', 'title', screen, 'title', screen.title);
-    var sotto = editable('p', 'lead', screen, 'body', screen.body);
-
-    /* --- Essenziale: solo email, il resto sotto (rif. Cuvva) ---------- */
-    if (variant === 'essenziale') {
-      titolo.classList.add('title--left');
-      sotto.classList.add('lead--left');
-      var soloMail = h('input', {
-        class: 'field__input field__input--tondo', type: 'email',
-        placeholder: 'Indirizzo email', value: email
+    if (compatta) {
+      var valori = { nome: S.answer('nome', ''), cognome: S.answer('cognome', '') };
+      pronto = function () {
+        return String(valori.nome).trim() !== '' && String(valori.cognome).trim() !== '';
+      };
+      campi = [
+        { key: 'nome', placeholder: 'Nome', autocomplete: 'given-name' },
+        { key: 'cognome', placeholder: 'Cognome', autocomplete: 'family-name' }
+      ].map(function (c) {
+        var input = h('input', {
+          class: 'field__input field__input--tondo', type: 'text',
+          placeholder: S.text(screen.id + '.campo.' + c.key, c.placeholder),
+          value: valori[c.key], autocomplete: c.autocomplete
+        });
+        input.addEventListener('input', function () {
+          valori[c.key] = input.value;
+          S.setAnswer(c.key, input.value);
+          goBtn.disabled = !pronto();
+        });
+        input.addEventListener('keydown', function (e) {
+          if (e.key === 'Enter') { e.preventDefault(); avanti(); }
+        });
+        window.NavidaKeyboard.attach(input);
+        return input;
       });
-      soloMail.addEventListener('input', function () {
-        email = soloMail.value;
+    } else {
+      var email = S.answer('email', '');
+      pronto = function () { return /\S+@\S+\.\S+/.test(email); };
+      var mail = h('input', {
+        class: 'field__input field__input--tondo', type: 'email', inputmode: 'email',
+        placeholder: 'Indirizzo email', value: email, autocomplete: 'email'
+      });
+      mail.addEventListener('input', function () {
+        email = mail.value;
         S.setAnswer('email', email);
-        if (goBtn) goBtn.disabled = !/\S+@\S+\.\S+/.test(email);
+        goBtn.disabled = !pronto();
       });
-      window.NavidaKeyboard.attach(soloMail, ['marco@', 'gmail.com', 'libero.it']);
-      goBtn = cta(screen, 'Entra con l’email', avanti, !/\S+@\S+\.\S+/.test(email));
-
-      return [
-        h('div', { class: 'loginTop' }, [
-          h('button', {
-            class: 'loginTop__round', 'aria-label': 'Chiudi',
-            onclick: function () { window.NavidaApp.back(); }
-          }, [icon('x', 20)]),
-          h('button', { class: 'loginTop__round', 'aria-label': 'Aiuto' }, [icon('lightbulb', 18)])
-        ]),
-        h('div', { class: 'body login--essenziale' }, [
-          titolo, sotto,
-          soloMail,
-          goBtn,
-          h('div', { class: 'divider', text: C.ui.oppure }),
-          social,
-          h('button', {
-            class: 'linkbtn linkbtn--forte',
-            text: 'Non hai un account? Registrati',
-            onclick: avanti
-          })
-        ]),
-        h('div', { class: 'footer' }, [
-          h('p', { class: 'legal', text: C.ui.legale })
-        ])
-      ];
+      window.NavidaKeyboard.attach(mail, ['marco@', 'gmail.com', 'libero.it']);
+      campi = [mail];
     }
 
-    /* --- Compatta: email e password uniti (rif. Duolingo) ------------- */
-    if (variant === 'compatta') {
-      emailInput.classList.add('field__input--unito');
-      pwdInput.classList.add('field__input--unito');
-      return [
-        h('div', { class: 'loginBar' }, [
-          h('button', {
-            class: 'loginBar__back', 'aria-label': 'Indietro',
-            onclick: function () { window.NavidaApp.back(); }
-          }, [icon('chevron-left', 22)]),
-          h('span', { class: 'loginBar__title', 'data-editable': screen.id + '.title', text: T(screen, 'title', screen.title) })
-        ]),
-        h('div', { class: 'body login--compatta' }, [
-          h('div', { class: 'fieldGroup' }, [emailInput, pwdInput]),
-          goBtn,
-          h('button', { class: 'linkbtn linkbtn--forte', text: 'Password dimenticata?' })
-        ]),
-        h('div', { class: 'footer' }, [
-          social,
-          h('p', { class: 'legal', text: C.ui.legale })
-        ])
-      ];
-    }
+    var chiaveCta = compatta ? 'ctaCompatta' : 'cta';
+    goBtn = cta(screen, T(screen, chiaveCta, screen[chiaveCta]), avanti, !pronto());
+    goBtn.querySelector('[data-editable]').setAttribute('data-editable', screen.id + '.' + chiaveCta);
 
-    /* --- 1 · centrata: tutto al centro, pulita ------------------------ */
-    if (variant === 'centrata') {
-      return [
-        header(screen, progress),
-        h('div', { class: 'body body--center login--centrata' }, [
-          h('div', { class: 'loginHead__logo' }, [window.NavidaMascotte.elemento('salutare')]),
-          titolo, sotto, campi
-        ]),
-        h('div', { class: 'footer' }, [
-          goBtn,
-          h('div', { class: 'divider', text: C.ui.oppure }),
-          social
-        ])
-      ];
-    }
+    var chiaveTitolo = compatta ? 'titleCompatta' : 'title';
+    var testa = [editable('h1', 'title title--left', screen, chiaveTitolo, screen[chiaveTitolo])];
+    if (!compatta) testa.push(editable('p', 'lead lead--left', screen, 'body', screen.body));
 
-    /* --- 2 · social first --------------------------------------------- */
-    if (variant === 'social') {
-      titolo.classList.add('title--left');
-      sotto.classList.add('lead--left');
-      return [
-        header(screen, progress),
-        h('div', { class: 'body login--social' }, [
-          titolo, sotto,
-          social,
-          h('div', { class: 'divider', text: 'o accedi con la tua email' }),
-          campi
-        ]),
-        h('div', { class: 'footer' }, [goBtn, h('p', { class: 'legal', text: C.ui.legale })])
-      ];
-    }
-
-    /* --- 3 · con copertina colorata ----------------------------------- */
-    if (variant === 'copertina') {
-      titolo.classList.add('title--left');
-      sotto.classList.add('lead--left');
-      return [
-        h('div', { class: 'login__cover' }, [
-          h('button', {
-            class: 'login__back', 'aria-label': 'Indietro',
-            onclick: function () { window.NavidaApp.back(); }
-          }, [icon('chevron-left', 22)]),
-          h('div', { class: 'login__coverArt' }, [window.NavidaMascotte.elemento('salutare')])
-        ]),
-        h('div', { class: 'login__sheet' }, [
-          titolo, sotto, campi, goBtn,
-          h('div', { class: 'divider', text: C.ui.oppure }),
-          social
-        ])
-      ];
-    }
-
-    /* --- 4 · pagina semplice (la prima versione) ----------------------- */
-    titolo.classList.add('title--left');
-    sotto.classList.add('lead--left');
     return [
       header(screen, progress),
-      h('div', { class: 'body' }, [
-        h('div', { class: 'loginHead' }, [
-          h('div', { class: 'loginHead__logo' }, [window.NavidaMascotte.elemento('salutare')]),
-          titolo, sotto
-        ]),
-        campi,
+      h('div', { class: 'body login login--' + (compatta ? 'compatta' : 'essenziale') }, testa.concat([
+        h('div', { class: 'loginCampi' }, campi),
+        goBtn,
         h('div', { class: 'divider', text: C.ui.oppure }),
-        social
-      ]),
-      h('div', { class: 'footer' }, [goBtn, h('p', { class: 'legal', text: C.ui.legale })])
-    ];
-  };
-
-  /* --- vecchie varianti a popup, tenute per confronto ------------------ */
-  Screens.loginPopup = function (screen) {
-    var variant = S.pageVariant(screen.id, PAGEVAR.registrazione.predefinita);
-    var email = S.answer('email', '');
-    var frag = document.createDocumentFragment();
-
-    var bg = h('div', {
-      class: 'loginBg' + (variant === 'popup' || variant === 'header' ? ' loginBg--dim' : '')
-    });
-    frag.appendChild(bg);
-
-    var goBtn;
-    function setEmail(v) {
-      email = v;
-      S.setAnswer('email', v);
-      var ok = /\S+@\S+\.\S+/.test(v);
-      if (goBtn) goBtn.disabled = !ok;
-    }
-
-    var emailInput = h('input', { placeholder: C.ui.email, type: 'email', value: email });
-    emailInput.addEventListener('input', function () { setEmail(emailInput.value); });
-
-    function googleApple(wide) {
-      if (wide) {
-        return [
-          h('button', { class: 'social social--wide', onclick: proceed }, [googleIcon(), 'Continua con Google']),
-          h('button', { class: 'social social--wide social--apple', onclick: proceed }, [appleIcon('#fff'), 'Continua con Apple'])
-        ];
-      }
-      return [h('div', { class: 'socialRow' }, [
-        h('button', { class: 'social', onclick: proceed }, [googleIcon()]),
-        h('button', { class: 'social', onclick: proceed }, [appleIcon('#000')])
-      ])];
-    }
-
-    function proceed() {
-      if (S.mode) return;
-      if (!S.answer('email')) S.setAnswer('email', 'pinco.pallino82@gmail.com');
-      window.NavidaApp.next();
-    }
-
-    var container;
-
-    if (variant === 'popup') {
-      container = h('div', { class: 'modal' }, [
-        h('div', { style: 'width:92px;height:126px;margin:0 auto', html: window.NavidaMascotte.pose('computer') }),
-        editable('h2', 'sheet__title', screen, 'title', screen.title),
-        editable('p', 'sheet__sub', screen, 'body', screen.body),
-        h('div', { class: 'inputRow' }, [emailInput]),
-        (goBtn = cta(screen, T(screen, 'cta', screen.cta), proceed, !/\S+@\S+\.\S+/.test(email))),
-        h('div', { class: 'divider', text: C.ui.oppure })
-      ].concat(googleApple(false), [
-        h('p', { class: 'legal', text: C.ui.legale })
-      ]));
-      container.querySelector('.sheet__title').style.textAlign = 'center';
-      container.querySelector('.sheet__sub').style.textAlign = 'center';
-
-    } else if (variant === 'header') {
-      container = h('div', { class: 'sheet' }, [
-        h('div', { class: 'sheetHeader' }, [
-          h('div', { class: 'sheetHeader__logo', text: 'N' }),
-          editable('h2', '', screen, 'titleC', screen.titleC),
-          editable('p', '', screen, 'bodyC', screen.bodyC),
-          h('button', { class: 'sheetHeader__close' }, [icon('x', 20)])
+        h('div', { class: 'loginSocial' }, [
+          h('button', { class: 'social social--wide', onclick: conSocial }, [googleIcon(), 'Continua con Google']),
+          h('button', { class: 'social social--wide social--apple', onclick: conSocial }, [appleIcon('#fff'), 'Continua con Apple'])
         ])
-      ].concat(googleApple(true), [
-        h('div', { class: 'divider', text: 'o usa la tua email' }),
-        h('div', { class: 'inputRow' }, [
-          emailInput,
-          (goBtn = h('button', {
-            class: 'inputRow__go',
-            disabled: !/\S+@\S+\.\S+/.test(email),
-            onclick: proceed
-          }, [icon('arrow-right', 16)]))
-        ]),
+      ])),
+      h('div', { class: 'footer' }, [
         h('p', { class: 'legal', text: C.ui.legale })
-      ]));
-
-    } else {
-      container = h('div', { class: 'sheet' }, [
-        h('div', { class: 'sheet__head' }, [
-          h('div', { style: 'width:40px;height:40px', html: window.NavidaMascotte.pose('salutare') }),
-          h('button', { class: 'sheet__close' }, [icon('chevron-down', 20)])
-        ]),
-        editable('h2', 'sheet__title', screen, 'title', screen.title),
-        editable('p', 'sheet__sub', screen, 'body', screen.body),
-        h('div', { class: 'inputRow' }, [
-          emailInput,
-          h('button', { class: 'inputRow__action', onclick: function () { emailInput.value = ''; setEmail(''); } }, [icon('x', 16)])
-        ]),
-        (goBtn = cta(screen, T(screen, 'cta', screen.cta), proceed, !/\S+@\S+\.\S+/.test(email))),
-        h('div', { class: 'divider', text: C.ui.oppure })
-      ].concat(googleApple(false)));
-    }
-
-    frag.appendChild(container);
-    return frag;
+      ])
+    ];
   };
 
   function googleIcon() {

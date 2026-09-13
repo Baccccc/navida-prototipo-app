@@ -150,10 +150,197 @@
     return box;
   }
 
+  /* ======================================================================
+     CINQUE VERSIONI NUOVE DELLA SCHERMATA DEL SOGNO
+     ----------------------------------------------------------------------
+     Nelle quattro versioni sopra la domanda e' solo decorazione: gira
+     dentro il disegno e un lettore di schermo non la legge.
+
+     In queste cinque la domanda e' un titolo vero dentro la scheda.
+     Si legge, si modifica dalla scheda "Testi" e resta ferma mentre si
+     scrive. Le funzioni qui sotto disegnano solo la scena intorno: la
+     domanda e il campo li mette js/render.js.
+     ====================================================================== */
+
+  var CON_DOMANDA = {
+    insegna: true,
+    targhetta: true,
+    nebulosa: true,
+    orizzonte: true,
+    pensiero: true
+  };
+
+  /** true se la versione vuole la domanda scritta, non solo disegnata. */
+  function domandaVisibile(variante) {
+    return CON_DOMANDA[variante] === true;
+  }
+
+  /* ----------------------------------------------------------------------
+     1. INSEGNA AL NEON
+     La luce della stanza si spegne. Resta accesa solo l'insegna con la
+     domanda, che sfarfalla due volte e poi tiene. Il campo di testo e' il
+     tubo di luce sotto l'insegna: piu' scrivi, piu' l'insegna e' viva.
+     ---------------------------------------------------------------------- */
+  function insegna() {
+    var h = window.NavidaRender.h;
+    var box = h('div', { class: 'dreamArt neon', 'aria-hidden': 'true' }, [
+      h('span', { class: 'neon__notte' }),
+      h('span', { class: 'neon__alone' })
+    ]);
+
+    /* pulviscolo: granelli di luce che salgono piano davanti all'insegna */
+    var pulviscolo = h('div', { class: 'neon__pulviscolo' });
+    var colonne = [7, 14, 22, 29, 37, 44, 51, 58, 64, 71, 78, 84, 90, 95, 18, 61];
+    colonne.forEach(function (x, i) {
+      pulviscolo.appendChild(h('span', {
+        style: '--x:' + x + '%;' +
+               '--s:' + (2 + (i % 3)) + 'px;' +
+               '--dur:' + (12 + (i % 5) * 2.6).toFixed(1) + 's;' +
+               '--dl:' + (i * 780) + 'ms'
+      }));
+    });
+    box.appendChild(pulviscolo);
+    return box;
+  }
+
+  /* ----------------------------------------------------------------------
+     2. TARGHETTA DA LAVORO
+     Un badge aziendale scende dal cordino e dondola fino a fermarsi.
+     Nome dell'azienda: Navida. Ruolo: vuoto. Lo scrivi tu.
+     E' la metafora piu' concreta di tutte: il lavoro dei sogni scritto
+     sul cartellino che porti al collo.
+     ---------------------------------------------------------------------- */
+  function targhetta() {
+    var h = window.NavidaRender.h;
+    return h('div', { class: 'dreamArt badge', 'aria-hidden': 'true' }, [
+      h('span', { class: 'badge__carta' }),
+      h('span', { class: 'badge__alone' })
+    ]);
+  }
+
+  /* ----------------------------------------------------------------------
+     3. NEBULOSA DI MESTIERI
+     Decine di mestieri veri fluttuano piano intorno al campo, come una
+     nebulosa. Il campo al centro e' il punto di gravita': i nomi gli
+     girano intorno. Toccarne uno lo scrive nel campo, cosi' chi non sa
+     cosa rispondere ha da dove partire.
+     ---------------------------------------------------------------------- */
+  /* x/y in percentuale, s = corpo del testo, a = trasparenza.
+     La fascia centrale (y 40-62) resta libera: li' c'e' la scheda con la
+     domanda. In alto si sta sotto la freccia Indietro, in basso sopra il
+     pulsante Continua. */
+  var MESTIERI_NEBULOSA = [
+    { t: 'Chef',            x: 18, y: 13, s: 13, a: .50 },
+    { t: 'Architetta',      x: 57, y: 6,  s: 15, a: .78 },
+    { t: 'Pilota',          x: 86, y: 10, s: 11, a: .40 },
+    { t: 'Veterinario',     x: 31, y: 19, s: 12, a: .48 },
+    { t: 'Data scientist',  x: 70, y: 21, s: 14, a: .64 },
+    { t: 'Fotografo',       x: 13, y: 26, s: 11, a: .44 },
+    { t: 'Insegnante',      x: 47, y: 28, s: 14, a: .70 },
+    { t: 'Falegname',       x: 80, y: 31, s: 12, a: .48 },
+    { t: 'Regista',         x: 25, y: 34, s: 13, a: .56 },
+    { t: 'Infermiera',      x: 62, y: 36, s: 11, a: .42 },
+    { t: 'Sviluppatrice',   x: 21, y: 69, s: 14, a: .68 },
+    { t: 'Biologo marino',  x: 56, y: 66, s: 12, a: .48 },
+    { t: 'Ingegnere',       x: 83, y: 71, s: 13, a: .56 },
+    { t: 'Avvocata',        x: 13, y: 77, s: 11, a: .44 },
+    { t: 'Astronauta',      x: 42, y: 79, s: 15, a: .80 },
+    { t: 'Musicista',       x: 76, y: 82, s: 12, a: .50 },
+    { t: 'Psicologa',       x: 26, y: 85, s: 11, a: .40 },
+    { t: 'Panettiere',      x: 61, y: 87, s: 13, a: .54 }
+  ];
+
+  function nebulosa() {
+    var h = window.NavidaRender.h;
+    var box = h('div', { class: 'dreamArt nebula' }, [
+      h('span', { class: 'nebula__nucleo', 'aria-hidden': 'true' })
+    ]);
+
+    MESTIERI_NEBULOSA.forEach(function (m, i) {
+      box.appendChild(h('button', {
+        type: 'button',
+        class: 'nebula__parola',
+        /* fuori dal giro del tasto Tab: e' un aiuto, non un passaggio
+           obbligato. Stessa scelta della tastiera finta. */
+        tabindex: '-1',
+        'data-mestiere': m.t,
+        'aria-label': 'Scrivi ' + m.t,
+        text: m.t,
+        style: '--x:' + m.x + '%;--y:' + m.y + '%;' +
+               '--fs:' + m.s + 'px;--a:' + m.a + ';' +
+               '--dur:' + (26 + (i % 6) * 7) + 's;' +
+               '--dl:' + (i * -1900) + 'ms'
+      }));
+    });
+    return box;
+  }
+
+  /* ----------------------------------------------------------------------
+     4. ORIZZONTE ALL'ALBA
+     Le stelle si spengono, il sole sale piano da dietro il campo di
+     testo e la riga su cui scrivi e' la linea dell'orizzonte.
+     E' la versione calma: nessun testo che gira, nessun rumore.
+     ---------------------------------------------------------------------- */
+  function orizzonte() {
+    var h = window.NavidaRender.h;
+    var box = h('div', { class: 'dreamArt dawn', 'aria-hidden': 'true' }, [
+      h('span', { class: 'dawn__cielo' })
+    ]);
+
+    var stelle = h('div', { class: 'dawn__stelle' });
+    [[13, 9], [31, 5], [48, 13], [67, 7], [83, 15], [22, 19], [58, 21], [92, 4]]
+      .forEach(function (p, i) {
+        stelle.appendChild(h('span', {
+          style: '--x:' + p[0] + '%;--y:' + p[1] + '%;--dl:' + (i * 420) + 'ms'
+        }));
+      });
+    box.appendChild(stelle);
+
+    /* tre nuvole sottili che attraversano il cielo a velocita' diverse */
+    [[26, 34, 118], [58, 22, 86], [14, 46, 150]].forEach(function (n, i) {
+      box.appendChild(h('span', {
+        class: 'dawn__nuvola',
+        style: '--y:' + n[0] + '%;--w:' + n[1] + '%;--dur:' + n[2] + 's;--dl:' + (i * -34) + 's'
+      }));
+    });
+    return box;
+  }
+
+  /* ----------------------------------------------------------------------
+     5. IL PENSIERO DI NAVIDA
+     L'astronauta pensa in basso a sinistra. Sopra di lui si gonfia la
+     nuvoletta del pensiero, e dentro la nuvoletta c'e' la domanda e il
+     campo. La risposta la stai pensando insieme a lui.
+     ---------------------------------------------------------------------- */
+  function pensiero() {
+    var h = window.NavidaRender.h;
+    var box = h('div', { class: 'dreamArt think', 'aria-hidden': 'true' }, [
+      h('span', { class: 'think__cielo' })
+    ]);
+
+    var stelle = h('div', { class: 'think__stelle' });
+    [[80, 18], [90, 30], [12, 26], [70, 8], [30, 12]].forEach(function (p, i) {
+      stelle.appendChild(h('span', {
+        style: '--x:' + p[0] + '%;--y:' + p[1] + '%;--dl:' + (i * 560) + 'ms'
+      }));
+    });
+    box.appendChild(stelle);
+
+    box.appendChild(h('div', { class: 'think__mascotte' }, [
+      window.NavidaMascotte.elemento('pensare')
+    ]));
+    return box;
+  }
+
   function sogno(frase, variante) {
     if (variante === 'costellazione') return costellazione(frase);
     if (variante === 'portale') return portale();
     if (variante === 'tunnel') return tunnelTipografico(frase);
+    if (variante === 'insegna') return insegna();
+    if (variante === 'targhetta') return targhetta();
+    if (variante === 'nebulosa') return nebulosa();
+    if (variante === 'orizzonte') return orizzonte();
+    if (variante === 'pensiero') return pensiero();
     return anelli(frase);
   }
 
@@ -186,59 +373,54 @@
     return box;
   }
 
-  /* Sequenza di mascotte per la schermata di elaborazione. La variante
-     "professioni" usa cinque asset generati sul personaggio Navida piu'
-     la posa al computer gia' presente nel progetto. */
-  /* Solo pose in piedi: "computer" e "leggere" sono sedute e rompevano il
-     ritmo dell'animazione. L'etichetta resta perche' descrive l'immagine
-     a chi usa un lettore di schermo, ma non si vede piu'. */
-  var POSE_ELABORAZIONE = [
-    { posa: 'matita',    label: 'Creatività' },
-    { posa: 'calcolare', label: 'Analisi' },
-    { posa: 'tablet',    label: 'Digitale' },
-    { posa: 'zaino',     label: 'Nuovi percorsi' }
+  /* Elaborazione: un'attesa semplice, come un loader.
+     Un titolo fermo e l'astronauta Navida che cambia veste. Niente nomi
+     dei mestieri, niente contatore, niente barra (richiesta di Bac).
+     Il cambio e' uno scatto: la mascotte sparisce, resta una breve pausa
+     vuota, poi appare la successiva. */
+  var VESTI_ELABORAZIONE = [
+    'assets/mascotte-professione-medico.png',
+    'assets/mascotte-professione-chef.png',
+    'assets/mascotte-professione-ingegnere.png',
+    'assets/mascotte-professione-docente.png',
+    'assets/mascotte-professione-designer.png'
   ];
 
-  var RUOLI_ELABORAZIONE = [
-    { src: 'assets/mascotte-professione-medico.png', label: 'Medicina' },
-    { src: 'assets/mascotte-professione-chef.png', label: 'Ristorazione' },
-    { src: 'assets/mascotte-professione-ingegnere.png', label: 'Ingegneria' },
-    { src: 'assets/mascotte-professione-docente.png', label: 'Formazione' },
-    { src: 'assets/mascotte-professione-designer.png', label: 'Design' }
-  ];
+  var ELAB_PASSO = 1150;  /* quanto resta ogni veste, pausa inclusa */
+  var ELAB_PAUSA = 140;   /* lo schermo vuoto tra una veste e l'altra */
 
-  function professioni(variante, fine) {
+  function professioni(fine) {
     var h = window.NavidaRender.h;
-    var items = variante === 'professioni' ? RUOLI_ELABORAZIONE : POSE_ELABORAZIONE;
-    /* durata complessiva fissa: le due varianti hanno un numero diverso di
-       mascotte, ma l'attesa dura sempre lo stesso tempo */
-    var DURATA = 5400;
-    var passo = Math.round(DURATA / items.length);
-    var box = h('div', { class: 'jobSpin' }, [
-      h('div', { class: 'jobSpin__orbit', 'aria-hidden': 'true' }),
-      h('p', { class: 'jobSpin__title', text: 'Stiamo esplorando le possibilità' }),
-      h('div', { class: 'jobSpin__dots', 'aria-hidden': 'true' }, [
-        h('span'), h('span'), h('span')
-      ])
+    var tot = VESTI_ELABORAZIONE.length;
+
+    /* le mascotte stanno una sopra l'altra: se ne accende una per volta */
+    var art = h('div', { class: 'jobV__art', 'aria-hidden': 'true' }, VESTI_ELABORAZIONE.map(function (src) {
+      return h('img', { src: src, alt: '' });
+    }));
+    var box = h('div', { class: 'jobV', role: 'status' }, [
+      h('div', { class: 'jobV__head' }, [
+        h('p', { class: 'jobV__eyebrow', text: 'Un momento' }),
+        h('h2', { class: 'jobV__title', text: 'Stiamo esplorando le possibilità' })
+      ]),
+      h('div', { class: 'jobV__stage' }, [art, h('span', { class: 'jobV__floor', 'aria-hidden': 'true' })])
     ]);
+    var imgs = Array.prototype.slice.call(art.querySelectorAll('img'));
 
-    items.forEach(function (item, i) {
-      var art = item.src
-        ? h('img', { src: item.src, alt: 'Astronauta Navida, ' + item.label })
-        : window.NavidaMascotte.elemento(item.posa);
+    function mostra(i) {
+      imgs.forEach(function (im, k) { im.classList.toggle('is-on', k === i); });
+    }
 
-      box.appendChild(h('div', {
-        class: 'jobSpin__slide',
-        style: 'animation-delay:' + (i * passo) + 'ms;' +
-               'animation-duration:' + passo + 'ms'
-      }, [
-        h('div', { class: 'jobSpin__art' }, [art])
-      ]));
-    });
+    mostra(0);
+    for (var i = 1; i < tot; i++) {
+      (function (i) {
+        setTimeout(function () { if (box.isConnected) mostra(-1); }, i * ELAB_PASSO - ELAB_PAUSA);
+        setTimeout(function () { if (box.isConnected) mostra(i); }, i * ELAB_PASSO);
+      })(i);
+    }
 
     var t = setTimeout(function () {
       if (box.isConnected && typeof fine === 'function') fine();
-    }, items.length * passo + 250);
+    }, tot * ELAB_PASSO + 300);
     box.dataset.timer = t;
     return box;
   }
@@ -253,6 +435,7 @@
   window.NavidaWow = {
     anelli: anelli,
     sogno: sogno,
+    domandaVisibile: domandaVisibile,
     cerchi: cerchi,
     professioni: professioni,
     CERCHI: CERCHI
