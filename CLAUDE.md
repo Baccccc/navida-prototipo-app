@@ -47,12 +47,25 @@ Serve come proof of concept per gli investitori e come base editabile per il tea
 | Cosa vuoi cambiare | File |
 |---|---|
 | Testi, domande, risposte, ordine delle schermate | `js/content.js` |
-| Contenuti della Fase 3 | `js/fase3-content.js` |
+| Elenco e ordine delle schermate dell'app (Fase 3 e 4) | `js/fase3-content.js` |
+| Dati di esempio dell'app: percorso, compiti, opportunità, curriculum | `js/app/dati.js` |
+| Pezzi comuni dell'app: barre, pastiglie, schede, navigazione (`NV`) | `js/app/base.js`, `css/app/base.css` |
+| Una schermata dell'app e le sue versioni | `js/app/<schermata>.js`, `css/app/<schermata>.css` |
 | Colori, font, raggi, spaziature | `css/tokens.css` |
 | Il secondo brand kit ("Maturo") | `css/brand-maturo.css` |
-| Layout e componenti | `css/app.css` |
+| Layout e componenti del questionario | `css/app.css` |
 | Varianti di stile disponibili | `js/variants.js` |
-| Come si disegnano le schermate | `js/render.js`, `js/fase3-render.js` |
+| Come si disegnano le schermate del questionario | `js/render.js` |
+
+**L'app (Fase 3 e 4) è disegnata solo per il kit Maturo**, che è quello
+definitivo. Le schermate stanno in `js/app/` e `css/app/`, una coppia di file
+per schermata; tutte usano i pezzi comuni di `js/app/base.js`. Le vecchie
+`js/fase3-render.js` e `css/fase3.css` non sono più caricate. L'anteprima
+della linea di carriera alla fine del questionario usa `js/app/percorso.js`.
+
+Per vedere una schermata senza barra di modifica, nel kit maturo:
+`fase3.html?screen=dashboard&brand=maturo&cattura=1` (anche `&variant=`,
+`&step=2`, `&compito=diploma`, `&opp=googleux`).
 
 L'ordine dell'array `screens` in `js/content.js` **è** l'ordine delle schermate.
 

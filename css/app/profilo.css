@@ -1,0 +1,1489 @@
+/* ==========================================================================
+   NAVIDA — Profilo, notifiche e consulenza
+   ==========================================================================
+   Schermate disegnate in js/app/profilo.js. Prefissi:
+     nv-pro-    profilo e pezzi comuni di questo file (righe, gruppi, avatar)
+     nv-cv-     curriculum
+     nv-pref-   preferenze
+     nv-noti-   notifiche
+     nv-soon-   consulenza in arrivo
+
+   Gerarchia della pagina profilo, dall'alto:
+     1. identita'   avatar grande con l'anello di completezza, nome come titolo
+     2. percorso    l'unica scheda con la sfumatura: e' la cosa che conta
+     3. curriculum  numeri e pastiglie, bianco
+     4. dati        elenco raggruppato, bianco
+     5. impostazioni righe semplici, e l'uscita da sola in rosso
+   ========================================================================== */
+
+:root {
+  /* avatar grande del profilo e della foto profilo */
+  --nv-pro-avatar: 96px;
+  /* spessore dell'anello di completezza intorno all'avatar */
+  --nv-pro-anello-w: 4px;
+  /* filo color pagina fra l'anello e la foto */
+  --nv-pro-anello-filo: 3px;
+  /* altezza minima di una riga di elenco (tocco comodo) */
+  --nv-pro-riga-h: 56px;
+  /* rientro del filo divisorio: parte dopo l'icona della riga */
+  --nv-pro-filo-da: 52px;
+  /* tacche dello step nella scheda obiettivo */
+  --nv-pro-tacca-h: 6px;
+  /* mascotte del pannello di uscita */
+  --nv-pro-mascotte-sm: 96px;
+}
+
+/* ==========================================================================
+   PEZZI COMUNI
+   ========================================================================== */
+
+/* --- elenco raggruppato: una scheda, piu' righe divise da un filo ------ */
+.nv-pro-gruppo {
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border-radius: var(--r-lg);
+  box-shadow: var(--nv-ring);
+  overflow: hidden;
+}
+
+.nv-pro-voce {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-6);
+  width: 100%;
+  min-height: var(--nv-pro-riga-h);
+  padding: var(--sp-5) var(--sp-7);
+  text-align: left;
+  background: transparent;
+  color: var(--text-highlighted);
+}
+.nv-pro-voce.nv-press:active { transform: none; background: var(--passivo); }
+button.nv-pro-voce:hover,
+div.nv-pro-voce.nv-press:hover { background: var(--bg); }
+
+/* il filo fra due righe parte dopo l'icona, come negli elenchi di sistema */
+.nv-pro-voce + .nv-pro-voce::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: var(--nv-pro-filo-da);
+  right: 0;
+  height: 1px;
+  background: var(--light-outline);
+}
+.nv-pro-voce:not(:has(.nv-pro-voce__ico)) + .nv-pro-voce::before,
+.nv-pro-voce + .nv-pro-voce:not(:has(.nv-pro-voce__ico))::before { left: var(--sp-7); }
+
+.nv-pro-voce__ico {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: var(--ico-md);
+  color: var(--main);
+}
+.nv-pro-voce__copy {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+.nv-pro-voce__titolo {
+  font-size: var(--fs-base);
+  line-height: 22px;
+  font-weight: var(--fw-semibold);
+  color: var(--text-highlighted);
+}
+.nv-pro-voce__sotto {
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+  color: var(--text-muted);
+}
+.nv-pro-voce__valore {
+  flex: 0 0 auto;
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+  font-weight: var(--fw-medium);
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.nv-pro-voce__chev { flex: 0 0 auto; display: grid; color: var(--text-dimmed); }
+.nv-pro-voce__n {
+  flex: 0 0 auto;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 var(--sp-3);
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-full);
+  background: var(--danger);
+  color: var(--text-on-main);
+  font-size: var(--fs-xs);
+  line-height: 1;
+  font-weight: var(--fw-bold);
+}
+.nv-pro-voce--rischio .nv-pro-voce__ico,
+.nv-pro-voce--rischio .nv-pro-voce__titolo { color: var(--danger); }
+
+/* --- pastiglie che non si toccano ------------------------------------ */
+.nv-pro-pills { display: flex; flex-wrap: wrap; gap: var(--sp-3); }
+.nv-pro-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  height: 32px;
+  padding: 0 var(--sp-6);
+  border-radius: var(--r-full);
+  background: var(--passivo);
+  color: var(--text-highlighted);
+  font-size: var(--fs-sm);
+  line-height: 1;
+  font-weight: var(--fw-semibold);
+  white-space: nowrap;
+}
+.nv-pro-pill--altre { background: transparent; box-shadow: inset 0 0 0 1.5px var(--bg-accented); color: var(--text-muted); }
+.nv-pro-pill--soft { background: var(--risposte-bg); color: var(--main); }
+
+/* --- titoletto dentro moduli e gruppi -------------------------------- */
+.nv-pro-titoletto {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-6);
+}
+.nv-pro-titoletto h2 {
+  font-size: var(--fs-base);
+  line-height: var(--lh-base);
+  font-weight: var(--fw-bold);
+  color: var(--text-highlighted);
+}
+
+/* --- pulsante tondo da 44 al posto della freccia nuda ------------------ */
+.nv-pro-tondo {
+  flex: 0 0 auto;
+  width: var(--nv-bar-h);
+  height: var(--nv-bar-h);
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-full);
+  background: var(--surface);
+  color: var(--text-highlighted);
+}
+
+/* --- pulsante rosso ---------------------------------------------------- */
+.nv-btn.nv-pro-btn--rischio { background: var(--danger); color: var(--text-on-main); }
+.nv-btn.nv-pro-btn--rischio:active { background: var(--danger); filter: brightness(.9); }
+
+/* --- avatar ------------------------------------------------------------ */
+.nv-pro-avatar {
+  position: relative;
+  flex: 0 0 auto;
+  width: var(--nv-pro-avatar);
+  height: var(--nv-pro-avatar);
+  border-radius: var(--r-full);
+}
+.nv-pro-avatar__foto {
+  position: absolute;
+  inset: 0;
+  display: block;
+  overflow: hidden;
+  border-radius: var(--r-full);
+  background: var(--risposte-bg);
+}
+.nv-pro-avatar__img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 18%;
+}
+/* L'anello di completezza: un arco blu sopra una traccia lavanda.
+   La foto rientra di un filo bianco, cosi' l'anello non la tocca. */
+.nv-pro-avatar--anello {
+  background: conic-gradient(var(--main) var(--nv-pro-anello, 0%), var(--bg-accented) 0);
+}
+/* la foto rientra di anello + filo; il filo (color pagina) copre solo
+   la parte interna dell'arco, cosi' l'anello resta tutto visibile */
+.nv-pro-avatar--anello .nv-pro-avatar__foto {
+  inset: calc(var(--nv-pro-anello-w) + var(--nv-pro-anello-filo));
+  box-shadow: 0 0 0 var(--nv-pro-anello-filo) var(--bg);
+}
+/* il bottone della fotocamera: tocco da 44, disco visibile da 32 */
+.nv-pro-avatar__camera {
+  position: absolute;
+  right: calc(var(--sp-3) * -1);
+  bottom: calc(var(--sp-3) * -1);
+  width: var(--nv-bar-h);
+  height: var(--nv-bar-h);
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border-radius: var(--r-full);
+  background: transparent;
+}
+.nv-pro-avatar__cameraIco {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-full);
+  background: var(--main);
+  color: var(--text-on-main);
+  box-shadow: 0 0 0 3px var(--bg);
+}
+
+/* ==========================================================================
+   PROFILO
+   ========================================================================== */
+
+/* 1 · identita' ------------------------------------------------------- */
+.nv-pro-id { display: flex; flex-direction: column; gap: var(--sp-7); }
+.nv-pro-id__riga {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--sp-7);
+}
+.nv-pro-id__modifica { margin-bottom: var(--sp-2); }
+.nv-pro-id__testi { display: flex; flex-direction: column; gap: var(--sp-2); }
+.nv-pro-id__meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--sp-4);
+  font-size: var(--fs-base);
+  line-height: var(--lh-base);
+  color: var(--text-muted);
+}
+.nv-pro-id__punto {
+  width: 4px;
+  height: 4px;
+  border-radius: var(--r-full);
+  background: var(--text-dimmed);
+}
+
+.nv-pro-completa {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-7);
+  padding: var(--sp-7);
+  border-radius: var(--r-lg);
+  background: var(--passivo);
+  color: var(--text);
+}
+.nv-pro-completa__testi {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+.nv-pro-completa__titolo {
+  font-size: var(--fs-base);
+  line-height: 22px;
+  color: var(--text-highlighted);
+}
+.nv-pro-completa__titolo strong { font-weight: var(--fw-bold); }
+.nv-pro-completa__nota {
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+  color: var(--text-muted);
+}
+.nv-pro-completa .nv-progress { margin-top: var(--sp-3); }
+
+/* 2 · percorso -------------------------------------------------------- */
+.nv-pro-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--sp-4);
+  text-align: left;
+}
+.nv-pro-meta__cima {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-6);
+}
+.nv-pro-meta__occhiello {
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  font-weight: var(--fw-bold);
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  opacity: .85;
+}
+.nv-pro-meta__vai {
+  width: var(--nv-bar-h);
+  height: var(--nv-bar-h);
+  margin: calc(var(--sp-4) * -1) calc(var(--sp-4) * -1) calc(var(--sp-4) * -1) 0;
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-full);
+  background: var(--on-main-veil);
+}
+.nv-pro-meta__titolo {
+  font-size: var(--fs-3xl);
+  line-height: var(--nv-title-lh);
+  font-weight: var(--fw-bold);
+  letter-spacing: -.022em;
+}
+.nv-pro-tacche {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: var(--sp-3);
+  margin-top: var(--sp-6);
+}
+.nv-pro-tacca {
+  height: var(--nv-pro-tacca-h);
+  border-radius: var(--r-full);
+  background: var(--on-main-dim);
+}
+.nv-pro-tacca.is-fatta,
+.nv-pro-tacca.is-attuale { background: var(--surface); }
+.nv-pro-meta__step {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1) var(--sp-4);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+}
+.nv-pro-meta__step strong { font-weight: var(--fw-bold); }
+.nv-pro-meta__step span { opacity: .85; }
+
+.nv-pro-tessere {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-5);
+}
+.nv-pro-tessera {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  padding: var(--sp-7);
+  border-radius: var(--r-lg);
+  background: var(--passivo);
+}
+.nv-pro-tessera:hover { background: var(--bg-accented); }
+.nv-pro-tessera .nv-icochip { margin-bottom: var(--sp-4); }
+.nv-pro-tessera__titolo {
+  font-size: var(--fs-base);
+  line-height: 22px;
+  font-weight: var(--fw-bold);
+  color: var(--text-highlighted);
+}
+.nv-pro-tessera__nota {
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  color: var(--text-muted);
+}
+
+/* 3 · curriculum ------------------------------------------------------ */
+.nv-pro-cvbox {
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border-radius: var(--r-lg);
+  box-shadow: var(--nv-ring);
+  overflow: hidden;
+}
+.nv-pro-cvbox__cima {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-7);
+  padding: var(--sp-7);
+  background: transparent;
+}
+.nv-pro-cvbox__cima:active { transform: none; background: var(--passivo); }
+.nv-pro-numeri {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--sp-4);
+}
+.nv-pro-numero { display: flex; flex-direction: column; gap: var(--sp-1); }
+.nv-pro-numero strong {
+  font-size: var(--fs-2xl);
+  line-height: var(--lh-2xl);
+  font-weight: var(--fw-bold);
+  color: var(--text-highlighted);
+}
+.nv-pro-numero span {
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  font-weight: var(--fw-semibold);
+  color: var(--text-muted);
+}
+.nv-pro-numero + .nv-pro-numero { padding-left: var(--sp-6); box-shadow: inset 1px 0 0 var(--light-outline); }
+
+/* il gruppo di azioni dentro la scheda del curriculum: niente scheda doppia */
+.nv-pro-gruppo--dentro {
+  border-radius: 0;
+  box-shadow: inset 0 1px 0 var(--light-outline);
+}
+
+/* 4 · dati personali -------------------------------------------------- */
+.nv-pro-dato {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-6);
+  min-height: var(--nv-pro-riga-h);
+  padding: var(--sp-5) var(--sp-7);
+}
+.nv-pro-dato + .nv-pro-dato::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: var(--nv-pro-filo-da);
+  right: 0;
+  height: 1px;
+  background: var(--light-outline);
+}
+.nv-pro-dato__ico { flex: 0 0 auto; display: grid; color: var(--text-dimmed); }
+.nv-pro-dato__copy { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: var(--sp-1); }
+.nv-pro-dato__copy small {
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  font-weight: var(--fw-semibold);
+  color: var(--text-muted);
+}
+.nv-pro-dato__copy strong {
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+  font-weight: var(--fw-semibold);
+  color: var(--text-highlighted);
+  overflow-wrap: anywhere;
+}
+
+/* 5 · piede ----------------------------------------------------------- */
+.nv-pro-versione {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-1);
+  padding-top: var(--sp-4);
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  color: var(--text-dimmed);
+}
+.nv-pro-versione__logo {
+  font-size: var(--fs-base);
+  line-height: var(--lh-base);
+  font-weight: var(--fw-bold);
+  letter-spacing: -.035em;
+  color: var(--text-dimmed);
+}
+
+/* ==========================================================================
+   FOTO PROFILO (pannello dal basso sopra il profilo)
+   ========================================================================== */
+
+.nv-pro-foto .nv-sheet__body { gap: var(--sp-8); }
+
+.nv-pro-foto__cima {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-8);
+}
+.nv-pro-foto__anteprima { box-shadow: inset 0 0 0 1px var(--light-outline); }
+.nv-pro-foto__azioni {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+.nv-pro-foto__azioni .nv-btn { justify-content: flex-start; padding: 0 var(--sp-7); }
+
+.nv-pro-foto__blocco { display: flex; flex-direction: column; gap: var(--sp-6); }
+
+.nv-pro-avatars {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: var(--sp-5);
+}
+.nv-pro-avatars__voce {
+  aspect-ratio: 1;
+  padding: 0;
+  overflow: hidden;
+  border-radius: var(--r-full);
+  background: var(--passivo);
+  transition: box-shadow var(--dur) var(--ease), background var(--dur) var(--ease), transform 120ms var(--ease);
+}
+.nv-pro-avatars__voce img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 18%;
+}
+.nv-pro-avatars__voce:active { transform: scale(.94); }
+/* scelto: come la risposta scelta del questionario */
+.nv-pro-avatars__voce.is-scelto {
+  background: var(--risposte-bg);
+  box-shadow: inset 0 0 0 2px var(--main), 0 0 0 2px var(--surface), 0 0 0 4px var(--main-ring);
+}
+
+.nv-pro-foto__rimuovi {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-4);
+  min-height: var(--nv-bar-h);
+  padding: 0 var(--sp-2);
+  font-size: var(--fs-base);
+  line-height: var(--lh-base);
+  font-weight: var(--fw-semibold);
+  color: var(--danger);
+}
+
+/* ==========================================================================
+   ESCI (pannello al centro)
+   ========================================================================== */
+
+.nv-scrim--centro .nv-pro-esci {
+  align-items: center;
+  gap: var(--sp-7);
+  text-align: center;
+  padding: var(--sp-8) var(--sp-8) var(--sp-8);
+}
+.nv-pro-esci__mascotte { width: var(--nv-pro-mascotte-sm); }
+.nv-pro-esci__testi { display: flex; flex-direction: column; gap: var(--sp-4); }
+.nv-pro-esci__titolo {
+  font-size: var(--fs-2xl);
+  line-height: var(--lh-2xl);
+  font-weight: var(--fw-bold);
+  letter-spacing: -.018em;
+  color: var(--text-highlighted);
+}
+.nv-pro-esci__testo {
+  font-size: var(--fs-sm);
+  line-height: 22px;
+  color: var(--text-muted);
+}
+.nv-pro-esci__azioni {
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  padding-top: var(--sp-4);
+}
+
+/* ==========================================================================
+   MODIFICA PROFILO
+   ========================================================================== */
+
+/* lo spazio in fondo lascia vedere l'ultimo campo sopra al pulsante */
+.nv-pro-modifica { padding-bottom: var(--sp-9); }
+
+.nv-pro-fotoriga {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-6);
+  padding: var(--sp-6) var(--sp-7) var(--sp-6) var(--sp-6);
+  border-radius: var(--r-lg);
+  background: var(--passivo);
+}
+.nv-pro-avatar--sm { --nv-pro-avatar: 56px; }
+.nv-pro-avatar--sm .nv-pro-avatar__foto { background: var(--surface); }
+.nv-pro-fotoriga__testi {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+.nv-pro-fotoriga__testi strong {
+  font-size: var(--fs-base);
+  line-height: 22px;
+  font-weight: var(--fw-bold);
+  color: var(--text-highlighted);
+}
+.nv-pro-fotoriga__testi span {
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  color: var(--text-muted);
+}
+
+.nv-pro-modulo { display: flex; flex-direction: column; gap: var(--sp-9); }
+.nv-pro-blocco {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-7);
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.nv-pro-blocco__titolo {
+  float: left;           /* toglie la legend dal bordo del fieldset */
+  width: 100%;
+  padding: 0;
+  font-size: var(--fs-xl);
+  line-height: var(--lh-xl);
+  font-weight: var(--fw-bold);
+  letter-spacing: -.012em;
+  color: var(--text-highlighted);
+}
+.nv-pro-blocco__titolo + * { clear: both; }
+
+.nv-pro-campo { gap: var(--sp-3); min-width: 0; }
+.nv-pro-due { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-5); }
+.nv-pro-due--cap { grid-template-columns: 1.6fr 1fr; }
+
+.nv-pro-scelte { display: flex; flex-wrap: wrap; gap: var(--sp-4); }
+
+.nv-pro-nota {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  padding-left: var(--sp-6);
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  color: var(--text-muted);
+}
+.nv-pro-nota .ico { flex: 0 0 auto; }
+
+/* Il pulsante che resta fermo in fondo, sopra al contenuto che scorre. */
+.nv-pro-piede {
+  flex: 0 0 auto;
+  position: relative;
+  z-index: 20;
+  padding: var(--sp-6) var(--gutter) calc(var(--nv-nav-bottom) + var(--sp-2));
+  background: var(--bg);
+  box-shadow: 0 -1px 0 var(--light-outline);
+}
+
+/* ==========================================================================
+   CURRICULUM
+   ========================================================================== */
+
+:root {
+  /* la carta disegnata dentro la scheda "Genera il tuo CV" */
+  --nv-cv-carta-w: 92px;
+  --nv-cv-carta-h: 120px;
+  /* colonna della linea del tempo (pallino + filo) */
+  --nv-cv-linea-col: 20px;
+  /* pallino della linea del tempo */
+  --nv-cv-punto: 10px;
+  /* tacche del livello di una lingua */
+  --nv-cv-tacca-w: 8px;
+  --nv-cv-tacca-h: 16px;
+}
+
+/* --- genera il tuo CV: l'unica scheda con la sfumatura ----------------- */
+.nv-cv-genera {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: stretch;
+  text-align: left;
+  min-height: 188px;
+}
+.nv-cv-genera__copy {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  min-width: 0;
+  max-width: 210px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-3);
+}
+.nv-cv-genera__occhiello {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  font-weight: var(--fw-bold);
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  opacity: .85;
+}
+.nv-cv-genera__titolo {
+  font-size: var(--fs-2xl);
+  line-height: var(--lh-2xl);
+  font-weight: var(--fw-bold);
+  letter-spacing: -.018em;
+}
+.nv-cv-genera__testo {
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+  opacity: .9;
+}
+.nv-cv-genera__cta {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-3);
+  height: var(--sp-11);
+  margin-top: var(--sp-5);
+  padding: 0 var(--sp-8);
+  border-radius: var(--r-full);
+  background: var(--surface);
+  color: var(--main);
+  font-size: var(--fs-sm);
+  line-height: 1;
+  font-weight: var(--fw-bold);
+}
+.nv-cv-genera__carta {
+  position: absolute;
+  right: var(--sp-8);
+  bottom: calc(var(--sp-8) * -1);
+  width: var(--nv-cv-carta-w);
+  height: var(--nv-cv-carta-h);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding: var(--sp-6) var(--sp-5);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  transform: rotate(8deg);
+  transform-origin: bottom left;
+}
+.nv-cv-genera__carta::after {
+  /* un secondo foglio dietro, appena accennato */
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: var(--on-main-dim);
+  transform: rotate(-12deg) translate(-14px, 4px);
+}
+.nv-cv-genera__tondo {
+  width: 18px;
+  height: 18px;
+  margin-bottom: var(--sp-1);
+  border-radius: var(--r-full);
+  background: var(--risposte-bg);
+}
+.nv-cv-genera__carta i {
+  display: block;
+  height: 4px;
+  border-radius: var(--r-full);
+  background: var(--bg-accented);
+}
+.nv-cv-genera__carta i.is-forte { height: 6px; width: 80%; background: var(--main); }
+.nv-cv-genera__carta i.is-corta { width: 60%; }
+.nv-cv-genera__carta i.is-sep { height: 0; margin: var(--sp-1) 0; }
+
+/* --- carica il CV e il portfolio ---------------------------------------- */
+.nv-cv-carica { display: flex; flex-direction: column; gap: var(--sp-5); }
+
+.nv-cv-drop {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-6);
+  padding: var(--sp-7);
+  border-radius: var(--r-lg);
+  background: var(--main-soft);
+  /* il tratteggio dice "trascina qui un file"; tenue, mai scuro */
+  border: 2px dashed var(--main-ring);
+  color: var(--text);
+}
+.nv-cv-drop:hover { background-color: var(--risposte-bg); }
+.nv-cv-drop__ico {
+  flex: 0 0 auto;
+  width: var(--ico-chip);
+  height: var(--ico-chip);
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-full);
+  background: var(--surface);
+  color: var(--main);
+}
+.nv-cv-drop__copy { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: var(--sp-2); }
+.nv-cv-drop__titolo {
+  font-size: var(--fs-base);
+  line-height: 22px;
+  font-weight: var(--fw-bold);
+  color: var(--text-highlighted);
+}
+.nv-cv-drop__testo {
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+  color: var(--text-toned);
+}
+.nv-cv-drop__meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--sp-2) var(--sp-6);
+  margin-top: var(--sp-4);
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  color: var(--text-muted);
+}
+.nv-cv-drop__scegli {
+  display: inline-flex;
+  align-items: center;
+  height: 32px;
+  padding: 0 var(--sp-7);
+  border-radius: var(--r-full);
+  background: var(--main);
+  color: var(--text-on-main);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-bold);
+}
+
+.nv-cv-file {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-6);
+  padding: var(--sp-6) var(--sp-7);
+  border-radius: var(--r-lg);
+  background: var(--passivo);
+}
+.nv-cv-file__copy { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: var(--sp-1); }
+.nv-cv-file__copy strong {
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+  font-weight: var(--fw-bold);
+  color: var(--text-highlighted);
+  overflow-wrap: anywhere;
+}
+.nv-cv-file__copy span { font-size: var(--fs-xs); line-height: var(--lh-xs); color: var(--text-muted); }
+
+.nv-cv-port { display: flex; flex-direction: column; gap: var(--sp-7); }
+.nv-cv-port__cima { display: flex; align-items: flex-start; gap: var(--sp-6); }
+.nv-cv-port__copy { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: var(--sp-1); }
+.nv-cv-port__copy strong {
+  font-size: var(--fs-base);
+  line-height: 22px;
+  font-weight: var(--fw-bold);
+  color: var(--text-highlighted);
+}
+.nv-cv-port__copy span {
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+  color: var(--text-muted);
+  overflow-wrap: anywhere;
+}
+
+/* --- sezioni ------------------------------------------------------------ */
+.nv-cv-sezione__head { align-items: center; }
+.nv-cv-sezione__head .nv-section__title { display: inline-flex; align-items: center; gap: var(--sp-4); }
+.nv-cv-conta {
+  min-width: 24px;
+  height: 24px;
+  padding: 0 var(--sp-3);
+  display: inline-grid;
+  place-items: center;
+  border-radius: var(--r-full);
+  background: var(--passivo);
+  color: var(--text-muted);
+  font-size: var(--fs-xs);
+  line-height: 1;
+  font-weight: var(--fw-bold);
+  letter-spacing: 0;
+}
+.nv-cv-aggiungi {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  height: 36px;
+  margin: calc(var(--sp-1) * -1) 0;
+  padding: 0 var(--sp-6) 0 var(--sp-5);
+  border-radius: var(--r-full);
+  background: var(--risposte-bg);
+  color: var(--main);
+  font-size: var(--fs-sm);
+  line-height: 1;
+  font-weight: var(--fw-bold);
+  white-space: nowrap;
+}
+.nv-cv-aggiungi:active { transform: scale(.96); }
+
+.nv-cv-scheda {
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border-radius: var(--r-lg);
+  box-shadow: var(--nv-ring);
+  padding: var(--sp-7);
+}
+.nv-cv-scheda--pills { gap: var(--sp-7); }
+
+.nv-cv-vuoto {
+  padding: var(--sp-7);
+  border-radius: var(--r-lg);
+  background: var(--passivo);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+  color: var(--text-muted);
+}
+.nv-cv-scheda .nv-cv-vuoto { padding: 0; background: transparent; }
+
+/* titolo di studio in testa alla formazione */
+.nv-cv-studio {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-6);
+  margin: calc(var(--sp-7) * -1) calc(var(--sp-7) * -1) var(--sp-7);
+  padding: var(--sp-6) var(--sp-7);
+  border-radius: var(--r-lg) var(--r-lg) 0 0;
+  background: var(--passivo);
+}
+.nv-cv-studio__ico { display: grid; color: var(--main); }
+.nv-cv-studio__copy { display: flex; flex-direction: column; gap: var(--sp-1); min-width: 0; }
+.nv-cv-studio__copy small {
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  font-weight: var(--fw-semibold);
+  color: var(--text-muted);
+}
+.nv-cv-studio__copy strong {
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+  font-weight: var(--fw-bold);
+  color: var(--text-highlighted);
+}
+
+/* linea del tempo */
+.nv-cv-linea { display: flex; flex-direction: column; }
+.nv-cv-linea__voce {
+  position: relative;
+  display: grid;
+  grid-template-columns: var(--nv-cv-linea-col) 1fr;
+  gap: var(--sp-5);
+  padding-bottom: var(--sp-8);
+}
+.nv-cv-linea__voce:last-child { padding-bottom: 0; }
+/* il filo che unisce i pallini */
+.nv-cv-linea__voce:not(:last-child)::before {
+  content: '';
+  position: absolute;
+  left: calc(var(--nv-cv-linea-col) / 2 - 1px);
+  top: calc(var(--sp-3) + var(--nv-cv-punto));
+  bottom: 0;
+  width: 2px;
+  border-radius: var(--r-full);
+  background: var(--light-outline);
+}
+.nv-cv-linea__punto {
+  justify-self: center;
+  width: var(--nv-cv-punto);
+  height: var(--nv-cv-punto);
+  margin-top: var(--sp-3);
+  border-radius: var(--r-full);
+  background: var(--bg-accented);
+}
+.nv-cv-linea__voce.is-in-corso .nv-cv-linea__punto {
+  background: var(--main);
+  box-shadow: 0 0 0 4px var(--main-ring);
+}
+.nv-cv-linea__copy { display: flex; flex-direction: column; gap: var(--sp-1); min-width: 0; }
+.nv-cv-linea__cima {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sp-4);
+}
+.nv-cv-linea__cima strong {
+  font-size: var(--fs-base);
+  line-height: 22px;
+  font-weight: var(--fw-bold);
+  color: var(--text-highlighted);
+}
+.nv-cv-linea__ente {
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+  color: var(--text-toned);
+}
+.nv-cv-linea__periodo {
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  color: var(--text-muted);
+}
+
+/* competenze suggerite: tratteggio tenue, si aggiungono con un tocco */
+.nv-cv-sugg {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-5);
+  padding-top: var(--sp-7);
+  box-shadow: inset 0 1px 0 var(--light-outline);
+}
+.nv-cv-sugg__titolo {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-3);
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  font-weight: var(--fw-semibold);
+  color: var(--text-muted);
+}
+.nv-cv-sugg__titolo .ico { color: var(--main-2); }
+.nv-cv-sugg__voce {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  height: 32px;
+  padding: 0 var(--sp-6) 0 var(--sp-5);
+  border-radius: var(--r-full);
+  background: transparent;
+  box-shadow: inset 0 0 0 1.5px var(--main-ring);
+  color: var(--main);
+  font-size: var(--fs-sm);
+  line-height: 1;
+  font-weight: var(--fw-semibold);
+  white-space: nowrap;
+}
+.nv-cv-sugg__voce:hover { background: var(--main-soft); }
+
+/* livello delle lingue: sei tacche, A1 -> C2 */
+.nv-cv-livello { display: inline-flex; gap: var(--sp-1); flex: 0 0 auto; }
+.nv-cv-livello span {
+  width: var(--nv-cv-tacca-w);
+  height: var(--nv-cv-tacca-h);
+  border-radius: var(--r-full);
+  background: var(--bg-accented);
+}
+.nv-cv-livello span.is-pieno { background: var(--main); }
+.nv-cv-lingue .nv-pro-voce + .nv-pro-voce::before { left: var(--sp-7); }
+
+/* --- pannello: anteprima del CV ------------------------------------------ */
+.nv-cv-carta {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-7);
+  padding: var(--sp-7);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  box-shadow: var(--nv-ring), var(--shadow-md);
+  overflow: hidden;
+}
+.nv-cv-carta__testa { display: flex; align-items: center; gap: var(--sp-6); }
+.nv-cv-carta__foto {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--r-full);
+  object-fit: cover;
+  object-position: 50% 18%;
+  background: var(--risposte-bg);
+}
+.nv-cv-carta__nome { display: flex; flex-direction: column; min-width: 0; }
+.nv-cv-carta__nome strong {
+  font-size: var(--fs-base);
+  line-height: 22px;
+  font-weight: var(--fw-bold);
+  color: var(--text-highlighted);
+}
+.nv-cv-carta__nome span { font-size: var(--fs-xs); line-height: var(--lh-xs); color: var(--main); font-weight: var(--fw-semibold); }
+.nv-cv-carta__corpo { display: flex; flex-direction: column; gap: var(--sp-6); }
+.nv-cv-carta__blocco { display: flex; flex-direction: column; gap: var(--sp-2); }
+.nv-cv-carta__blocco small {
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  font-weight: var(--fw-bold);
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--main);
+}
+.nv-cv-carta__blocco span {
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  font-weight: var(--fw-semibold);
+  color: var(--text-highlighted);
+}
+.nv-cv-carta__blocco i {
+  display: block;
+  height: 4px;
+  border-radius: var(--r-full);
+  background: var(--passivo);
+}
+.nv-cv-carta__blocco i.is-corta { width: 64%; }
+
+/* i tre modelli cambiano solo la testa della carta */
+.nv-cv-carta--essenziale .nv-cv-carta__testa { padding-bottom: var(--sp-6); box-shadow: inset 0 -1px 0 var(--light-outline); }
+.nv-cv-carta--essenziale .nv-cv-carta__foto { display: none; }
+.nv-cv-carta--essenziale .nv-cv-carta__blocco small,
+.nv-cv-carta--essenziale .nv-cv-carta__nome span { color: var(--text-muted); }
+.nv-cv-carta--moderno { box-shadow: var(--nv-ring), inset 4px 0 0 var(--main), var(--shadow-md); }
+.nv-cv-carta--creativo .nv-cv-carta__testa {
+  margin: calc(var(--sp-7) * -1) calc(var(--sp-7) * -1) 0;
+  padding: var(--sp-7);
+  background: var(--grad-brand);
+}
+.nv-cv-carta--creativo .nv-cv-carta__nome strong,
+.nv-cv-carta--creativo .nv-cv-carta__nome span { color: var(--text-on-main); }
+.nv-cv-carta--creativo .nv-cv-carta__foto { box-shadow: 0 0 0 2px var(--surface); }
+.nv-cv-carta--creativo .nv-cv-carta__blocco small { color: var(--main-2); }
+
+.nv-cv-modelli { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--sp-4); }
+.nv-cv-modello {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-4);
+  padding: var(--sp-5) var(--sp-4) var(--sp-4);
+  border-radius: var(--r-lg);
+  background: var(--passivo);
+  transition: background var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+}
+.nv-cv-modello.is-scelto { background: var(--risposte-bg); box-shadow: inset 0 0 0 2px var(--main); }
+.nv-cv-modello__nome {
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+  font-weight: var(--fw-semibold);
+  color: var(--text-highlighted);
+}
+.nv-cv-modello.is-scelto .nv-cv-modello__nome { color: var(--main); font-weight: var(--fw-bold); }
+.nv-cv-mini {
+  width: 44px;
+  height: 56px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding: var(--sp-3) var(--sp-2);
+  border-radius: var(--r-xs);
+  background: var(--surface);
+  box-shadow: var(--nv-ring);
+  overflow: hidden;
+}
+.nv-cv-mini i { display: block; height: 3px; border-radius: var(--r-full); background: var(--bg-accented); }
+.nv-cv-mini i:first-child { height: 5px; width: 70%; background: var(--text-muted); }
+.nv-cv-mini i:last-child { width: 60%; }
+.nv-cv-mini--moderno { box-shadow: var(--nv-ring), inset 3px 0 0 var(--main); }
+.nv-cv-mini--moderno i:first-child { background: var(--main); }
+.nv-cv-mini--creativo i:first-child {
+  height: 14px;
+  width: auto;
+  margin: calc(var(--sp-3) * -1) calc(var(--sp-2) * -1) 0;
+  border-radius: 0;
+  background: var(--grad-brand);
+}
+
+/* --- pannello: lettura e risultato del CV caricato ------------------------ */
+.nv-scrim:has(.nv-cv-senzaanim),
+.nv-cv-senzaanim { animation: none; }
+
+.nv-cv-lettura__corpo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-7);
+  padding: var(--sp-4) 0 var(--sp-8);
+  text-align: center;
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+  color: var(--text-muted);
+}
+.nv-cv-lettura__mascotte { width: 112px; }
+.nv-cv-lettura__barra { align-self: stretch; }
+.nv-cv-lettura__barra .nv-progress__fill { width: 90%; animation: nv-cv-leggi 1.6s var(--ease) both; }
+@keyframes nv-cv-leggi { from { width: 4%; } }
+
+.nv-cv-esito {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-5);
+  padding: var(--sp-6) var(--sp-7);
+  border-radius: var(--r-lg);
+  background: var(--success-bg);
+  color: var(--success);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+  font-weight: var(--fw-semibold);
+}
+.nv-cv-esito .ico { flex: 0 0 auto; }
+.nv-cv-trovati .nv-pro-voce + .nv-pro-voce::before { left: var(--sp-7); }
+
+.nv-cv-modulo { display: flex; flex-direction: column; gap: var(--sp-7); }
+
+/* ==========================================================================
+   PREFERENZE
+   Impostazioni, non contenuti: etichette piccole invece dei titoli da 20,
+   cosi' la pagina resta calma anche se e' lunga.
+   ========================================================================== */
+
+.nv-pref { gap: var(--sp-9); }
+.nv-pref .nv-head { gap: var(--sp-4); }
+
+.nv-pref-salva {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-3);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+  color: var(--text-muted);
+  transition: color var(--dur) var(--ease);
+}
+.nv-pref-salva .ico { color: var(--success); }
+.nv-pref-salva.is-fresco { color: var(--success); font-weight: var(--fw-semibold); }
+
+.nv-pref-blocco { display: flex; flex-direction: column; gap: var(--sp-5); }
+.nv-pref-etichetta {
+  padding-left: var(--sp-2);
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  font-weight: var(--fw-bold);
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.nv-pref-sottoetichetta {
+  margin-top: var(--sp-4);
+  padding-left: var(--sp-2);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+  font-weight: var(--fw-semibold);
+  color: var(--text-toned);
+}
+.nv-pref-nota {
+  padding-left: var(--sp-2);
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  color: var(--text-dimmed);
+}
+
+/* tema e dimensione del testo: titolo sopra, interruttore a voci sotto */
+.nv-pref-scelta {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-6);
+  padding: var(--sp-7);
+}
+.nv-pref-scelta__cima { display: flex; align-items: flex-start; gap: var(--sp-6); }
+.nv-pref-scelta__cima .nv-pro-voce__ico { padding-top: var(--sp-1); }
+.nv-pref-scelta + .nv-pro-voce::before { left: var(--nv-pro-filo-da); }
+
+.nv-pref-anteprima {
+  padding: var(--sp-6) var(--sp-7);
+  border-radius: var(--r-md);
+  background: var(--passivo);
+  color: var(--text-highlighted);
+  font-weight: var(--fw-medium);
+  transition: font-size var(--dur) var(--ease);
+}
+.nv-pref-anteprima--piccolo { font-size: var(--fs-sm); line-height: var(--lh-sm); }
+.nv-pref-anteprima--normale { font-size: var(--fs-base); line-height: var(--lh-base); }
+.nv-pref-anteprima--grande  { font-size: var(--fs-lg); line-height: var(--lh-lg); }
+
+/* i temi delle notifiche si spengono se non c'e' nessun canale acceso */
+.nv-pref-temi { transition: opacity var(--dur) var(--ease); }
+.nv-pref-temi.is-spento { opacity: .45; }
+
+/* scelta della lingua nel pannello */
+.nv-pref-lingue .nv-pro-voce + .nv-pro-voce::before { left: var(--sp-7); }
+.nv-pref-lingue .nv-pro-voce.is-scelta .nv-pro-voce__titolo { color: var(--main); font-weight: var(--fw-bold); }
+.nv-pref-spunta { display: grid; color: var(--main); }
+
+.nv-pref-fondo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-2);
+  padding-top: var(--sp-4);
+}
+.nv-pref-elimina {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-4);
+  width: 100%;
+  height: var(--btn-h);
+  border-radius: var(--r-full);
+  background: var(--danger-bg);
+  color: var(--danger);
+  font-size: var(--fs-base);
+  line-height: 1;
+  font-weight: var(--fw-bold);
+  transition: transform 120ms var(--ease);
+}
+.nv-pref-elimina:active { transform: scale(.98); }
+.nv-pref-fondo .nv-pref-nota { padding-left: 0; text-align: center; }
+
+.nv-pref-eliminaFoglio .nv-sheet__head { margin-bottom: 0; }
+
+/* le voci dell'interruttore dividono lo spazio in parti uguali, anche
+   se una parola e' piu' lunga delle altre */
+.nv-pref-scelta .nv-seg__opt { flex: 1 1 0; min-width: 0; padding: 0 var(--sp-3); }
+
+/* ==========================================================================
+   NOTIFICHE
+   ========================================================================== */
+
+.nv-noti-gruppo { display: flex; flex-direction: column; gap: var(--sp-5); }
+.nv-noti-gruppo__n { color: var(--text-dimmed); }
+
+.nv-noti-lista {
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border-radius: var(--r-lg);
+  box-shadow: var(--nv-ring);
+  overflow: hidden;
+}
+
+.nv-noti {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-6);
+  width: 100%;
+  padding: var(--sp-7);
+  text-align: left;
+  background: transparent;
+}
+.nv-noti:hover { background: var(--bg); }
+.nv-noti.nv-press:active { transform: none; background: var(--passivo); }
+/* filo dopo l'icona, come negli altri elenchi */
+.nv-noti + .nv-noti::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: calc(var(--sp-7) + var(--ico-chip) + var(--sp-6));
+  right: 0;
+  height: 1px;
+  background: var(--light-outline);
+}
+
+.nv-noti__copy { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: var(--sp-1); }
+.nv-noti__cima {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-4);
+}
+.nv-noti__titolo {
+  font-size: var(--fs-base);
+  line-height: 22px;
+  font-weight: var(--fw-semibold);
+  color: var(--text-highlighted);
+}
+.nv-noti.is-nuova .nv-noti__titolo { font-weight: var(--fw-bold); }
+.nv-noti__quando {
+  flex: 0 0 auto;
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  color: var(--text-dimmed);
+  white-space: nowrap;
+}
+.nv-noti.is-nuova .nv-noti__quando { color: var(--main); font-weight: var(--fw-semibold); }
+.nv-noti__testo {
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+  color: var(--text-muted);
+}
+.nv-noti.is-nuova .nv-noti__testo { color: var(--text-toned); }
+.nv-noti__azione {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  margin-top: var(--sp-3);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+  font-weight: var(--fw-bold);
+  color: var(--main);
+}
+/* il pallino rosso sta sull'angolo dell'icona, come sulla campanella */
+.nv-noti__pallino {
+  position: absolute;
+  top: var(--sp-6);
+  left: calc(var(--sp-7) + var(--ico-chip) - var(--sp-5));
+  width: 12px;
+  height: 12px;
+  border-radius: var(--r-full);
+  background: var(--danger);
+  box-shadow: 0 0 0 2px var(--surface);
+}
+
+.nv-noti-pari {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-6);
+  padding: var(--sp-6) var(--sp-7) var(--sp-6) var(--sp-5);
+  border-radius: var(--r-lg);
+  background: var(--success-bg);
+}
+.nv-noti-pari__mascotte { flex: 0 0 auto; width: 64px; }
+.nv-noti-pari__copy { display: flex; flex-direction: column; gap: var(--sp-1); }
+.nv-noti-pari__copy strong {
+  font-size: var(--fs-base);
+  line-height: 22px;
+  font-weight: var(--fw-bold);
+  color: var(--text-highlighted);
+}
+.nv-noti-pari__copy span { font-size: var(--fs-sm); line-height: var(--lh-sm); color: var(--text-toned); }
+
+.nv-noti-vuoto {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-4);
+  padding: var(--sp-9) var(--sp-7);
+  text-align: center;
+}
+.nv-noti-vuoto__mascotte { width: 140px; margin-bottom: var(--sp-4); }
+.nv-noti-vuoto strong { font-size: var(--fs-xl); line-height: var(--lh-xl); color: var(--text-highlighted); }
+.nv-noti-vuoto p { font-size: var(--fs-sm); line-height: var(--lh-sm); color: var(--text-muted); }
+
+.nv-noti-gestisci { align-self: center; gap: var(--sp-3); min-height: var(--nv-bar-h); }
+.nv-iconbtn.nv-noti-fatto { color: var(--text-dimmed); }
+
+/* ==========================================================================
+   CONSULENZA IN ARRIVO
+   ========================================================================== */
+
+:root {
+  /* altezza della scena con la mascotte */
+  --nv-soon-scena-h: 216px;
+  /* larghezza della mascotte nella scena */
+  --nv-soon-mascotte-w: 184px;
+}
+
+.nv-soon-scena {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  height: var(--nv-soon-scena-h);
+  overflow: hidden;
+  border-radius: var(--r-xl);
+  /* un orizzonte bianco sotto l'astronauta, come un pianeta */
+  background:
+    radial-gradient(circle at 50% 135%, var(--surface) 0 46%, transparent 46.4%),
+    var(--risposte-bg);
+}
+.nv-soon-scena__mascotte { width: var(--nv-soon-mascotte-w); margin-bottom: var(--sp-6); }
+.nv-soon-scena__tag {
+  position: absolute;
+  top: var(--sp-7);
+  left: var(--sp-7);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  height: 28px;
+  padding: 0 var(--sp-5) 0 var(--sp-4);
+  border-radius: var(--r-full);
+  background: var(--surface);
+  color: var(--main);
+  font-size: var(--fs-xs);
+  line-height: 1;
+  font-weight: var(--fw-bold);
+}
+
+.nv-soon-voce {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-6);
+  padding: var(--sp-6) var(--sp-7);
+}
+.nv-soon-voce + .nv-soon-voce::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: calc(var(--sp-7) + var(--ico-chip) + var(--sp-6));
+  right: 0;
+  height: 1px;
+  background: var(--light-outline);
+}

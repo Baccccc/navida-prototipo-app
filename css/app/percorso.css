@@ -1,0 +1,928 @@
+/* ==========================================================================
+   NAVIDA — Linea di carriera estesa
+   ==========================================================================
+   Vale sia nell'app (fase3.html, schermata "percorso") sia nell'anteprima
+   alla fine del questionario (index.html, schermata "preview").
+   Disegno: js/app/percorso.js. Prefisso delle classi: nv-path-
+
+     base     Sentiero   nodi tondi da gioco su un sentiero che serpeggia
+     pianeti  Pianeti    cielo notturno, dalla Terra al traguardo
+     tappe    Tappe      mini mappa + carte grandi che scorrono di lato
+
+   Solo variabili del kit. Le misure nuove stanno qui sotto, con il
+   perche'. Niente altezze fisse sul contenuto: le tappe stanno nel flusso
+   e i tracciati si ridisegnano sulle misure vere.
+   ========================================================================== */
+
+:root {
+  /* --- Sentiero ----------------------------------------------------- */
+  --nv-path-nodo: 72px;             /* nodo tondo di una tappa */
+  --nv-path-nodo-attuale: 100px;    /* il nodo dove sei: il piu' grande della pagina */
+  --nv-path-nodo-fine: 88px;        /* il traguardo */
+  --nv-path-medaglia: 48px;         /* disco bianco con la coppa, dentro il traguardo */
+  --nv-path-labbro: 6px;            /* il gradino sotto i nodi: li fa sembrare pulsanti da gioco */
+  --nv-path-tratto: 8px;            /* spessore del sentiero */
+  --nv-path-lucchetto: 26px;        /* bollino del lucchetto sulle tappe chiuse */
+  --nv-path-mascotte: 72px;         /* astronauta accanto alla tappa attuale */
+  /* aria verticale fra due tappe: pochi step, quindi molto spazio (88px) */
+  --nv-path-passo: calc(var(--sp-12) + var(--sp-4));
+
+  /* colore del gradino sotto i nodi: il colore del nodo, un tono piu' scuro */
+  --nv-path-labbro-main: color-mix(in srgb, var(--main-2) 55%, var(--text-highlighted));
+  --nv-path-labbro-grigio: color-mix(in srgb, var(--bg-accented) 70%, var(--text-dimmed));
+  --nv-path-labbro-oro: color-mix(in srgb, var(--contrast) 45%, var(--contrast-2));
+  --nv-path-labbro-ok: color-mix(in srgb, var(--success) 70%, var(--text-highlighted));
+
+  /* --- Pianeti ------------------------------------------------------ */
+  --nv-path-pianeta: 84px;          /* pianeta di una tappa */
+  --nv-path-pianeta-attuale: 112px; /* il pianeta dove sei */
+  --nv-path-saturno: 176px;         /* il traguardo, largo */
+  --nv-path-razzo: 64px;            /* il razzo appoggiato alla tappa attuale */
+  --nv-path-terra-h: 212px;         /* quanta Terra si vede in fondo */
+  /* testo tenue sul cielo: il bianco al 72%, leggibile sull'indaco */
+  --nv-path-notte-tenue: color-mix(in srgb, var(--text-on-main) 72%, transparent);
+  --nv-path-notte-velo: color-mix(in srgb, var(--text-on-main) 10%, transparent);
+
+  /* --- Tappe -------------------------------------------------------- */
+  --nv-path-carta: 280px;           /* larghezza di una carta: si intravede la prossima */
+  --nv-path-mini-nodo: 32px;        /* pallino della mini mappa */
+  --nv-path-mini-attuale: 40px;     /* pallino della tappa attuale */
+  --nv-path-mini-linea: 4px;        /* spessore della linea della mini mappa */
+  --nv-path-carta-mascotte: 88px;   /* astronauta che spunta dalla carta attuale */
+}
+
+/* ==========================================================================
+   COMUNI
+   ========================================================================== */
+
+.nv-path-riepilogo {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  padding: var(--sp-7) var(--sp-2);
+  border-radius: var(--r-lg);
+  background: var(--passivo);
+}
+.nv-path-riepilogo__voce {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-1);
+  min-width: 0;
+  padding: 0 var(--sp-4);
+  text-align: center;
+}
+.nv-path-riepilogo__voce + .nv-path-riepilogo__voce { box-shadow: inset 1px 0 0 var(--bg-accented); }
+.nv-path-riepilogo__voce strong {
+  font-size: var(--fs-lg);
+  line-height: var(--lh-lg);
+  font-weight: var(--fw-bold);
+  letter-spacing: -.01em;
+  color: var(--text-highlighted);
+  white-space: nowrap;
+}
+.nv-path-riepilogo__voce span {
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  font-weight: var(--fw-semibold);
+  color: var(--text-muted);
+}
+
+/* Occhiello di una tappa: "STEP 2 · ESPERIENZA" */
+.nv-path-etichetta__occhiello {
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  font-weight: var(--fw-bold);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.nv-path-etichetta__titolo {
+  font-size: var(--fs-base);
+  line-height: 22px;
+  font-weight: var(--fw-bold);
+  letter-spacing: -.005em;
+  color: var(--text-highlighted);
+  text-wrap: balance;
+}
+
+/* I dati piccoli: durata, compiti, stipendio */
+.nv-path-dati {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2) var(--sp-6);
+  margin-top: var(--sp-1);
+}
+.nv-path-dati .nv-meta { color: var(--text-toned); }
+.nv-path-dati .nv-meta .ico { color: var(--text-dimmed); }
+
+/* Invito ad aprire la tappa. E' dentro al pulsante della tappa: non e' un
+   secondo pulsante, serve solo a far capire che si tocca. */
+.nv-path-apri {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  height: 36px;
+  margin-top: var(--sp-4);
+  padding: 0 var(--sp-6) 0 var(--sp-7);
+  border-radius: var(--r-full);
+  background: var(--risposte-bg);
+  color: var(--main);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+  font-weight: var(--fw-bold);
+  white-space: nowrap;
+}
+
+/* Tutto cio' che e' una tappa si tocca */
+.nv-path-tappa,
+.nv-path-astro,
+.nv-path-carta,
+.nv-path-mini__tappa {
+  -webkit-tap-highlight-color: transparent;
+  cursor: pointer;
+}
+.nv-path-tappa:focus-visible,
+.nv-path-astro:focus-visible,
+.nv-path-carta:focus-visible,
+.nv-path-mini__tappa:focus-visible {
+  outline: 2px solid var(--main);
+  outline-offset: var(--sp-2);
+  border-radius: var(--r-lg);
+}
+
+/* Pulsante fisso in fondo all'anteprima */
+.nv-path-piede {
+  flex: 0 0 auto;
+  position: relative;
+  z-index: 3;
+  padding: var(--sp-6) var(--gutter) calc(var(--nv-nav-bottom) + var(--sp-4));
+  background: var(--bg);
+  box-shadow: 0 -1px 0 var(--light-outline);
+}
+.nv-path-piede--notte {
+  background: var(--indigo-950);
+  box-shadow: 0 -1px 0 var(--nv-path-notte-velo);
+}
+
+/* Pannello di una tappa (solo anteprima) */
+.nv-path-foglio__stato { display: flex; flex-wrap: wrap; gap: var(--sp-3); }
+.nv-path-foglio__obiettivo { font-size: var(--fs-base); line-height: var(--lh-base); }
+.nv-path-foglio__dati {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-7);
+  padding: var(--sp-7);
+  border-radius: var(--r-lg);
+  background: var(--passivo);
+}
+.nv-path-foglio__largo { grid-column: 1 / -1; }
+.nv-path-foglio__blocco { display: flex; flex-direction: column; gap: var(--sp-4); }
+.nv-path-foglio__competenze { display: flex; flex-wrap: wrap; gap: var(--sp-3); }
+
+/* ==========================================================================
+   VERSIONE 1 · SENTIERO
+   ========================================================================== */
+
+.nv-path-sentiero {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--nv-path-passo);
+  padding: var(--sp-4) 0 var(--sp-9);
+}
+
+.nv-path-sentiero__traccia {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+/* dopo la tappa attuale: puntini, come impronte da seguire */
+.nv-path-traccia__futuro {
+  fill: none;
+  stroke: var(--disabled);
+  stroke-width: var(--nv-path-tratto);
+  stroke-linecap: round;
+  stroke-dasharray: 0 var(--sp-8);
+}
+/* fino alla tappa attuale: pieno, e si disegna all'apertura */
+.nv-path-traccia__fatto {
+  fill: none;
+  stroke: var(--main);
+  stroke-width: var(--nv-path-tratto);
+  stroke-linecap: round;
+  stroke-dasharray: 1 2;
+  stroke-dashoffset: 1;
+  opacity: 0;
+  transition: stroke-dashoffset calc(var(--dur) * 3) var(--ease), opacity 1ms;
+}
+.nv-path-sentiero.is-pronto .nv-path-traccia__fatto { stroke-dashoffset: 0; opacity: 1; }
+
+.nv-path-riga {
+  position: relative;
+  z-index: 1;
+  display: flex;
+}
+.nv-path-riga--partenza,
+.nv-path-riga--centro { justify-content: center; }
+/* spazio sopra per il fumetto "Sei qui" */
+.nv-path-riga--attuale { padding-top: var(--sp-10); }
+
+.nv-path-partenza {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-3);
+  max-width: 100%;
+  padding: var(--sp-4) var(--sp-7);
+  border-radius: var(--r-full);
+  background: var(--surface);
+  box-shadow: var(--nv-ring);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.nv-path-partenza .ico { color: var(--main); }
+.nv-path-partenza strong {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: var(--fw-bold);
+  color: var(--text-highlighted);
+}
+
+/* --- la tappa: nodo + etichetta ------------------------------------- */
+.nv-path-tappa {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-7);
+  width: 100%;
+  padding: 0;
+  text-align: left;
+  color: inherit;
+}
+.nv-path-tappa--destra { flex-direction: row-reverse; text-align: right; }
+.nv-path-tappa--centro { flex-direction: column; gap: var(--sp-7); text-align: center; }
+
+.nv-path-etichetta {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-1);
+}
+.nv-path-tappa--destra .nv-path-etichetta { align-items: flex-end; }
+.nv-path-tappa--destra .nv-path-dati { justify-content: flex-end; }
+/* al centro l'etichetta resta fra le due colonne dei nodi laterali:
+   il sentiero scende li' accanto senza toccarla */
+.nv-path-tappa--centro .nv-path-etichetta {
+  flex: 0 0 auto;
+  align-items: center;
+  max-width: calc(100% - 2 * var(--nv-path-nodo) + var(--sp-8));
+}
+.nv-path-tappa--centro .nv-path-dati { justify-content: center; }
+.nv-path-tappa--centro .nv-path-etichetta__titolo {
+  font-size: var(--fs-xl);
+  line-height: var(--lh-xl);
+  letter-spacing: -.012em;
+}
+.nv-path-tappa.is-attuale .nv-path-etichetta__occhiello { color: var(--main); }
+.nv-path-tappa.is-da-fare .nv-path-etichetta__titolo { color: var(--text-toned); }
+
+/* --- il nodo tondo --------------------------------------------------- */
+.nv-path-nodo {
+  --nv-path-labbro-c: var(--nv-path-labbro-grigio);
+  position: relative;
+  flex: 0 0 auto;
+  width: var(--nv-path-nodo);
+  height: var(--nv-path-nodo);
+  border-radius: var(--r-full);
+  display: grid;
+  place-items: center;
+  background: var(--bg-accented);
+  color: var(--text-muted);
+  box-shadow: 0 var(--nv-path-labbro) 0 var(--nv-path-labbro-c);
+  transition: transform 120ms var(--ease), box-shadow 120ms var(--ease);
+}
+/* premuto: il nodo scende sul suo gradino */
+.nv-path-tappa:active .nv-path-nodo {
+  transform: translateY(calc(var(--nv-path-labbro) / 2));
+  box-shadow: 0 calc(var(--nv-path-labbro) / 2) 0 var(--nv-path-labbro-c);
+}
+.nv-path-nodo__numero {
+  font-size: var(--fs-3xl);
+  line-height: 1;
+  font-weight: var(--fw-bold);
+  letter-spacing: -.02em;
+}
+
+.nv-path-nodo--fatto {
+  --nv-path-labbro-c: var(--nv-path-labbro-ok);
+  background: var(--success);
+  color: var(--text-on-main);
+}
+
+/* Dove sei: il nodo piu' grande, la sfumatura di marca, un alone fermo e
+   un'onda leggera che parte dal bordo. */
+.nv-path-nodo--attuale {
+  --nv-path-labbro-c: var(--nv-path-labbro-main);
+  width: var(--nv-path-nodo-attuale);
+  height: var(--nv-path-nodo-attuale);
+  background: var(--grad-brand);
+  color: var(--text-on-main);
+  box-shadow: 0 var(--nv-path-labbro) 0 var(--nv-path-labbro-c), 0 0 0 var(--sp-5) var(--risposte-bg);
+}
+.nv-path-tappa:active .nv-path-nodo--attuale {
+  box-shadow: 0 calc(var(--nv-path-labbro) / 2) 0 var(--nv-path-labbro-c), 0 0 0 var(--sp-5) var(--risposte-bg);
+}
+.nv-path-nodo--attuale .nv-path-nodo__numero { font-size: var(--fs-4xl); }
+.nv-path-nodo--attuale::after {
+  content: '';
+  position: absolute;
+  inset: calc(var(--sp-5) * -1);
+  border-radius: inherit;
+  border: 2px solid var(--main);
+  opacity: 0;
+  pointer-events: none;
+  animation: nv-path-onda calc(var(--dur) * 8) var(--ease) infinite;
+}
+
+/* Il traguardo: oro, con la coppa su un disco bianco */
+.nv-path-nodo--fine {
+  --nv-path-labbro-c: var(--nv-path-labbro-oro);
+  width: var(--nv-path-nodo-fine);
+  height: var(--nv-path-nodo-fine);
+  background: var(--contrast);
+  color: var(--contrast-2);
+}
+.nv-path-nodo__medaglia {
+  width: var(--nv-path-medaglia);
+  height: var(--nv-path-medaglia);
+  border-radius: var(--r-full);
+  display: grid;
+  place-items: center;
+  background: var(--surface);
+}
+
+.nv-path-nodo__lucchetto {
+  position: absolute;
+  right: calc(var(--sp-2) * -1);
+  bottom: calc(var(--sp-2) * -1);
+  width: var(--nv-path-lucchetto);
+  height: var(--nv-path-lucchetto);
+  border-radius: var(--r-full);
+  display: grid;
+  place-items: center;
+  background: var(--surface);
+  color: var(--text-muted);
+  box-shadow: 0 0 0 2px var(--bg);
+}
+.nv-path-tappa--destra .nv-path-nodo__lucchetto { right: auto; left: calc(var(--sp-2) * -1); }
+
+/* Il fumetto "Sei qui", sopra il nodo attuale */
+.nv-path-fumetto {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + var(--sp-8));
+  transform: translateX(-50%);
+  padding: var(--sp-3) var(--sp-7);
+  border-radius: var(--r-full);
+  background: var(--text-highlighted);
+  color: var(--text-on-main);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+  font-weight: var(--fw-bold);
+  white-space: nowrap;
+  animation: nv-path-dondola calc(var(--dur) * 6) var(--ease) infinite;
+}
+.nv-path-fumetto::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 100%;
+  width: var(--sp-6);
+  height: var(--sp-6);
+  margin: calc(var(--sp-6) / -2) 0 0 calc(var(--sp-6) / -2);
+  border-radius: 0 0 var(--r-xs) 0;
+  background: inherit;
+  transform: rotate(45deg);
+}
+
+.nv-path-sentiero__mascotte {
+  position: absolute;
+  bottom: calc(var(--nv-path-labbro) * -1);
+  width: var(--nv-path-mascotte);
+  pointer-events: none;
+}
+.nv-path-sentiero__mascotte--sinistra { right: calc(100% + var(--sp-8)); transform: scaleX(-1); }
+.nv-path-sentiero__mascotte--destra { left: calc(100% + var(--sp-8)); }
+
+@keyframes nv-path-onda {
+  0%   { transform: scale(1);    opacity: .6; }
+  70%  { transform: scale(1.28); opacity: 0; }
+  100% { transform: scale(1.28); opacity: 0; }
+}
+@keyframes nv-path-dondola {
+  0%, 100% { transform: translate(-50%, 0); }
+  50%      { transform: translate(-50%, calc(var(--sp-2) * -1)); }
+}
+
+/* ==========================================================================
+   VERSIONE 2 · PIANETI
+   ========================================================================== */
+
+/* La barra sta fuori dalla pagina che scorre e galleggia sul cielo: il
+   fondo sfuma nel cielo invece di tagliarlo con una riga. La parte che
+   sfuma non blocca i tocchi. */
+.nv-path-barra-notte {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 4;
+  padding: var(--nv-top) var(--gutter) var(--sp-8);
+  min-height: 0;
+  background: linear-gradient(to bottom, var(--indigo-950) 55%, transparent);
+  color: var(--text-on-main);
+  pointer-events: none;
+}
+.nv-path-barra-notte > * { pointer-events: auto; }
+.nv-path-barra-notte .nv-iconbtn {
+  background: var(--nv-path-notte-velo);
+  color: var(--text-on-main);
+}
+.nv-path-barra-notte .nv-iconbtn:hover { background: var(--on-main-veil); }
+.nv-path-barra-notte .nv-bar__titolo { color: var(--text-on-main); }
+
+.nv-path--pianeti {
+  gap: 0;
+  padding: 0;
+  background: var(--indigo-950);
+  color: var(--text-on-main);
+}
+
+.nv-path-cielo {
+  position: relative;
+  flex: 1 0 auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: var(--sp-10);
+  /* sopra resta lo spazio della barra che galleggia */
+  padding: calc(var(--nv-top) + var(--nv-bar-h) + var(--sp-9)) var(--gutter) 0;
+  background: var(--indigo-950) url("../../assets/percorso/spazio-navida.webp") center bottom / cover no-repeat;
+}
+.nv-path-cielo__traccia {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+.nv-path-scia__futuro {
+  fill: none;
+  stroke: var(--nv-path-notte-tenue);
+  stroke-width: 3px;
+  stroke-linecap: round;
+  stroke-dasharray: 0 var(--sp-5);
+}
+.nv-path-scia__fatta {
+  fill: none;
+  stroke: var(--contrast);
+  stroke-width: 4px;
+  stroke-linecap: round;
+  stroke-dasharray: 1 2;
+  stroke-dashoffset: 1;
+  opacity: 0;
+  transition: stroke-dashoffset calc(var(--dur) * 3) var(--ease), opacity 1ms;
+}
+.nv-path-cielo.is-pronto .nv-path-scia__fatta { stroke-dashoffset: 0; opacity: 1; }
+
+.nv-path-astro {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-7);
+  width: 100%;
+  padding: 0;
+  text-align: left;
+  color: inherit;
+}
+.nv-path-astro--destra { flex-direction: row-reverse; text-align: right; }
+.nv-path-astro--fine {
+  flex-direction: column-reverse;
+  gap: var(--sp-6);
+  text-align: center;
+}
+
+.nv-path-astro__corpo {
+  position: relative;
+  flex: 0 0 auto;
+  width: var(--nv-path-pianeta);
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+}
+.nv-path-astro:active .nv-path-astro__corpo { transform: scale(.97); }
+.nv-path-astro__img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  /* i pianeti da raggiungere sono un filo spenti: stesso disegno, colore
+     un po' piu' basso. Il lucchetto dice il resto. */
+  filter: hue-rotate(var(--nv-path-tinta, 0deg)) saturate(.8) brightness(.86);
+}
+.nv-path-astro.is-fatto .nv-path-astro__img { filter: hue-rotate(var(--nv-path-tinta, 0deg)); }
+
+/* il pianeta dove sei: pieno di colore, con un alone */
+.nv-path-astro.is-attuale .nv-path-astro__corpo { width: var(--nv-path-pianeta-attuale); }
+.nv-path-astro.is-attuale .nv-path-astro__img { filter: hue-rotate(var(--nv-path-tinta, 0deg)); }
+.nv-path-astro.is-attuale .nv-path-astro__corpo::before {
+  content: '';
+  position: absolute;
+  inset: calc(var(--sp-4) * -1);
+  border-radius: var(--r-full);
+  box-shadow: 0 0 0 2px var(--nv-path-notte-tenue);
+  opacity: 0;
+  animation: nv-path-onda calc(var(--dur) * 8) var(--ease) infinite;
+}
+
+/* il traguardo: Saturno, acceso, perche' e' la meta */
+.nv-path-astro--fine .nv-path-astro__corpo {
+  width: var(--nv-path-saturno);
+  aspect-ratio: 3 / 2;
+}
+.nv-path-astro--fine .nv-path-astro__img { filter: none; }
+
+.nv-path-astro__bollino {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: var(--nv-path-lucchetto);
+  height: var(--nv-path-lucchetto);
+  border-radius: var(--r-full);
+  display: grid;
+  place-items: center;
+  background: var(--surface);
+  color: var(--indigo-950);
+}
+.nv-path-astro__bollino--ok { background: var(--success); color: var(--text-on-main); }
+.nv-path-astro--destra .nv-path-astro__bollino { right: auto; left: 0; }
+
+/* il razzo sulla tappa attuale, in volo verso la prossima */
+.nv-path-razzo {
+  position: absolute;
+  left: 70%;
+  bottom: 84%;
+  width: var(--nv-path-razzo);
+  height: auto;
+  pointer-events: none;
+  animation: nv-path-volo calc(var(--dur) * 7) var(--ease) infinite;
+}
+.nv-path-astro--destra .nv-path-razzo { left: auto; right: 70%; scale: -1 1; }
+
+.nv-path-astro__testi {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-1);
+}
+.nv-path-astro--destra .nv-path-astro__testi { align-items: flex-end; }
+.nv-path-astro--destra .nv-path-dati { justify-content: flex-end; }
+.nv-path-astro--fine .nv-path-astro__testi { align-items: center; }
+.nv-path-astro--fine .nv-path-dati { justify-content: center; }
+
+.nv-path--pianeti .nv-path-etichetta__occhiello { color: var(--nv-path-notte-tenue); }
+.nv-path--pianeti .nv-path-etichetta__titolo { color: var(--text-on-main); }
+.nv-path--pianeti .nv-path-dati .nv-meta,
+.nv-path--pianeti .nv-path-dati .nv-meta .ico { color: var(--nv-path-notte-tenue); }
+.nv-path-astro.is-attuale .nv-path-etichetta__titolo { font-size: var(--fs-lg); line-height: var(--lh-base); }
+.nv-path-astro--fine .nv-path-etichetta__titolo {
+  font-size: var(--fs-2xl);
+  line-height: var(--lh-2xl);
+  letter-spacing: -.018em;
+}
+
+/* "Sei qui": l'unico giallo acceso del cielo */
+.nv-path-qui {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  height: 24px;
+  margin-bottom: var(--sp-2);
+  padding: 0 var(--sp-5);
+  border-radius: var(--r-full);
+  background: var(--contrast);
+  color: var(--indigo-950);
+  font-size: var(--fs-xs);
+  line-height: 1;
+  font-weight: var(--fw-bold);
+}
+
+/* La Terra da cui si parte: si vede solo la cima, in fondo al cielo */
+.nv-path-terra {
+  position: relative;
+  height: var(--nv-path-terra-h);
+  margin: var(--sp-4) calc(var(--gutter) * -1) 0;
+  overflow: hidden;
+}
+.nv-path-terra__img {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  width: 120%;
+  max-width: none;
+  height: auto;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+.nv-path-terra__testi {
+  position: absolute;
+  left: var(--gutter);
+  right: var(--gutter);
+  bottom: var(--sp-8);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-4);
+}
+.nv-path-terra__partenza {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-3);
+  max-width: 100%;
+  padding: var(--sp-4) var(--sp-7);
+  border-radius: var(--r-full);
+  background: var(--surface);
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+  white-space: nowrap;
+}
+.nv-path-terra__partenza .ico { color: var(--main); }
+.nv-path-terra__partenza strong { font-weight: var(--fw-bold); color: var(--text-highlighted); overflow: hidden; text-overflow: ellipsis; }
+.nv-path-terra__dati {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--sp-3);
+}
+.nv-path-terra__dati .nv-meta {
+  height: 28px;
+  padding: 0 var(--sp-5);
+  border-radius: var(--r-full);
+  background: var(--indigo-950);
+  color: var(--text-on-main);
+}
+
+@keyframes nv-path-volo {
+  0%, 100% { translate: 0 0; }
+  50%      { translate: var(--sp-2) calc(var(--sp-3) * -1); }
+}
+
+/* ==========================================================================
+   VERSIONE 3 · TAPPE
+   ========================================================================== */
+
+.nv-path--tappe { gap: var(--sp-8); }
+
+/* --- la mini mappa ---------------------------------------------------- */
+.nv-path-mini {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(var(--nv-path-n, 5), minmax(0, 1fr));
+  padding-top: var(--sp-9);
+}
+/* la linea va dal centro del primo pallino al centro dell'ultimo */
+.nv-path-mini__linea {
+  position: absolute;
+  left: calc(50% / var(--nv-path-n, 5));
+  right: calc(50% / var(--nv-path-n, 5));
+  top: calc(var(--sp-9) + var(--nv-path-mini-attuale) / 2 - var(--nv-path-mini-linea) / 2);
+  height: var(--nv-path-mini-linea);
+  border-radius: var(--r-full);
+  background-image: repeating-linear-gradient(90deg, var(--disabled) 0 var(--sp-3), transparent var(--sp-3) var(--sp-5));
+}
+.nv-path-mini__fatta {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--main);
+}
+
+.nv-path-mini__tappa {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-3);
+  min-width: 0;
+  padding: 0;
+  color: inherit;
+}
+.nv-path-mini__posto {
+  height: var(--nv-path-mini-attuale);
+  display: grid;
+  place-items: center;
+}
+.nv-path-mini__nodo {
+  width: var(--nv-path-mini-nodo);
+  height: var(--nv-path-mini-nodo);
+  border-radius: var(--r-full);
+  display: grid;
+  place-items: center;
+  background: var(--bg-accented);
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+  line-height: 1;
+  font-weight: var(--fw-bold);
+  /* il bordo del colore del fondo stacca il pallino dalla linea */
+  box-shadow: 0 0 0 var(--sp-2) var(--bg);
+  transition: box-shadow var(--dur) var(--ease);
+}
+.nv-path-mini__tappa.is-fatto .nv-path-mini__nodo { background: var(--success); color: var(--text-on-main); }
+.nv-path-mini__tappa.is-attuale .nv-path-mini__nodo {
+  width: var(--nv-path-mini-attuale);
+  height: var(--nv-path-mini-attuale);
+  background: var(--grad-brand);
+  color: var(--text-on-main);
+  font-size: var(--fs-base);
+}
+.nv-path-mini__tappa.is-fine .nv-path-mini__nodo { background: var(--contrast); color: var(--text-highlighted); }
+/* la carta che hai davanti: anello blu */
+.nv-path-mini__tappa.is-vista .nv-path-mini__nodo {
+  box-shadow: 0 0 0 var(--sp-1) var(--bg), 0 0 0 var(--sp-2) var(--main);
+}
+
+.nv-path-mini__nome {
+  /* il nome puo' allargarsi un filo oltre la sua colonna: "UX Designer" ci sta */
+  max-width: calc(100% + var(--sp-5));
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  font-weight: var(--fw-semibold);
+  color: var(--text-muted);
+}
+.nv-path-mini__tappa.is-attuale .nv-path-mini__nome { color: var(--main); font-weight: var(--fw-bold); }
+
+.nv-path-mini__qui {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + var(--sp-3));
+  transform: translateX(-50%);
+  padding: var(--sp-1) var(--sp-4);
+  border-radius: var(--r-full);
+  background: var(--text-highlighted);
+  color: var(--text-on-main);
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  font-weight: var(--fw-bold);
+  white-space: nowrap;
+}
+.nv-path-mini__qui::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 100%;
+  width: var(--sp-4);
+  height: var(--sp-4);
+  margin: calc(var(--sp-4) / -2) 0 0 calc(var(--sp-4) / -2);
+  background: inherit;
+  transform: rotate(45deg);
+}
+
+/* --- le carte ---------------------------------------------------------- */
+.nv-path-carosello {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  gap: var(--sp-6);
+  margin: 0 calc(var(--gutter) * -1);
+  padding: var(--sp-2) var(--gutter) var(--sp-4);
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x mandatory;
+  scroll-padding: 0 var(--gutter);
+  scrollbar-width: none;
+}
+.nv-path-carosello::-webkit-scrollbar { display: none; }
+
+.nv-path-carta {
+  position: relative;
+  flex: 0 0 var(--nv-path-carta);
+  scroll-snap-align: start;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-7);
+  padding: var(--sp-8);
+  overflow: hidden;
+  border-radius: var(--r-xl);
+  background: var(--surface);
+  box-shadow: var(--nv-ring);
+  text-align: left;
+  color: var(--text);
+  transition: transform 120ms var(--ease);
+}
+.nv-path-carta:active { transform: scale(.985); }
+.nv-path-carta.is-attuale {
+  background: var(--grad-brand);
+  box-shadow: none;
+  color: var(--text-on-main);
+}
+.nv-path-carta.is-fine { background: var(--tema-4-bg); box-shadow: none; }
+
+.nv-path-carta__testa {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-6);
+  width: 100%;
+}
+.nv-path-carta__numero {
+  font-size: var(--fs-4xl);
+  line-height: var(--lh-4xl);
+  font-weight: var(--fw-bold);
+  letter-spacing: -.03em;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-dimmed);
+}
+.nv-path-carta.is-attuale .nv-path-carta__numero { color: var(--text-on-main); }
+.nv-path-carta.is-fine .nv-path-carta__numero { color: var(--tema-4-text); }
+
+.nv-path-carta__copy {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+.nv-path-carta__titolo {
+  font-size: var(--fs-xl);
+  line-height: var(--lh-xl);
+  font-weight: var(--fw-bold);
+  letter-spacing: -.012em;
+  color: var(--text-highlighted);
+  text-wrap: balance;
+}
+.nv-path-carta__obiettivo {
+  margin-top: var(--sp-2);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+  color: var(--text-muted);
+}
+.nv-path-carta.is-attuale .nv-path-etichetta__occhiello,
+.nv-path-carta.is-attuale .nv-path-carta__obiettivo { color: var(--nv-path-notte-tenue); }
+.nv-path-carta.is-attuale .nv-path-carta__titolo { color: var(--text-on-main); }
+
+.nv-path-carta__dati {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-6) var(--sp-7);
+  width: 100%;
+  margin-top: auto;
+  padding-top: var(--sp-7);
+  box-shadow: inset 0 1px 0 var(--light-outline);
+}
+.nv-path-carta__largo { grid-column: 1 / -1; }
+.nv-path-carta.is-attuale .nv-path-carta__dati { box-shadow: inset 0 1px 0 var(--on-main-veil); }
+.nv-path-carta.is-fine .nv-path-carta__dati { box-shadow: inset 0 1px 0 var(--tema-4-bg); }
+.nv-path-carta.is-attuale .nv-dato small { color: var(--nv-path-notte-tenue); }
+.nv-path-carta.is-attuale .nv-dato strong { color: var(--text-on-main); }
+
+.nv-path-carta .nv-path-apri { margin-top: 0; }
+.nv-path-carta.is-attuale .nv-path-apri { background: var(--surface); color: var(--main); }
+.nv-path-carta.is-fine .nv-path-apri { background: var(--surface); color: var(--text-highlighted); }
+
+/* l'astronauta spunta dal bordo della carta attuale, in basso a destra */
+.nv-path-carta__mascotte {
+  position: absolute;
+  right: var(--sp-6);
+  bottom: calc(var(--sp-9) * -1);
+  width: var(--nv-path-carta-mascotte);
+  pointer-events: none;
+}
+
+/* ==========================================================================
+   MOVIMENTO RIDOTTO
+   Niente onde, niente dondolii: il tracciato compare gia' disegnato.
+   ========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  .nv-path-nodo--attuale::after,
+  .nv-path-astro.is-attuale .nv-path-astro__corpo::before,
+  .nv-path-fumetto,
+  .nv-path-razzo { animation: none; }
+  .nv-path-traccia__fatto,
+  .nv-path-scia__fatta { transition: none; }
+}

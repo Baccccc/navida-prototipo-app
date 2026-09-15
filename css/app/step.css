@@ -1,0 +1,631 @@
+/* ==========================================================================
+   NAVIDA — Dettaglio dello step
+   ==========================================================================
+   Stile di js/app/step.js. Tre versioni:
+     .nv-step--base        Lista chiara
+     .nv-step--checklist   Checklist con avanzamento
+     .nv-step--carosello   Carosello di step
+
+   Regole: solo variabili (css/tokens.css + kit maturo), testi dalla scala
+   --fs-*, icone 16/20/24, raggi --r-*, spaziature --sp-*. Le poche misure
+   nuove stanno qui sotto, con il loro perche'.
+   ========================================================================== */
+
+.nv-step {
+  /* quanto si vede dello step dopo (e un filo di quello prima) nel carosello */
+  --nv-step-sbircia: 28px;
+  /* il cerchio della spunta nella checklist: piu' grande di un'icona,
+     perche' e' lui a dire lo stato a colpo d'occhio */
+  --nv-step-spunta: 28px;
+  /* la mascotte che chiude l'ultimo step */
+  --nv-step-mascotte-w: 84px;
+  /* altezza minima delle carte del carosello, cosi' non ballano fra loro */
+  --nv-step-carta-h: 208px;
+  /* il puntino che separa i dati di una riga (categoria, durata, suggerimenti) */
+  --nv-step-puntino: 3px;
+
+  /* lo swipe orizzontale e' nostro, lo scorrimento verticale resta al browser */
+  touch-action: pan-y;
+}
+.nv-step.is-trascina { -webkit-user-select: none; user-select: none; cursor: grabbing; }
+
+/* Il contenuto che si sposta con il dito. */
+.nv-step-corpo {
+  flex: 1 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-8);
+}
+.nv-step-corpo.is-scatta { transition: transform 160ms var(--ease), opacity 160ms var(--ease); }
+
+/* Cambio di step: niente animazione della schermata intera, entra solo il
+   contenuto dal lato giusto. La barra resta ferma. */
+.screen:has(> .nv-step--entra) { animation: none; }
+.nv-step--da-destra:not(.nv-step--carosello) .nv-step-corpo,
+.nv-step--carosello.nv-step--da-destra .nv-step-sotto { animation: nv-step-da-destra var(--dur) var(--ease); }
+.nv-step--da-sinistra:not(.nv-step--carosello) .nv-step-corpo,
+.nv-step--carosello.nv-step--da-sinistra .nv-step-sotto { animation: nv-step-da-sinistra var(--dur) var(--ease); }
+@keyframes nv-step-da-destra { from { opacity: 0; transform: translateX(40px); } }
+@keyframes nv-step-da-sinistra { from { opacity: 0; transform: translateX(-40px); } }
+
+/* ==========================================================================
+   PEZZI COMUNI
+   ========================================================================== */
+
+/* Etichetta dello step */
+.nv-step-tag--attuale { background: var(--main); color: var(--text-on-main); }
+.nv-step-tag--fatto { background: var(--success-bg); color: var(--success); }
+.nv-step-tag--da-fare { background: var(--bg-accented); color: var(--text-toned); }
+.nv-step-tag--traguardo { background: var(--tema-4-bg); color: var(--text-highlighted); }
+.nv-step-tag--traguardo .ico { color: var(--tema-4-text); }
+.nv-step-tag--chiaro { background: var(--on-main-veil); color: var(--text-on-main); }
+.nv-step-tag--chiaro .ico { color: inherit; }
+
+/* Fatto / In corso / Da fare */
+.nv-step-stato {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  font-weight: var(--fw-bold);
+  white-space: nowrap;
+}
+.nv-step-stato--fatto { color: var(--success); }
+.nv-step-stato--in-corso { color: var(--main); }
+.nv-step-stato--da-fare { color: var(--text-muted); }
+
+/* Scadenza o nota breve di un'attivita' */
+.nv-step-nota {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-top: var(--sp-2);
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  font-weight: var(--fw-semibold);
+  color: var(--main);
+}
+
+/* Titoli di sezione e di gruppo */
+.nv-step-sezione { display: flex; flex-direction: column; gap: var(--sp-7); }
+.nv-step-sezione__testa { display: flex; flex-direction: column; gap: var(--sp-2); }
+.nv-step-sezione__testa--riga {
+  flex-direction: row;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-6);
+}
+.nv-step-sezione__titolo {
+  font-size: var(--fs-xl);
+  line-height: var(--lh-xl);
+  font-weight: var(--fw-bold);
+  letter-spacing: -.012em;
+  color: var(--text-highlighted);
+}
+.nv-step-sezione__sub {
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+  color: var(--text-muted);
+}
+
+.nv-step-gruppo { display: flex; flex-direction: column; gap: var(--sp-4); }
+.nv-step-gruppo + .nv-step-gruppo { margin-top: var(--sp-4); }
+.nv-step-gruppo__testa {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-6);
+  padding: 0 var(--sp-2);
+}
+.nv-step-gruppo__titolo {
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  font-weight: var(--fw-bold);
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  color: var(--text-toned);
+}
+.nv-step-gruppo__conto {
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  font-weight: var(--fw-semibold);
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+/* Pulsanti tondi prima / dopo */
+.nv-step-freccia[disabled] { opacity: .35; pointer-events: none; }
+
+/* Pallini degli step: 44px di tocco, il segno dentro e' piccolo */
+.nv-step-pallini { display: flex; justify-content: center; }
+.nv-step-pallini__voce {
+  width: var(--sp-9);
+  height: var(--sp-11);
+  display: grid;
+  place-items: center;
+  padding: 0;
+}
+.nv-step-pallini__segno {
+  display: block;
+  width: var(--sp-4);
+  height: var(--sp-4);
+  border-radius: var(--r-full);
+  background: var(--bg-accented);
+  transition: width var(--dur) var(--ease), background var(--dur) var(--ease);
+}
+/* il tuo step: pallino blu tenue anche quando non e' aperto */
+.nv-step-pallini__voce.is-mio .nv-step-pallini__segno { background: var(--main-ring); }
+.nv-step-pallini__voce.is-attivo .nv-step-pallini__segno { width: var(--sp-8); background: var(--main); }
+
+/* Step che non e' ancora il tuo */
+.nv-step-avviso { display: flex; align-items: flex-start; gap: var(--sp-6); }
+.nv-step-avviso__copy { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: var(--sp-1); }
+.nv-step-avviso__titolo {
+  font-size: var(--fs-base);
+  line-height: var(--lh-base);
+  font-weight: var(--fw-bold);
+  color: var(--text-highlighted);
+}
+.nv-step-avviso__testo { font-size: var(--fs-sm); line-height: var(--lh-sm); color: var(--text-toned); }
+.nv-step-avviso__link { align-self: flex-start; margin-top: var(--sp-2); }
+
+/* Parole chiave dello step */
+.nv-step-competenze { display: flex; flex-wrap: wrap; gap: var(--sp-3); }
+.nv-step-competenza {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--sp-9);
+  padding: var(--sp-3) var(--sp-6);
+  border-radius: var(--r-full);
+  background: var(--surface);
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  font-weight: var(--fw-semibold);
+  color: var(--text-toned);
+}
+
+/* Fine del percorso: la mascotte con il trofeo */
+.nv-step-arrivo {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-7);
+  padding: var(--sp-7) var(--sp-8) var(--sp-7) var(--sp-7);
+  border-radius: var(--r-lg);
+  background: var(--risposte-bg);
+}
+.nv-step-arrivo__mascotte { flex: 0 0 auto; width: var(--nv-step-mascotte-w); }
+.nv-step-arrivo__copy { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: var(--sp-2); }
+.nv-step-arrivo__titolo {
+  font-size: var(--fs-lg);
+  line-height: var(--lh-lg);
+  font-weight: var(--fw-bold);
+  color: var(--text-highlighted);
+}
+.nv-step-arrivo__testo { font-size: var(--fs-sm); line-height: var(--lh-sm); color: var(--text-toned); }
+.nv-step-arrivo .nv-meta { color: var(--main); font-weight: var(--fw-bold); }
+
+/* Su una zona grigia l'etichetta Facoltativa (grigia) sparirebbe: diventa bianca. */
+:is(.nv-step-voce, .nv-step-tessera, .nv-tile) .nv-tag--facoltativa { background: var(--surface); }
+
+/* ==========================================================================
+   VERSIONE 1 · LISTA CHIARA
+   ========================================================================== */
+
+/* Linguette degli step, come l'interruttore Elenco | Mappa */
+.nv-step-tabs {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: var(--sp-2);
+  padding: var(--sp-2);
+  border-radius: var(--r-full);
+  background: var(--passivo);
+}
+.nv-step-tabs__voce {
+  position: relative;
+  height: var(--sp-11);
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border-radius: var(--r-full);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+  font-weight: var(--fw-bold);
+  color: var(--text-muted);
+  transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+.nv-step-tabs__voce:hover { color: var(--text-highlighted); }
+.nv-step-tabs__voce.is-fatto { color: var(--success); }
+.nv-step-tabs__voce.is-traguardo .ico { color: var(--tema-4-text); }
+.nv-step-tabs__voce.is-aperta {
+  background: var(--surface);
+  color: var(--text-highlighted);
+  box-shadow: var(--shadow-sm);
+}
+/* il puntino blu sotto il numero dice "sei qui" anche da un altro step */
+.nv-step-tabs__qui {
+  position: absolute;
+  bottom: var(--sp-2);
+  left: 50%;
+  width: var(--sp-3);
+  height: var(--sp-3);
+  margin-left: calc(var(--sp-3) / -2);
+  border-radius: var(--r-full);
+  background: var(--main);
+}
+
+.nv-step--base .nv-step-tabs + .nv-step-corpo { margin-top: calc(var(--sp-2) * -1); }
+
+.nv-step-testata { display: flex; flex-direction: column; gap: var(--sp-4); }
+.nv-step-testata__su { display: flex; align-items: center; flex-wrap: wrap; gap: var(--sp-4); margin-bottom: var(--sp-2); }
+.nv-step-testata__tipo {
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  font-weight: var(--fw-semibold);
+  color: var(--text-muted);
+}
+
+/* Descrizione e dati in un solo riquadro grigio */
+.nv-step-dati { display: flex; flex-direction: column; gap: var(--sp-7); }
+.nv-step-dati .nv-body { color: var(--text-toned); }
+.nv-step-dati__griglia {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  padding-top: var(--sp-7);
+  box-shadow: inset 0 1px 0 var(--bg-accented);
+}
+.nv-step-dati__griglia .nv-dato + .nv-dato {
+  padding-left: var(--sp-6);
+  box-shadow: inset 1px 0 0 var(--bg-accented);
+}
+.nv-step-dati__griglia .nv-dato:not(:last-child) { padding-right: var(--sp-4); }
+.nv-step-dati .nv-dato strong { font-size: var(--fs-base); line-height: var(--lh-base); }
+.nv-step-dati > .nv-meta { color: var(--text-toned); font-weight: var(--fw-semibold); white-space: normal; }
+.nv-step-dati__impari {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+  font-weight: var(--fw-semibold);
+  color: var(--text-highlighted);
+}
+.nv-step-dati__label {
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  font-weight: var(--fw-semibold);
+  color: var(--text-muted);
+}
+
+/* Riga di un'attivita' */
+.nv-step-riga { align-items: flex-start; padding: var(--sp-7); }
+.nv-step-riga .nv-row__chev { align-self: center; }
+.nv-step-riga__su { display: flex; align-items: center; flex-wrap: wrap; gap: var(--sp-3) var(--sp-4); margin-bottom: var(--sp-3); }
+.nv-step-riga__meta {
+  display: flex;
+  flex-wrap: wrap;
+  margin-top: var(--sp-1);
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  font-weight: var(--fw-medium);
+  color: var(--text-muted);
+}
+/* il puntino fra i dati, disegnato: niente simboli tipografici sparsi */
+.nv-step-riga__meta > span + span::before {
+  content: '';
+  display: inline-block;
+  width: var(--nv-step-puntino);
+  height: var(--nv-step-puntino);
+  margin: 0 var(--sp-3);
+  vertical-align: middle;
+  border-radius: var(--r-full);
+  background: var(--text-dimmed);
+}
+.nv-step-riga.is-fatto .nv-row__title { color: var(--text-toned); }
+
+/* Lo step che viene dopo */
+.nv-step-dopo { display: flex; align-items: center; gap: var(--sp-6); }
+.nv-step-dopo__copy { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: var(--sp-1); }
+.nv-step-dopo__titolo {
+  font-size: var(--fs-base);
+  line-height: var(--lh-base);
+  font-weight: var(--fw-bold);
+  color: var(--text-highlighted);
+}
+.nv-step-dopo__vai {
+  flex: 0 0 auto;
+  width: var(--sp-11);
+  height: var(--sp-11);
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-full);
+  background: var(--surface);
+  color: var(--main);
+}
+
+/* ==========================================================================
+   VERSIONE 2 · CHECKLIST CON AVANZAMENTO
+   ========================================================================== */
+
+/* I pallini stanno nella barra, al centro */
+.nv-step--checklist .nv-bar .nv-step-pallini { flex: 1; }
+
+.nv-step-testa { display: flex; flex-direction: column; gap: var(--sp-3); }
+.nv-step-testa--spenta {
+  padding: var(--sp-8);
+  border-radius: var(--r-xl);
+  background: var(--passivo);
+  color: var(--text);
+}
+.nv-step-testa__su {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  margin: calc(var(--sp-4) * -1) calc(var(--sp-4) * -1) var(--sp-3) 0;
+}
+.nv-step-testa__frecce { display: flex; gap: var(--sp-3); }
+.nv-hero .nv-step-freccia { background: var(--on-main-veil); color: var(--text-on-main); }
+.nv-hero .nv-step-freccia:hover { background: var(--on-main-dim); }
+.nv-step-testa--spenta .nv-step-freccia { background: var(--surface); }
+
+.nv-step-testa__occhiello {
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  font-weight: var(--fw-bold);
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.nv-hero .nv-step-testa__occhiello { color: inherit; opacity: .85; }
+.nv-step-testa__titolo {
+  font-size: var(--fs-2xl);
+  line-height: var(--lh-2xl);
+  font-weight: var(--fw-bold);
+  letter-spacing: -.018em;
+  color: var(--text-highlighted);
+}
+.nv-hero .nv-step-testa__titolo { color: inherit; }
+.nv-step-testa__obiettivo { font-size: var(--fs-sm); line-height: var(--lh-sm); color: var(--text-toned); }
+.nv-hero .nv-step-testa__obiettivo { color: inherit; opacity: .9; }
+.nv-step-testa__conto {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--sp-2) var(--sp-6);
+  margin-top: var(--sp-6);
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  font-weight: var(--fw-semibold);
+}
+.nv-step-testa__conto strong { font-size: var(--fs-base); line-height: var(--lh-base); font-weight: var(--fw-bold); }
+.nv-step-testa .nv-progress { margin-top: var(--sp-2); }
+
+/* Il prossimo passo: la sola azione blu della pagina */
+.nv-step-passo { display: flex; flex-direction: column; align-items: flex-start; gap: var(--sp-3); padding: var(--sp-8); }
+.nv-step-passo__su { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-4); width: 100%; }
+.nv-step-passo__titolo {
+  font-size: var(--fs-lg);
+  line-height: var(--lh-lg);
+  font-weight: var(--fw-bold);
+  color: var(--text-highlighted);
+}
+.nv-step-passo .nv-step-nota { margin-top: 0; }
+.nv-step-passo .nv-btn { width: 100%; margin-top: var(--sp-6); }
+
+/* Il filtro: tre voci strette, devono stare in una riga */
+.nv-step-filtro .nv-seg__opt { padding: 0 var(--sp-4); }
+
+.nv-step-liste { display: flex; flex-direction: column; gap: var(--sp-4); }
+.nv-step-check { display: flex; flex-direction: column; gap: var(--sp-4); }
+
+/* Voce della checklist: zona grigia come le risposte del questionario */
+.nv-step-voce {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-6);
+  padding: var(--sp-7);
+  border-radius: var(--r-lg);
+  background: var(--passivo);
+  color: var(--text);
+}
+.nv-step-voce .nv-row__chev { align-self: center; }
+/* quella in corso e' bianca con l'anello blu: e' quella su cui stai lavorando */
+.nv-step-voce.is-in-corso { background: var(--surface); box-shadow: inset 0 0 0 2px var(--main); }
+.nv-step-voce__copy { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: var(--sp-2); }
+.nv-step-voce__titolo {
+  font-size: var(--fs-base);
+  line-height: var(--lh-base);
+  font-weight: var(--fw-bold);
+  color: var(--text-highlighted);
+}
+.nv-step-voce.is-fatto .nv-step-voce__titolo { color: var(--text-muted); }
+.nv-step-voce__meta {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  font-weight: var(--fw-medium);
+  color: var(--text-muted);
+}
+.nv-step-voce__tags { display: flex; align-items: center; flex-wrap: wrap; gap: var(--sp-3) var(--sp-4); margin-top: var(--sp-2); }
+
+/* La spunta: piena verde se fatta, anello blu con il centro se in corso */
+.nv-step-spunta {
+  flex: 0 0 auto;
+  width: var(--nv-step-spunta);
+  height: var(--nv-step-spunta);
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-full);
+  box-shadow: inset 0 0 0 2px var(--text-dimmed);
+  color: var(--text-on-main);
+}
+.nv-step-spunta--fatto { background: var(--success); box-shadow: none; }
+.nv-step-spunta--in-corso { box-shadow: inset 0 0 0 2px var(--main); }
+.nv-step-spunta--in-corso::after {
+  content: '';
+  width: var(--sp-5);
+  height: var(--sp-5);
+  border-radius: var(--r-full);
+  background: var(--main);
+}
+
+.nv-step-vuoto { font-size: var(--fs-sm); line-height: var(--lh-sm); color: var(--text-muted); text-align: center; }
+
+/* ==========================================================================
+   VERSIONE 3 · CAROSELLO DI STEP
+   ========================================================================== */
+
+.nv-step-giostra { display: flex; flex-direction: column; gap: var(--sp-2); }
+
+/* La finestra delle carte va da bordo a bordo; le misure delle carte si
+   calcolano sulla sua larghezza (cqw), cosi' vale su ogni telefono. */
+.nv-step-vista {
+  container-type: inline-size;
+  margin: 0 calc(var(--gutter) * -1);
+  overflow: hidden;
+}
+.nv-step-traccia {
+  --nv-step-i: 0;
+  --nv-step-dx: 0px;
+  --nv-step-carta-w: calc(100cqw - var(--gutter) * 2 - var(--nv-step-sbircia));
+  display: flex;
+  gap: var(--sp-6);
+  padding: 0 var(--gutter);
+  transform: translateX(calc((var(--nv-step-carta-w) + var(--sp-6)) * var(--nv-step-i) * -1 + var(--nv-step-dx)));
+}
+.nv-step-traccia.is-scatta { transition: transform var(--dur) var(--ease); }
+
+.nv-step-carta {
+  flex: 0 0 var(--nv-step-carta-w);
+  min-width: 0;
+  min-height: var(--nv-step-carta-h);
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--sp-1);
+  padding: var(--sp-8);
+  border-radius: var(--r-xl);
+  background: var(--passivo);
+  color: var(--text);
+  text-align: left;
+  transition: opacity var(--dur) var(--ease);
+}
+/* lo step in cui sei ha la sfumatura: la regola sopra non deve coprirla */
+.nv-step-carta.nv-hero { background: var(--grad-brand); color: var(--text-on-main); }
+.nv-step-carta:not(.is-aperta) { opacity: .6; }
+.nv-step-carta__su { display: flex; align-items: center; gap: var(--sp-4); margin-bottom: var(--sp-6); }
+.nv-step-carta__num {
+  flex: 0 0 auto;
+  width: var(--sp-9);
+  height: var(--sp-9);
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-full);
+  background: var(--surface);
+  font-size: var(--fs-sm);
+  line-height: 1;
+  font-weight: var(--fw-bold);
+  color: var(--text-highlighted);
+}
+.nv-step-carta__ico {
+  flex: 0 0 auto;
+  margin-left: auto;
+  width: var(--ico-chip);
+  height: var(--ico-chip);
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-full);
+  background: var(--surface);
+  color: var(--main);
+}
+.nv-step-carta.is-traguardo .nv-step-carta__ico { color: var(--tema-4-text); }
+.nv-step-carta.nv-hero .nv-step-carta__num,
+.nv-step-carta.nv-hero .nv-step-carta__ico { background: var(--on-main-veil); color: var(--text-on-main); }
+
+.nv-step-carta__titolo {
+  font-size: var(--fs-xl);
+  line-height: var(--lh-xl);
+  font-weight: var(--fw-bold);
+  letter-spacing: -.012em;
+  color: var(--text-highlighted);
+}
+.nv-step-carta__meta { font-size: var(--fs-sm); line-height: var(--lh-sm); color: var(--text-muted); }
+.nv-step-carta.nv-hero .nv-step-carta__titolo { color: inherit; }
+.nv-step-carta.nv-hero .nv-step-carta__meta { color: inherit; opacity: .88; }
+.nv-step-carta__giu {
+  margin-top: auto;
+  padding-top: var(--sp-7);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+.nv-step-carta__conto { font-size: var(--fs-xs); line-height: var(--lh-xs); font-weight: var(--fw-semibold); }
+.nv-step-carta .nv-progress { background: var(--bg-accented); }
+.nv-step-carta.nv-hero .nv-progress { background: var(--on-main-dim); }
+
+/* Pallini e suggerimento "scorri" sotto le carte */
+.nv-step-guida { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-6); }
+.nv-step-guida .nv-step-pallini { margin-left: calc(var(--sp-5) * -1); }
+.nv-step-guida__testo {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  font-weight: var(--fw-semibold);
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.nv-step-sotto { display: flex; flex-direction: column; gap: var(--sp-8); transition: opacity 160ms var(--ease); }
+.nv-step-sotto.is-via { opacity: 0; }
+
+.nv-step-intro { display: flex; flex-direction: column; gap: var(--sp-4); margin-top: calc(var(--sp-4) * -1); }
+.nv-step-intro__obiettivo { color: var(--text); }
+.nv-step-extra { display: flex; flex-direction: column; gap: var(--sp-6); }
+.nv-step-extra[hidden] { display: none; }
+.nv-step-extra .nv-step-competenza { background: var(--passivo); }
+.nv-step-leggi { align-self: flex-start; }
+.nv-step-leggi[aria-expanded="true"] .ico { transform: rotate(180deg); }
+
+/* Le attivita' come tessere, come le risposte a griglia dell'onboarding */
+.nv-step-tessere {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-5);
+}
+.nv-step-tessera {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  padding: var(--sp-7);
+  border-radius: var(--r-lg);
+  background: var(--passivo);
+  color: var(--text);
+}
+.nv-step-tessera.is-in-corso { background: var(--surface); box-shadow: inset 0 0 0 2px var(--main); }
+.nv-step-tessera__su {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  width: 100%;
+  margin-bottom: var(--sp-4);
+}
+.nv-step-tessera__titolo {
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+  font-weight: var(--fw-bold);
+  color: var(--text-highlighted);
+}
+.nv-step-tessera.is-fatto .nv-step-tessera__titolo { color: var(--text-toned); }
+.nv-step-tessera__meta { margin-bottom: var(--sp-4); font-size: var(--fs-xs); line-height: var(--lh-xs); color: var(--text-muted); }
+/* l'etichetta sta sempre in fondo, allineata fra le tessere della stessa fila */
+.nv-step-tessera .nv-tag { margin-top: auto; }

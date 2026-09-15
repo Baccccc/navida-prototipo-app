@@ -856,6 +856,9 @@ window.NAVIDA_CONTENT = {
       id: 'preview',
       chapter: 'auth',
       type: 'preview',
+      /* Disegnata da js/app/percorso.js: e' la stessa vista della linea di
+         carriera nell'app, con i dati di js/app/dati.js. */
+      fullBleed: true,
       title: 'La tua linea di carriera',
       body: 'Da dove sei oggi a {lavoroSogni}.',
       steps: [

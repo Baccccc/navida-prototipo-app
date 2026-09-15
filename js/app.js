@@ -124,7 +124,7 @@
         specializzazione: 'Nessuna',
         situazione: 'occupato',
         ultimaPosizione: 'Impiegato amministrativo',
-        lavoroSogni: 'Front-end developer',
+        lavoroSogni: 'UX/AI Designer',
         categoria: 'cat15',
         mansioni: ['Front-end developer', 'Full-stack developer'],
         livello: 'Livello avanzato',
@@ -310,6 +310,12 @@
     S.load();
     // prima prova a prendere le modifiche condivise dal server, poi disegna
     window.NavidaSync.pull(S, function () {
+      /* ?brand=maturo apre il prototipo in quel kit senza salvare niente:
+         serve ai link di prova e alle schermate di controllo. */
+      try {
+        var kit = new URLSearchParams(window.location.search).get('brand');
+        if (kit === 'maturo' || kit === 'originale') S.overrides.brand = kit;
+      } catch (e) {}
       S.applyColors();
       S.applyBrand();
       // ogni pezzo è opzionale: se un file non carica, l'app parte lo stesso

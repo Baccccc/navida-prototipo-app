@@ -1,0 +1,717 @@
+/* ==========================================================================
+   NAVIDA — Base dell'app (Fase 3 e 4)
+   ==========================================================================
+   Il vestito comune di dashboard, linea di carriera, schede, mappa e
+   profilo. E' il linguaggio del kit "Maturo" (css/brand-maturo.css)
+   portato sulle schermate dell'app:
+
+     - pastiglia su cio' che si tocca (pulsanti, pastiglie, interruttori)
+     - superfici piatte: schede bianche con un filo lavanda, niente ombre
+     - titoli grandi, a sinistra, blu notte quasi nero
+     - piu' aria: 24px fra i blocchi, 26px di margine laterale
+     - pulsanti tondi da 44px al posto delle frecce nude
+     - blu per l'azione, sfumatura solo per le cose ad alto impatto,
+       nero per la seconda azione forte
+
+   Tutti i valori arrivano dalle variabili di css/tokens.css (e da quelle
+   del kit maturo). Qui sotto ci sono solo le poche variabili dell'app.
+   Ogni schermata ha poi il suo file: dashboard.css, percorso.css, ...
+   ========================================================================== */
+
+:root {
+  /* quanto scende la barra in alto: su desktop sotto la finta barra di stato */
+  --nv-top: var(--header-top);
+  /* quanto sale la barra in basso: su desktop sopra la lineetta "home" */
+  --nv-nav-bottom: 20px;
+  /* altezza dei pulsanti tondi della barra in alto */
+  --nv-bar-h: 44px;
+  /* il filo lavanda intorno alle schede bianche */
+  --nv-ring: inset 0 0 0 1px var(--light-outline);
+  /* il nero della seconda azione forte (lo stesso del pulsante Apple) */
+  --nv-nero: #0b0b12;
+  --nv-nero-hover: #1d1d2b;
+  /* altezza del titolo grande di pagina */
+  --nv-title-lh: 38px;
+}
+
+/* Su telefono vero la finta barra di stato non c'e': basta la safe area. */
+@media (max-width: 720px), (pointer: coarse) and (max-width: 900px) {
+  :root {
+    --nv-top: max(var(--sp-7), env(safe-area-inset-top));
+    --nv-nav-bottom: max(var(--sp-4), env(safe-area-inset-bottom, 0px));
+  }
+}
+
+/* ==========================================================================
+   LA SCHERMATA
+   .screen e' una colonna: la pagina (.nv-page) scorre, la barra in basso
+   (.nv-nav) resta ferma. I pannelli (.nv-scrim) coprono tutto.
+   ========================================================================== */
+
+.screen:has(> .nv-page) { overflow: hidden; }
+
+/* Un elemento nascosto con l'attributo hidden resta nascosto anche se la
+   sua classe gli da' un display: senza questa riga ricompare. */
+:where(.nv-page, .nv-nav, .nv-scrim) [hidden] { display: none !important; }
+
+.nv-page {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-8);
+  padding: 0 var(--gutter) var(--sp-10);
+  background: var(--bg);
+  color: var(--text);
+}
+.nv-page > * { flex: 0 0 auto; }
+
+/* Pagina senza margini laterali: per foto e mappe a tutta larghezza.
+   I blocchi di testo dentro si rimettono il margine con .nv-gutter. */
+.nv-page--piena { padding-left: 0; padding-right: 0; }
+.nv-gutter { padding-left: var(--gutter); padding-right: var(--gutter); }
+
+/* Nei bottoni e nei campi il carattere si eredita. Specificita' zero,
+   cosi' .btn e le classi dei componenti vincono sempre. */
+:where(.nv-page, .nv-nav, .nv-scrim) :where(button, input, select, textarea) {
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  color: inherit;
+}
+:where(.nv-page, .nv-nav, .nv-scrim) :where(h1, h2, h3, h4, p, ul, ol, figure) { margin: 0; }
+:where(.nv-page, .nv-scrim) :where(ul, ol) { padding: 0; list-style: none; }
+
+/* ==========================================================================
+   BARRA IN ALTO
+   ========================================================================== */
+
+.nv-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  padding-top: var(--nv-top);
+  min-height: calc(var(--nv-top) + var(--nv-bar-h));
+}
+.nv-bar__titolo {
+  flex: 1;
+  min-width: 0;
+  text-align: center;
+  font-size: var(--fs-base);
+  line-height: var(--lh-base);
+  font-weight: var(--fw-bold);
+  color: var(--text-highlighted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.nv-bar__spazio { flex: 1; }
+.nv-bar__vuoto { width: var(--nv-bar-h); flex: 0 0 auto; }
+.nv-bar__azioni {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--sp-4);
+  min-width: var(--nv-bar-h);
+}
+
+/* La barra sopra una foto: galleggia, i pulsanti diventano vetro. */
+.nv-bar--foto {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  z-index: 5;
+  padding-left: var(--gutter);
+  padding-right: var(--gutter);
+}
+.nv-bar--foto .nv-iconbtn {
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+}
+
+/* Il logotipo ufficiale: "navida" minuscolo, blu di marca. */
+.nv-logo {
+  margin-right: auto;
+  font-size: var(--fs-2xl);
+  line-height: 1;
+  font-weight: var(--fw-bold);
+  letter-spacing: -.035em;
+  color: var(--main);
+}
+
+.nv-iconbtn {
+  position: relative;
+  flex: 0 0 auto;
+  width: var(--nv-bar-h);
+  height: var(--nv-bar-h);
+  border-radius: var(--r-full);
+  display: grid;
+  place-items: center;
+  background: var(--passivo);
+  color: var(--text-highlighted);
+  transition: background var(--dur) var(--ease), transform 120ms var(--ease);
+}
+.nv-iconbtn:hover { background: var(--bg-accented); }
+.nv-iconbtn:active { transform: scale(.94); }
+.nv-iconbtn--vuoto { background: transparent; }
+
+.nv-dot {
+  position: absolute;
+  top: 10px; right: 11px;
+  width: 9px; height: 9px;
+  border-radius: var(--r-full);
+  background: var(--danger);
+  box-shadow: 0 0 0 2px var(--passivo);
+}
+
+.nv-avatar {
+  flex: 0 0 auto;
+  width: var(--nv-bar-h);
+  height: var(--nv-bar-h);
+  padding: 0;
+  border-radius: var(--r-full);
+  overflow: hidden;
+  background: var(--risposte-bg);
+  box-shadow: inset 0 0 0 2px var(--surface), 0 0 0 1px var(--light-outline);
+}
+.nv-avatar img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 18%;
+}
+
+/* ==========================================================================
+   TITOLI E TESTI
+   ========================================================================== */
+
+.nv-head { display: flex; flex-direction: column; gap: var(--sp-4); }
+
+.nv-eyebrow {
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  font-weight: var(--fw-bold);
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.nv-title {
+  font-size: var(--fs-3xl);
+  line-height: var(--nv-title-lh);
+  font-weight: var(--fw-bold);
+  letter-spacing: -.022em;
+  color: var(--text-highlighted);
+}
+.nv-title--md {
+  font-size: var(--fs-2xl);
+  line-height: var(--lh-2xl);
+  letter-spacing: -.018em;
+}
+.nv-lead {
+  font-size: var(--fs-base);
+  line-height: 25px;
+  color: var(--text-muted);
+}
+.nv-body {
+  font-size: var(--fs-sm);
+  line-height: 22px;
+  color: var(--text-toned);
+}
+
+/* ==========================================================================
+   SEZIONI, SCHEDE, RIGHE
+   ========================================================================== */
+
+.nv-section { display: flex; flex-direction: column; gap: var(--sp-6); }
+.nv-section__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-6);
+}
+.nv-section__title {
+  font-size: var(--fs-xl);
+  line-height: var(--lh-xl);
+  font-weight: var(--fw-bold);
+  letter-spacing: -.012em;
+  color: var(--text-highlighted);
+}
+.nv-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  padding: var(--sp-2) 0;
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+  font-weight: var(--fw-semibold);
+  color: var(--main);
+  white-space: nowrap;
+}
+.nv-link:hover { text-decoration: underline; text-underline-offset: 4px; }
+
+/* Scheda bianca con il filo lavanda. */
+.nv-card {
+  background: var(--surface);
+  border-radius: var(--r-lg);
+  box-shadow: var(--nv-ring);
+  padding: var(--sp-7);
+}
+/* Zona di colore grigio tenue, come le risposte del questionario. */
+.nv-tile {
+  background: var(--passivo);
+  border-radius: var(--r-lg);
+  padding: var(--sp-7);
+}
+/* La scheda ad alto impatto: sfumatura di marca, testo bianco. */
+.nv-hero {
+  background: var(--grad-brand);
+  color: var(--text-on-main);
+  border-radius: var(--r-xl);
+  padding: var(--sp-8);
+}
+
+/* Tutto cio' che si tocca e non e' un pulsante: si abbassa un filo. */
+.nv-press {
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  transition: transform 120ms var(--ease), background var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+}
+.nv-press:active { transform: scale(.985); }
+
+.nv-list { display: flex; flex-direction: column; gap: var(--sp-4); }
+
+.nv-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-6);
+  width: 100%;
+  padding: var(--sp-6) var(--sp-7);
+  text-align: left;
+  background: var(--surface);
+  border-radius: var(--r-lg);
+  box-shadow: var(--nv-ring);
+}
+.nv-row__copy {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+.nv-row__title {
+  font-size: var(--fs-base);
+  line-height: 22px;
+  font-weight: var(--fw-bold);
+  color: var(--text-highlighted);
+}
+.nv-row__sub {
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+  color: var(--text-muted);
+}
+.nv-row__chev { flex: 0 0 auto; color: var(--text-dimmed); }
+
+.nv-sep { height: 1px; border: 0; margin: 0; background: var(--light-outline); }
+
+/* Dato in coppia etichetta / valore (durata, costo, inizio...). */
+.nv-dato { display: flex; flex-direction: column; gap: var(--sp-1); min-width: 0; }
+.nv-dato small {
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  font-weight: var(--fw-semibold);
+  color: var(--text-muted);
+}
+.nv-dato strong {
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+  font-weight: var(--fw-bold);
+  color: var(--text-highlighted);
+}
+
+/* ==========================================================================
+   ICONE COLORATE E LOGHI
+   ========================================================================== */
+
+.nv-icochip {
+  flex: 0 0 auto;
+  width: var(--ico-chip);
+  height: var(--ico-chip);
+  border-radius: var(--r-full);
+  display: grid;
+  place-items: center;
+}
+.nv-icochip--lg { width: 52px; height: 52px; }
+
+.nv-tono-1 { color: var(--tema-1-text); background: var(--tema-1-bg); }
+.nv-tono-2 { color: var(--tema-2-text); background: var(--tema-2-bg); }
+.nv-tono-3 { color: var(--tema-3-text); background: var(--tema-3-bg); }
+.nv-tono-4 { color: var(--tema-4-text); background: var(--tema-4-bg); }
+.nv-tono-5 { color: var(--tema-5-text); background: var(--tema-5-bg); }
+.nv-tono-ok { color: var(--success); background: var(--success-bg); }
+.nv-tono-neutro { color: var(--text-toned); background: var(--passivo); }
+
+/* Logo di ripiego: la sigla dell'ente su fondo colorato. */
+.nv-logo-ente {
+  flex: 0 0 auto;
+  width: 48px;
+  height: 48px;
+  border-radius: var(--r-md);
+  display: grid;
+  place-items: center;
+  font-size: var(--fs-sm);
+  line-height: 1;
+  font-weight: var(--fw-bold);
+  letter-spacing: -.01em;
+}
+.nv-logo-ente--sm { width: 40px; height: 40px; font-size: var(--fs-xs); }
+.nv-logo-ente--lg { width: 64px; height: 64px; border-radius: var(--r-lg); font-size: var(--fs-lg); }
+
+/* ==========================================================================
+   ETICHETTE E PASTIGLIE
+   ========================================================================== */
+
+.nv-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  height: 24px;
+  padding: 0 var(--sp-5);
+  border-radius: var(--r-full);
+  font-size: var(--fs-xs);
+  line-height: 1;
+  font-weight: var(--fw-bold);
+  white-space: nowrap;
+  flex: 0 0 auto;
+}
+.nv-tag--obbligatoria { background: var(--risposte-bg); color: var(--main); }
+/* Facoltativa: solo il contorno. Si legge sia sulle schede bianche sia
+   sulle zone grigie, e pesa meno della piena "Obbligatoria". */
+.nv-tag--facoltativa { background: transparent; color: var(--text-muted); box-shadow: inset 0 0 0 1.5px var(--bg-accented); }
+.nv-tag--neutra { background: var(--passivo); color: var(--text-toned); }
+.nv-tag--main { background: var(--main); color: var(--text-on-main); }
+.nv-tag--ok { background: var(--success-bg); color: var(--success); }
+.nv-tag--sponsor { background: var(--tema-4-bg); color: var(--text-toned); }
+.nv-tag--scura { background: var(--nv-nero); color: var(--text-on-main); }
+.nv-tag--chiara { background: var(--on-main-veil); color: var(--text-on-main); }
+
+.nv-chips {
+  display: flex;
+  gap: var(--sp-4);
+  overflow-x: auto;
+  scrollbar-width: none;
+  margin: 0 calc(var(--gutter) * -1);
+  padding: var(--sp-1) var(--gutter);
+}
+.nv-chips::-webkit-scrollbar { display: none; }
+
+.nv-chip {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-3);
+  height: 40px;
+  padding: 0 var(--sp-7);
+  border-radius: var(--r-full);
+  background: var(--passivo);
+  color: var(--text-highlighted);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+  font-weight: var(--fw-semibold);
+  white-space: nowrap;
+  transition: background var(--dur) var(--ease), box-shadow var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+.nv-chip:hover { background: var(--bg-accented); }
+/* scelta: come la risposta scelta nel questionario */
+.nv-chip.is-attivo {
+  background: var(--risposte-bg);
+  color: var(--main);
+  box-shadow: inset 0 0 0 2px var(--main);
+}
+.nv-chip__n { font-size: var(--fs-xs); color: var(--text-muted); }
+.nv-chip.is-attivo .nv-chip__n { color: var(--main); }
+
+/* Interruttore a voci (Elenco | Mappa) */
+.nv-seg {
+  display: inline-flex;
+  gap: var(--sp-2);
+  padding: var(--sp-2);
+  border-radius: var(--r-full);
+  background: var(--passivo);
+}
+.nv-seg--piena { display: flex; }
+.nv-seg__opt {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-3);
+  height: 36px;
+  padding: 0 var(--sp-7);
+  border-radius: var(--r-full);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+  color: var(--text-muted);
+  white-space: nowrap;
+  transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+.nv-seg__opt.is-attivo {
+  background: var(--surface);
+  color: var(--text-highlighted);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Interruttore si'/no */
+.nv-switch {
+  position: relative;
+  flex: 0 0 auto;
+  width: 52px;
+  height: 32px;
+  border-radius: var(--r-full);
+  background: var(--bg-accented);
+  transition: background var(--dur) var(--ease);
+}
+.nv-switch::after {
+  content: '';
+  position: absolute;
+  top: 3px; left: 3px;
+  width: 26px; height: 26px;
+  border-radius: var(--r-full);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+  transition: transform var(--dur) var(--ease);
+}
+.nv-switch[aria-checked="true"] { background: var(--main); }
+.nv-switch[aria-checked="true"]::after { transform: translateX(20px); }
+
+/* ==========================================================================
+   VOTI, DATI PICCOLI, AVANZAMENTO
+   ========================================================================== */
+
+.nv-rating {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.nv-rating .ico { color: var(--tema-4-text); }
+.nv-rating .ico svg { fill: currentColor; }
+.nv-rating strong { font-weight: var(--fw-bold); color: var(--text-highlighted); }
+
+.nv-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  font-weight: var(--fw-medium);
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.nv-progress {
+  height: 6px;
+  border-radius: var(--r-full);
+  background: var(--bg-accented);
+  overflow: hidden;
+}
+.nv-progress__fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--grad-brand);
+  transition: width 600ms var(--ease);
+}
+.nv-progress--chiara { background: var(--on-main-dim); }
+.nv-progress--chiara .nv-progress__fill { background: var(--surface); }
+
+/* ==========================================================================
+   PULSANTI
+   Si parte da .btn del questionario (pastiglia da 56 nel kit maturo).
+   ========================================================================== */
+
+.nv-btn { text-decoration: none; }
+.nv-btn--sm { height: var(--sp-11); font-size: var(--fs-sm); }
+.nv-btn--hug { width: auto; padding: 0 var(--sp-8); }
+.nv-btn--nero { background: var(--nv-nero); color: var(--text-on-main); }
+.nv-btn--nero:hover { background: var(--nv-nero-hover); filter: none; }
+.nv-btn--bianco { background: var(--surface); color: var(--main); }
+
+/* due pulsanti affiancati */
+.nv-btns { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-4); }
+
+/* ==========================================================================
+   BARRA IN BASSO
+   ========================================================================== */
+
+.nv-nav {
+  flex: 0 0 auto;
+  position: relative;
+  z-index: 20;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  padding: var(--sp-4) var(--sp-4) var(--nv-nav-bottom);
+  background: var(--surface);
+  box-shadow: 0 -1px 0 var(--light-outline);
+}
+.nv-nav__voce {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: 0;
+  color: var(--text-muted);
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  font-weight: var(--fw-semibold);
+}
+.nv-nav__icona {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 32px;
+  border-radius: var(--r-full);
+  transition: background var(--dur) var(--ease);
+}
+.nv-nav__voce:hover .nv-nav__icona { background: var(--passivo); }
+.nv-nav__voce.is-attiva { color: var(--main); font-weight: var(--fw-bold); }
+.nv-nav__voce.is-attiva .nv-nav__icona { background: var(--risposte-bg); }
+
+/* ==========================================================================
+   PANNELLI (dal basso o al centro)
+   ========================================================================== */
+
+.nv-scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: flex-end;
+  background: var(--scrim);
+  animation: nv-fade var(--dur) var(--ease);
+}
+.nv-scrim--centro { align-items: center; padding: var(--gutter); }
+
+.nv-sheet {
+  width: 100%;
+  max-height: 88%;
+  display: flex;
+  flex-direction: column;
+  padding: var(--sp-4) var(--gutter) calc(var(--nv-nav-bottom) + var(--sp-7));
+  background: var(--surface);
+  border-radius: var(--r-xl) var(--r-xl) 0 0;
+  color: var(--text);
+  animation: nv-su var(--dur) var(--ease);
+}
+.nv-scrim--centro .nv-sheet {
+  border-radius: var(--r-xl);
+  padding: var(--sp-8);
+  animation: nv-pop var(--dur) var(--ease);
+}
+.nv-sheet__maniglia {
+  align-self: center;
+  width: 40px;
+  height: 5px;
+  margin-bottom: var(--sp-6);
+  border-radius: var(--r-full);
+  background: var(--bg-accented);
+}
+.nv-scrim--centro .nv-sheet__maniglia { display: none; }
+.nv-sheet__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sp-6);
+  margin-bottom: var(--sp-7);
+}
+.nv-sheet__head h2 {
+  font-size: var(--fs-2xl);
+  line-height: var(--lh-2xl);
+  font-weight: var(--fw-bold);
+  letter-spacing: -.018em;
+  color: var(--text-highlighted);
+}
+.nv-sheet__head p {
+  margin-top: var(--sp-2);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+  color: var(--text-muted);
+}
+.nv-sheet__body {
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-7);
+}
+.nv-sheet__azioni {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: var(--sp-4);
+  padding-top: var(--sp-8);
+}
+
+@keyframes nv-fade { from { opacity: 0; } }
+@keyframes nv-su { from { opacity: 0; transform: translateY(40px); } }
+@keyframes nv-pop { from { opacity: 0; transform: scale(.96); } }
+
+/* Messaggio breve in basso */
+.nv-toast {
+  position: absolute;
+  left: var(--gutter);
+  right: var(--gutter);
+  bottom: calc(var(--nv-nav-bottom) + 84px);
+  z-index: 60;
+  padding: var(--sp-6) var(--sp-7);
+  border-radius: var(--r-lg);
+  background: var(--nv-nero);
+  color: var(--text-on-main);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+  font-weight: var(--fw-semibold);
+  box-shadow: var(--shadow-lg);
+  animation: nv-su var(--dur) var(--ease);
+  transition: opacity 300ms var(--ease), transform 300ms var(--ease);
+}
+.nv-toast.is-via { opacity: 0; transform: translateY(8px); }
+
+.nv-mascotte img { display: block; width: 100%; height: auto; }
+
+/* ==========================================================================
+   MODALITA' CATTURA  (?cattura=1)
+   Per le schermate di prova: niente barra di modifica, niente commenti,
+   telefono largo 393px appoggiato a sinistra e alto quanto la finestra.
+   ========================================================================== */
+
+.nv-cattura #editor,
+.nv-cattura #edburger,
+.nv-cattura #commenti,
+.nv-cattura #skip,
+.nv-cattura .device__notch,
+.nv-cattura .device__status,
+.nv-cattura .device__home { display: none !important; }
+.nv-cattura #stage {
+  place-items: start;
+  padding: 0 !important;
+  background: #14121f;
+}
+.nv-cattura .device {
+  width: 393px !important;
+  height: 100vh !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+.nv-cattura .screen { animation: none; }

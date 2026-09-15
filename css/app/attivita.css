@@ -1,0 +1,836 @@
+/* ==========================================================================
+   NAVIDA — Scheda attività
+   ==========================================================================
+   L'elenco delle opportunità di un compito (o di un ambito della
+   dashboard). Tre versioni, disegnate in js/app/attivita.js:
+
+     .nv-att--base        schede orizzontali pulite
+     .nv-att--copertine   schede grandi con copertina e affinità in vista
+     .nv-att--compatta    righe raggruppate, prezzo e durata allineati
+
+   Tutte le classi hanno il prefisso nv-att-. I pezzi comuni (pastiglie,
+   interruttore Elenco | Mappa, etichette, loghi) arrivano da base.css.
+   ========================================================================== */
+
+:root {
+  /* altezza della copertina nella versione con copertine */
+  --nv-att-cover-h: 136px;
+  /* il bordo bianco del logo che scavalca la copertina */
+  --nv-att-logo-bordo: 3px;
+  /* quanto il logo scavalca la copertina */
+  --nv-att-logo-su: 20px;
+  /* le pastiglie dei dati dentro le schede (dove, durata, prezzo, voto) */
+  --nv-att-pill-h: 28px;
+  /* le pastiglie dei filtri accesi e l'affinità sulla copertina */
+  --nv-att-attivo-h: 32px;
+  /* il foglietto con la data degli eventi sulla copertina */
+  --nv-att-data-w: 48px;
+  /* la colonna costo e durata della versione compatta: stessa larghezza
+     per tutte le righe, cosi' i nomi vanno a capo tutti allo stesso punto */
+  --nv-att-numeri-w: 96px;
+  /* interlinea del nome di una scheda: un filo piu' stretta del testo */
+  --nv-att-lh-nome: 22px;
+  /* i due pianeti disegnati sulle copertine senza foto */
+  --nv-att-pianeta: 104px;
+  --nv-att-luna: 18px;
+  /* la mascotte degli stati vuoti */
+  --nv-att-mascotte-w: 140px;
+  --nv-att-mascotte-h: 150px;
+}
+
+/* ==========================================================================
+   STRUTTURA
+   ========================================================================== */
+
+.nv-att-corpo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-7);
+}
+
+/* la ricerca sta attaccata ai controlli: 16px invece di 24 */
+.nv-att-cerca + .nv-att-corpo { margin-top: calc(var(--sp-4) * -1); }
+
+.nv-att-lista {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-6);
+}
+
+/* ==========================================================================
+   TESTATA
+   ========================================================================== */
+
+.nv-att-testa {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+.nv-att-testa .nv-title { text-wrap: balance; }
+.nv-att-testa .nv-icochip { margin-bottom: var(--sp-4); }
+
+.nv-att-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+}
+.nv-att-testa__tags { margin-top: var(--sp-2); }
+
+.nv-att-descr { margin-top: var(--sp-2); }
+.nv-att-descr.is-chiusa {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+.nv-att-leggi {
+  align-self: flex-start;
+  margin-top: calc(var(--sp-4) * -1);
+  padding: var(--sp-4) 0;
+}
+
+.nv-att-nota {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  font-weight: var(--fw-semibold);
+  color: var(--main);
+}
+
+/* ==========================================================================
+   CONTROLLI: Elenco | Mappa, Filtri, categorie, ordine
+   ========================================================================== */
+
+.nv-att-controlli {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-4);
+}
+
+.nv-att-filtri {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-3);
+  height: var(--nv-bar-h);
+  padding: 0 var(--sp-7);
+  border-radius: var(--r-full);
+  background: var(--passivo);
+  color: var(--text-highlighted);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+  font-weight: var(--fw-semibold);
+  transition: background var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+}
+.nv-att-filtri:hover { background: var(--bg-accented); }
+.nv-att-filtri.is-attivo {
+  background: var(--risposte-bg);
+  color: var(--main);
+  box-shadow: inset 0 0 0 2px var(--main);
+}
+.nv-att-filtri__n {
+  display: grid;
+  place-items: center;
+  min-width: var(--ico-md);
+  height: var(--ico-md);
+  padding: 0 var(--sp-2);
+  border-radius: var(--r-full);
+  background: var(--main);
+  color: var(--text-on-main);
+  font-size: var(--fs-xs);
+  line-height: 1;
+  font-weight: var(--fw-bold);
+}
+
+.nv-att-chips { padding-top: var(--sp-1); padding-bottom: var(--sp-1); }
+/* una categoria che con i filtri accesi resta vuota: si vede, ma pesa meno */
+.nv-att-chips .nv-chip.is-vuota:not(.is-attivo) { color: var(--text-dimmed); background: transparent; box-shadow: inset 0 0 0 1px var(--bg-accented); }
+.nv-att-chips .nv-chip.is-vuota:not(.is-attivo) .nv-chip__n { color: var(--text-dimmed); }
+
+/* Filtri come pulsante tondo da 44 (versione con copertine): il numero dei
+   filtri accesi sta nel pallino in alto a destra. */
+.nv-att-filtri--tondo {
+  position: relative;
+  width: var(--nv-bar-h);
+  padding: 0;
+  justify-content: center;
+}
+.nv-att-filtri--tondo .nv-att-filtri__n {
+  position: absolute;
+  top: calc(var(--sp-2) * -1);
+  right: calc(var(--sp-2) * -1);
+  box-shadow: 0 0 0 2px var(--bg);
+}
+.nv-att-riepilogo__azioni {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-6);
+}
+
+/* i filtri accesi: si tolgono con un tocco */
+.nv-att-attivi {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-3);
+}
+.nv-att-attivo {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  height: var(--nv-att-attivo-h);
+  padding: 0 var(--sp-5) 0 var(--sp-6);
+  border-radius: var(--r-full);
+  background: var(--risposte-bg);
+  color: var(--main);
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  font-weight: var(--fw-bold);
+  white-space: nowrap;
+}
+/* l'area da toccare arriva a 44px anche se la pastiglia ne misura 32 */
+.nv-att-attivo::after {
+  content: '';
+  position: absolute;
+  inset: calc(var(--sp-3) * -1) 0;
+}
+.nv-att-azzera { padding: var(--sp-4) var(--sp-3); }
+
+/* "5 scuole · ordinate per te"   [Più adatte a te] */
+.nv-att-riepilogo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-6);
+}
+.nv-att-conto {
+  min-width: 0;
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+  color: var(--text-muted);
+}
+.nv-att-conto strong {
+  font-weight: var(--fw-bold);
+  color: var(--text-highlighted);
+}
+.nv-att-ordina {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  height: var(--nv-bar-h);
+  margin: calc(var(--sp-6) * -1) 0;
+  padding: 0 var(--sp-1);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+  font-weight: var(--fw-semibold);
+  color: var(--main);
+  white-space: nowrap;
+}
+.nv-att-ordina:hover span { text-decoration: underline; text-underline-offset: 4px; }
+
+/* ==========================================================================
+   PEZZI COMUNI DELLE SCHEDE
+   ========================================================================== */
+
+/* "perché te la consigliamo": sotto una riga sottile, con la scintilla blu */
+.nv-att-perche {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+  color: var(--text-toned);
+}
+.nv-att-perche .ico {
+  flex: 0 0 auto;
+  margin-top: var(--sp-1);
+  color: var(--main);
+}
+
+/* ==========================================================================
+   VERSIONE BASE · schede orizzontali pulite
+   ========================================================================== */
+
+.nv-att-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-6);
+  padding: var(--sp-7);
+  background: var(--surface);
+  border-radius: var(--r-lg);
+  box-shadow: var(--nv-ring);
+  color: var(--text);
+}
+.nv-att-card:hover { box-shadow: inset 0 0 0 1px var(--main-ring); }
+/* la piu' adatta: il filo diventa blu tenue, niente di piu' */
+.nv-att-card.is-migliore { box-shadow: inset 0 0 0 2px var(--main-ring); }
+
+.nv-att-card__main {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-6);
+}
+.nv-att-card__copy {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+.nv-att-card__nome {
+  font-size: var(--fs-base);
+  line-height: var(--nv-att-lh-nome);
+  font-weight: var(--fw-bold);
+  letter-spacing: -.005em;
+  color: var(--text-highlighted);
+}
+.nv-att-card__ente {
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+  color: var(--text-muted);
+}
+.nv-att-card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2) var(--sp-6);
+  margin-top: var(--sp-3);
+}
+.nv-att-card__prezzo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2) var(--sp-6);
+  margin-top: var(--sp-2);
+}
+.nv-att-card__prezzo strong {
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+  font-weight: var(--fw-bold);
+  color: var(--text-highlighted);
+}
+.nv-att-card .nv-att-perche {
+  padding-top: var(--sp-6);
+  box-shadow: inset 0 1px 0 var(--light-outline);
+}
+
+/* ==========================================================================
+   VERSIONE COPERTINE · schede grandi, affinita' in vista
+   ========================================================================== */
+
+.nv-att--copertine .nv-att-lista { gap: var(--sp-7); }
+
+.nv-att-cop {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  overflow: hidden;
+  background: var(--surface);
+  border-radius: var(--r-xl);
+  box-shadow: var(--nv-ring);
+  color: var(--text);
+}
+
+/* La copertina: la foto se c'e', altrimenti la coppia colore della
+   categoria con due pianeti disegnati, come nel resto del mondo Navida. */
+.nv-att-cover {
+  position: relative;
+  height: var(--nv-att-cover-h);
+  overflow: hidden;
+}
+.nv-att-cover:not(.has-foto) {
+  /* dove stanno il pianeta grande e la luna (tre disposizioni qui sotto) */
+  --nv-att-pianeta-at: 86% 120%;
+  --nv-att-luna-at: 64% 34%;
+  background-image:
+    radial-gradient(circle at var(--nv-att-pianeta-at), color-mix(in srgb, currentColor 16%, transparent) 0 var(--nv-att-pianeta), transparent calc(var(--nv-att-pianeta) + 1px)),
+    radial-gradient(circle at var(--nv-att-luna-at), color-mix(in srgb, currentColor 14%, transparent) 0 var(--nv-att-luna), transparent calc(var(--nv-att-luna) + 1px));
+}
+/* doppia classe: deve vincere sulla regola :not(.has-foto) qui sopra */
+.nv-att-cover.nv-att-cover--2 { --nv-att-pianeta-at: 14% 128%; --nv-att-luna-at: 78% 62%; }
+.nv-att-cover.nv-att-cover--3 { --nv-att-pianeta-at: 104% 40%; --nv-att-luna-at: 30% 70%; }
+.nv-att-cover img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.nv-att-cover__su {
+  position: absolute;
+  top: var(--sp-6);
+  left: var(--sp-6);
+  right: var(--sp-6);
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sp-4);
+}
+.nv-att-cover__cat {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  height: var(--nv-att-attivo-h);
+  padding: 0 var(--sp-6) 0 var(--sp-5);
+  border-radius: var(--r-full);
+  background: var(--surface);
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  font-weight: var(--fw-bold);
+}
+.nv-att-cover.has-foto .nv-att-cover__cat { color: var(--text-highlighted); }
+
+/* il foglietto della data degli eventi */
+.nv-att-data {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: var(--nv-att-data-w);
+  padding: var(--sp-3) 0 var(--sp-2);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  color: var(--text-highlighted);
+}
+.nv-att-data strong {
+  font-size: var(--fs-xl);
+  line-height: var(--lh-xs);
+  padding-top: var(--sp-2);
+  font-weight: var(--fw-bold);
+}
+.nv-att-data span {
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  font-weight: var(--fw-bold);
+  letter-spacing: .06em;
+  color: var(--main);
+}
+
+/* l'affinita': anello + percentuale, su una pastiglia bianca */
+.nv-att-match {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  height: var(--nv-att-attivo-h);
+  padding: 0 var(--sp-6) 0 var(--sp-3);
+  border-radius: var(--r-full);
+  background: var(--surface);
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.nv-att-match strong {
+  margin-left: var(--sp-1);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+  font-weight: var(--fw-bold);
+  color: var(--text-highlighted);
+}
+.nv-att-anello { display: grid; place-items: center; }
+.nv-att-anello svg { display: block; }
+.nv-att-anello circle { fill: none; stroke-width: 3; }
+.nv-att-anello__traccia { stroke: var(--bg-accented); }
+.nv-att-anello__pieno { stroke: var(--main); stroke-linecap: round; }
+
+.nv-att-cop__corpo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-6);
+  padding: 0 var(--sp-7) var(--sp-7);
+}
+/* il logo scavalca il bordo della copertina; le etichette stanno a destra */
+/* position + z-index: la copertina e' posizionata e senza questo le
+   passerebbe sopra, tagliando a meta' il logo */
+.nv-att-cop__testa {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  margin-top: calc(var(--nv-att-logo-su) * -1);
+}
+/* Il logo ha il tono trasparente: sotto gli si mette il bianco pieno, e
+   intorno un anello bianco, cosi' resta un quadratino pulito appoggiato
+   sul bordo della copertina. */
+.nv-att-cop__logo {
+  display: inline-flex;
+  border-radius: var(--r-md);
+  background: var(--surface);
+  box-shadow: 0 0 0 var(--nv-att-logo-bordo) var(--surface);
+}
+.nv-att-cop__testa .nv-att-tags { justify-content: flex-end; }
+
+.nv-att-cop__copy {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  /* l'anello sporge di 3px sotto il logo: il nome dell'ente resta staccato */
+  margin-top: calc(var(--sp-2) * -1);
+}
+.nv-att-cop__ente {
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  font-weight: var(--fw-semibold);
+  color: var(--text-muted);
+}
+.nv-att-cop__nome {
+  font-size: var(--fs-lg);
+  line-height: var(--lh-sm);
+  padding-top: var(--sp-1);
+  font-weight: var(--fw-bold);
+  letter-spacing: -.01em;
+  color: var(--text-highlighted);
+}
+
+.nv-att-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+}
+.nv-att-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  height: var(--nv-att-pill-h);
+  padding: 0 var(--sp-5);
+  border-radius: var(--r-full);
+  background: var(--passivo);
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  font-weight: var(--fw-semibold);
+  color: var(--text-toned);
+  white-space: nowrap;
+}
+.nv-att-pill .ico { color: var(--text-muted); }
+.nv-att-pill--prezzo { font-weight: var(--fw-bold); color: var(--text-highlighted); }
+.nv-att-pill--voto .ico { color: var(--tema-4-text); }
+.nv-att-pill--voto .ico svg { fill: currentColor; }
+
+/* ==========================================================================
+   VERSIONE COMPATTA · righe raggruppate da confrontare
+   ========================================================================== */
+
+/* la riga Elenco | Mappa + Filtri resta in alto mentre scorri */
+.nv-att-controlli--ferma {
+  position: sticky;
+  top: 0;
+  z-index: 4;
+  margin: 0 calc(var(--gutter) * -1);
+  padding: var(--sp-4) var(--gutter);
+  background: var(--bg);
+}
+/* il margine negativo compensa l'imbottitura: la distanza dalla testata resta 24px */
+.nv-att--compatta .nv-att-corpo { margin-top: calc(var(--sp-4) * -1); }
+.nv-att--compatta .nv-att-cerca + .nv-att-corpo { margin-top: calc(var(--sp-6) * -1); }
+.nv-att--compatta .nv-att-corpo { gap: var(--sp-6); }
+
+.nv-att-gruppi {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-8);
+}
+.nv-att-gruppo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+.nv-att-gruppo__head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--sp-6);
+  padding: 0 var(--sp-1);
+}
+.nv-att-gruppo__copy {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.nv-att-gruppo__titolo {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  font-size: var(--fs-base);
+  line-height: var(--lh-base);
+  font-weight: var(--fw-bold);
+  color: var(--text-highlighted);
+}
+.nv-att-gruppo__n {
+  display: grid;
+  place-items: center;
+  min-width: var(--ico-md);
+  height: var(--ico-md);
+  padding: 0 var(--sp-2);
+  border-radius: var(--r-full);
+  background: var(--passivo);
+  font-size: var(--fs-xs);
+  line-height: 1;
+  font-weight: var(--fw-bold);
+  color: var(--text-toned);
+}
+.nv-att-gruppo__sub,
+.nv-att-gruppo__colonna {
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  color: var(--text-muted);
+}
+.nv-att-gruppo__colonna {
+  flex: 0 0 auto;
+  padding-right: var(--sp-7);
+  font-weight: var(--fw-semibold);
+  color: var(--text-dimmed);
+  text-align: right;
+}
+
+.nv-att-gruppo__lista {
+  overflow: hidden;
+  background: var(--surface);
+  border-radius: var(--r-lg);
+  box-shadow: var(--nv-ring);
+}
+
+.nv-att-riga {
+  position: relative;
+  display: grid;
+  grid-template-columns: var(--ico-chip) minmax(0, 1fr) var(--nv-att-numeri-w);
+  grid-template-areas:
+    "logo testo numeri"
+    "logo extra extra";
+  column-gap: var(--sp-6);
+  row-gap: var(--sp-3);
+  align-items: start;
+  padding: var(--sp-6) var(--sp-7);
+  color: var(--text);
+}
+/* niente rimpicciolimento dentro un elenco unito: si scurisce il fondo */
+.nv-att-riga.nv-press:active { transform: none; background: var(--passivo); }
+.nv-att-riga:hover { background: var(--bg); }
+/* il filo fra due righe parte dopo il logo, come negli elenchi di sistema */
+.nv-att-riga + .nv-att-riga::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: calc(var(--sp-7) + var(--ico-chip) + var(--sp-6));
+  height: 1px;
+  background: var(--light-outline);
+}
+.nv-att-riga > .nv-logo-ente { grid-area: logo; }
+
+.nv-att-riga__testo {
+  grid-area: testo;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+.nv-att-riga__nome {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+  font-weight: var(--fw-bold);
+  color: var(--text-highlighted);
+}
+.nv-att-riga__ente {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  color: var(--text-muted);
+}
+
+.nv-att-riga__numeri {
+  grid-area: numeri;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--sp-1);
+  text-align: right;
+}
+.nv-att-riga__numeri strong {
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+  font-weight: var(--fw-bold);
+  color: var(--text-highlighted);
+  white-space: nowrap;
+}
+.nv-att-riga__numeri span {
+  max-width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  color: var(--text-muted);
+}
+
+.nv-att-riga__extra {
+  grid-area: extra;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-3) var(--sp-5);
+}
+.nv-att-riga__km {
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  font-weight: var(--fw-medium);
+  color: var(--text-muted);
+}
+.nv-att-affinita,
+.nv-att-riga__numeri .nv-att-affinita {
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  font-weight: var(--fw-bold);
+  color: var(--main);
+}
+
+/* ==========================================================================
+   STATI VUOTI
+   ========================================================================== */
+
+.nv-att-vuoto {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-4);
+  padding: var(--sp-7) var(--sp-4) 0;
+  text-align: center;
+}
+.nv-att-vuoto__mascotte {
+  width: var(--nv-att-mascotte-w);
+  height: var(--nv-att-mascotte-h);
+  margin-bottom: var(--sp-4);
+}
+.nv-att-vuoto__titolo {
+  font-size: var(--fs-xl);
+  line-height: var(--lh-xl);
+  font-weight: var(--fw-bold);
+  letter-spacing: -.012em;
+  color: var(--text-highlighted);
+  text-wrap: balance;
+}
+.nv-att-vuoto__testo {
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+  color: var(--text-muted);
+  text-wrap: pretty;
+}
+.nv-att-vuoto__azioni {
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  margin-top: var(--sp-6);
+}
+
+/* ==========================================================================
+   PANNELLI: Filtri e Ordina
+   ========================================================================== */
+
+.nv-att-foglio .nv-sheet__body { gap: var(--sp-8); }
+
+.nv-att-foglio__gruppo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+.nv-att-foglio__titolo {
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+  font-weight: var(--fw-bold);
+  color: var(--text-highlighted);
+}
+.nv-att-scelte {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-4);
+}
+.nv-att-foglio__riga {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-6);
+  padding: var(--sp-6) var(--sp-7);
+  border-radius: var(--r-lg);
+  background: var(--passivo);
+}
+.nv-att-foglio__copy {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+.nv-att-foglio__copy strong {
+  font-size: var(--fs-base);
+  line-height: var(--lh-base);
+  font-weight: var(--fw-bold);
+  color: var(--text-highlighted);
+}
+.nv-att-foglio__copy span {
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  color: var(--text-muted);
+}
+
+/* le tre voci di "Ordina per": come le risposte del questionario */
+.nv-att-voci {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+.nv-att-voce {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-6);
+  width: 100%;
+  padding: var(--sp-6) var(--sp-7);
+  border-radius: var(--r-lg);
+  background: var(--passivo);
+  text-align: left;
+  transition: background var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+}
+.nv-att-voce:hover { background: var(--bg-accented); }
+.nv-att-voce.is-attiva {
+  background: var(--risposte-bg);
+  box-shadow: inset 0 0 0 2px var(--main);
+}
+.nv-att-voce.is-attiva .nv-icochip { background: var(--surface); }
+.nv-att-voce__copy {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+.nv-att-voce__copy strong {
+  font-size: var(--fs-base);
+  line-height: var(--lh-base);
+  font-weight: var(--fw-bold);
+  color: var(--text-highlighted);
+}
+.nv-att-voce__copy span {
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  color: var(--text-muted);
+}
+.nv-att-voce__spunta { flex: 0 0 auto; display: grid; color: var(--main); }
+
+.nv-att-trasparenza {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  color: var(--text-muted);
+}
+.nv-att-trasparenza .ico { flex: 0 0 auto; color: var(--text-dimmed); }

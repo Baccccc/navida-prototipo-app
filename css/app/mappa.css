@@ -1,0 +1,825 @@
+/* ==========================================================================
+   NAVIDA — Mappa
+   ==========================================================================
+   Mappa a tutto schermo sotto elementi che galleggiano, come Google Maps:
+   ricerca e categorie in alto, pulsanti a destra, pannello dei risultati
+   in basso. La pagina non scorre: scorre solo l'elenco dentro al pannello.
+
+   Livelli (dal basso):
+     .nv-map-vista        pianta SVG + segnaposto + "Tu sei qui"
+     .nv-map-controlli    + / − e Centra su di me
+     .nv-map-pannello     elenco dei risultati
+     .nv-map-anteprima    scheda del segnaposto toccato
+     .nv-map-alto         ricerca, step, categorie
+     .nv-map-tendina      risultati della ricerca
+
+   JS: js/app/mappa.js
+   ========================================================================== */
+
+.nv-page.nv-map {
+  /* --- la pianta: tinte tenui ricavate dai colori del kit ------------- */
+  --nv-map-terra: color-mix(in srgb, var(--passivo) 50%, var(--surface));
+  --nv-map-isolato: color-mix(in srgb, var(--bg-accented) 62%, var(--surface));
+  --nv-map-isolato-centro: color-mix(in srgb, var(--bg-accented) 88%, var(--surface));
+  --nv-map-vicolo: color-mix(in srgb, var(--surface) 80%, var(--nv-map-isolato));
+  --nv-map-strada: var(--surface);
+  --nv-map-strada-bordo: color-mix(in srgb, var(--disabled) 85%, var(--surface));
+  --nv-map-acqua: color-mix(in srgb, var(--main-1) 30%, var(--surface));
+  --nv-map-acqua-testo: color-mix(in srgb, var(--main-1) 75%, var(--text));
+  --nv-map-parco: color-mix(in srgb, var(--success) 20%, var(--surface));
+  --nv-map-parco-testo: color-mix(in srgb, var(--success) 80%, var(--text));
+  --nv-map-ferrovia: color-mix(in srgb, var(--text-dimmed) 55%, var(--surface));
+
+  /* --- misure ---------------------------------------------------------- */
+  /* la tela della pianta: uguale a TELA in mappa.js */
+  --nv-map-tela-w: 700px;
+  --nv-map-tela-h: 1000px;
+  /* segnaposto normale e segnaposto scelto (a goccia) */
+  --nv-map-pin: 36px;
+  --nv-map-pin-scelto: 48px;
+  /* il pallino "Tu sei qui" e il suo alone */
+  --nv-map-tu: 18px;
+  --nv-map-tu-alone: 64px;
+  /* altezza del pannello chiuso: maniglia + titolo + sottotitolo */
+  --nv-map-peek: 100px;
+  /* dove finiscono gli elementi in alto (lo aggiorna mappa.js) */
+  --nv-map-alto-h: 214px;
+  /* distanza della scheda anteprima dai bordi */
+  --nv-map-margine: var(--sp-6);
+  /* ombra degli elementi che galleggiano sulla mappa: leggera, ma serve
+     a staccare il bianco dal fondo chiaro */
+  --nv-map-ombra: var(--shadow-sm), var(--shadow-md);
+  /* ombra del pannello, verso l'alto */
+  --nv-map-ombra-su: 0 -8px 24px color-mix(in srgb, var(--indigo-950) 7%, transparent);
+
+  display: block;
+  overflow: hidden;
+  padding: 0;
+  gap: 0;
+  background: var(--nv-map-terra);
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Ridisegno chiesto dalla mappa stessa (categoria, filtro): niente
+   animazione di cambio pagina, deve sembrare la stessa schermata. */
+.screen:has(> .nv-map--ridisegno) { animation: none; }
+
+/* ==========================================================================
+   LA VISTA E LA PIANTA
+   ========================================================================== */
+
+.nv-map-vista {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  touch-action: none;
+  cursor: grab;
+}
+.nv-map-vista.is-trascina { cursor: grabbing; }
+
+.nv-map-tela {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: var(--nv-map-tela-w);
+  height: var(--nv-map-tela-h);
+  transform-origin: 0 0;
+  will-change: transform;
+}
+.nv-map-svg { display: block; width: 100%; height: 100%; }
+
+.nv-map-vista.is-animata .nv-map-tela,
+.nv-map-vista.is-animata .nv-map-segno,
+.nv-map-vista.is-animata .nv-map-tu {
+  transition: transform 420ms var(--ease);
+}
+
+/* --- i pezzi del disegno ------------------------------------------------ */
+.nv-map-s-terra { fill: var(--nv-map-terra); }
+.nv-map-s-isolato { fill: var(--nv-map-isolato); }
+.nv-map-s-isolato--centro { fill: var(--nv-map-isolato-centro); }
+.nv-map-s-vicolo { fill: none; stroke: var(--nv-map-vicolo); stroke-width: 4; }
+.nv-map-s-vicolo--fine { stroke-width: 3; }
+.nv-map-s-parco { fill: var(--nv-map-parco); }
+
+.nv-map-s-fiume,
+.nv-map-s-canale {
+  fill: none;
+  stroke: var(--nv-map-acqua);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.nv-map-s-fiume { stroke-width: 22; }
+.nv-map-s-canale { stroke-width: 8; }
+.nv-map-s-canale--fine { stroke-width: 4; }
+
+.nv-map-s-ferrovia { fill: none; stroke: var(--nv-map-ferrovia); stroke-width: 6; }
+.nv-map-s-ferrovia-traversine {
+  fill: none;
+  stroke: var(--surface);
+  stroke-width: 2;
+  stroke-dasharray: 10 8;
+}
+
+.nv-map-s-strada-bordo,
+.nv-map-s-strada,
+.nv-map-s-via-bordo,
+.nv-map-s-via,
+.nv-map-s-anello-strada {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.nv-map-s-strada-bordo { stroke: var(--nv-map-strada-bordo); stroke-width: 15; }
+.nv-map-s-strada { stroke: var(--nv-map-strada); stroke-width: 11; }
+.nv-map-s-via-bordo { stroke: var(--nv-map-strada-bordo); stroke-width: 9; }
+.nv-map-s-via { stroke: var(--nv-map-strada); stroke-width: 6; }
+.nv-map-s-anello-strada { stroke: var(--nv-map-strada); stroke-width: 10; }
+
+/* Scritte: un alone del colore del fondo le tiene leggibili sopra le vie. */
+.nv-map-s-testo {
+  font-family: var(--font);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  fill: var(--text-muted);
+  text-anchor: middle;
+  paint-order: stroke;
+  stroke: var(--nv-map-isolato);
+  stroke-width: 3px;
+  stroke-linejoin: round;
+}
+.nv-map-s-testo--via { fill: var(--text-muted); stroke: var(--surface); }
+.nv-map-s-testo--quartiere {
+  font-weight: var(--fw-bold);
+  letter-spacing: .14em;
+  fill: var(--text-dimmed);
+}
+.nv-map-s-testo--acqua {
+  font-style: italic;
+  fill: var(--nv-map-acqua-testo);
+  stroke: var(--nv-map-acqua);
+}
+.nv-map-s-testo--parco { fill: var(--nv-map-parco-testo); stroke: var(--nv-map-isolato); }
+
+/* ==========================================================================
+   SEGNAPOSTO
+   Il pulsante e' un punto senza misura messo esattamente sulla posizione;
+   il disegno gli sta intorno. Cosi' spostarlo e' un solo transform.
+   ========================================================================== */
+
+.nv-map-segni { position: absolute; inset: 0; pointer-events: none; }
+
+.nv-map-tono-1 { --nv-map-colore: var(--tema-1-text); }
+.nv-map-tono-2 { --nv-map-colore: var(--tema-2-text); }
+.nv-map-tono-3 { --nv-map-colore: var(--tema-3-text); }
+.nv-map-tono-4 { --nv-map-colore: var(--tema-4-text); }
+.nv-map-tono-5 { --nv-map-colore: var(--tema-5-text); }
+
+.nv-map-segno {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 1;
+  width: 0;
+  height: 0;
+  padding: 0;
+  pointer-events: auto;
+  cursor: pointer;
+}
+/* area di tocco da 44px anche se il disegno e' piu' piccolo */
+.nv-map-segno::before {
+  content: '';
+  position: absolute;
+  left: calc(var(--sp-11) / -2);
+  top: calc(var(--sp-11) / -2);
+  width: var(--sp-11);
+  height: var(--sp-11);
+  border-radius: var(--r-full);
+}
+.nv-map-segno__corpo {
+  position: absolute;
+  left: calc(var(--nv-map-pin) / -2);
+  top: calc(var(--nv-map-pin) / -2);
+  width: var(--nv-map-pin);
+  height: var(--nv-map-pin);
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-full);
+  background: var(--nv-map-colore, var(--main));
+  color: var(--text-on-main);
+  box-shadow: 0 0 0 2px var(--surface), var(--shadow-md);
+  transition: opacity var(--dur) var(--ease);
+}
+.nv-map-segno__ico--md { display: none; }
+.nv-map-segno:hover .nv-map-segno__corpo { box-shadow: 0 0 0 3px var(--surface), var(--shadow-lg); }
+
+/* il segnaposto scelto: una goccia piu' grande con la punta sul posto */
+.nv-map-segno.is-scelto { z-index: 4; }
+.nv-map-segno.is-scelto .nv-map-segno__corpo {
+  left: calc(var(--nv-map-pin-scelto) / -2);
+  top: calc(var(--nv-map-pin-scelto) * -1.2);
+  width: var(--nv-map-pin-scelto);
+  height: var(--nv-map-pin-scelto);
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
+  box-shadow: 0 0 0 3px var(--surface), var(--shadow-lg);
+  animation: nv-map-salta var(--dur) var(--ease);
+}
+.nv-map-segno.is-scelto .nv-map-segno__corpo .ico { transform: rotate(45deg); }
+.nv-map-segno.is-scelto .nv-map-segno__ico--sm { display: none; }
+.nv-map-segno.is-scelto .nv-map-segno__ico--md { display: inline-grid; }
+
+/* durante la ricerca si spengono quelli che non c'entrano */
+.nv-map-segno.is-spento { z-index: 0; }
+.nv-map-segno.is-spento .nv-map-segno__corpo { opacity: .3; }
+
+@keyframes nv-map-salta {
+  from { transform: rotate(-45deg) scale(.6); opacity: 0; }
+}
+
+/* --- Tu sei qui ---------------------------------------------------------- */
+.nv-map-tu {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 2;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+.nv-map-tu__alone {
+  position: absolute;
+  left: calc(var(--nv-map-tu-alone) / -2);
+  top: calc(var(--nv-map-tu-alone) / -2);
+  width: var(--nv-map-tu-alone);
+  height: var(--nv-map-tu-alone);
+  border-radius: var(--r-full);
+  background: var(--main-ring);
+  animation: nv-map-respiro 2800ms var(--ease) infinite;
+}
+.nv-map-tu__punto {
+  position: absolute;
+  left: calc(var(--nv-map-tu) / -2);
+  top: calc(var(--nv-map-tu) / -2);
+  width: var(--nv-map-tu);
+  height: var(--nv-map-tu);
+  border-radius: var(--r-full);
+  background: var(--main);
+  box-shadow: 0 0 0 3px var(--surface), var(--shadow-md);
+}
+.nv-map-tu__etichetta {
+  position: absolute;
+  right: var(--sp-7);
+  top: calc(var(--sp-6) * -1);
+  height: var(--sp-8);
+  padding: 0 var(--sp-5);
+  display: flex;
+  align-items: center;
+  border-radius: var(--r-full);
+  background: var(--surface);
+  color: var(--main);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-bold);
+  white-space: nowrap;
+  box-shadow: var(--nv-map-ombra);
+  transition: opacity var(--dur) var(--ease);
+}
+/* da lontano o con un posto scelto l'etichetta finirebbe sopra i segnaposto */
+.nv-map.is-lontano .nv-map-tu__etichetta,
+.nv-map.is-anteprima .nv-map-tu__etichetta { opacity: 0; }
+
+@keyframes nv-map-respiro {
+  0%, 100% { transform: scale(.72); opacity: 1; }
+  50% { transform: scale(1); opacity: .55; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nv-map-tu__alone,
+  .nv-map-segno.is-scelto .nv-map-segno__corpo { animation: none; }
+}
+
+/* ==========================================================================
+   IN ALTO: RICERCA, STEP, CATEGORIE
+   ========================================================================== */
+
+.nv-map-alto {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 7;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-5);
+  padding: var(--nv-top) var(--gutter) 0;
+  pointer-events: none;
+}
+.nv-map-alto > * { pointer-events: auto; }
+
+/* Un velo del colore della pianta sotto la barra di stato: l'ora non
+   finisce sopra le vie. */
+.nv-map-alto::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: var(--nv-top);
+  background: linear-gradient(var(--nv-map-terra) 40%, transparent);
+  pointer-events: none;
+}
+
+/* La ricerca: pastiglia bianca, come i campi del kit ma staccata dalla
+   mappa con un'ombra leggera. L'avatar sta dentro, come in Google Maps. */
+.nv-map-cerca {
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  height: var(--btn-h);
+  padding: 0 var(--sp-3) 0 var(--sp-7);
+  border-radius: var(--r-full);
+  background: var(--surface);
+  box-shadow: var(--nv-map-ombra);
+  transition: box-shadow var(--dur) var(--ease);
+}
+.nv-map-cerca:focus-within { box-shadow: inset 0 0 0 2px var(--main), var(--nv-map-ombra); }
+.nv-map-cerca__ico {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  margin-right: var(--sp-4);
+  color: var(--text-muted);
+}
+.nv-map-cerca__campo {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  font-size: var(--fs-base);
+  line-height: var(--lh-base);
+  font-weight: var(--fw-medium);
+  color: var(--text-highlighted);
+  -webkit-appearance: none;
+  appearance: none;
+  -webkit-user-select: text;
+  user-select: text;
+}
+.nv-map-cerca__campo::placeholder { color: var(--text-muted); font-weight: var(--fw-normal); }
+.nv-map-cerca__campo::-webkit-search-cancel-button,
+.nv-map-cerca__campo::-webkit-search-decoration { -webkit-appearance: none; appearance: none; }
+.nv-map-cerca__cancella { color: var(--text-muted); }
+/* i pulsanti della base hanno display: grid, che batterebbe l'attributo hidden */
+.nv-map-cerca__cancella[hidden],
+.nv-map-tendina[hidden] { display: none; }
+
+/* Lo step o il filtro che arriva dalla scheda attività. */
+.nv-map-contesto {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-3);
+  max-width: 100%;
+  height: calc(var(--sp-9) + var(--sp-2));
+  padding: 0 var(--sp-6);
+  border-radius: var(--r-full);
+  background: var(--surface);
+  color: var(--text-highlighted);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+  font-weight: var(--fw-semibold);
+  white-space: nowrap;
+  box-shadow: var(--nv-map-ombra);
+}
+.nv-map-contesto > span { overflow: hidden; text-overflow: ellipsis; }
+.nv-map-contesto .ico { color: var(--main); }
+/* il filtro si toglie: e' l'unico elemento nero della pagina */
+.nv-map-contesto--filtro {
+  padding-right: var(--sp-2);
+  background: var(--nv-nero);
+  color: var(--text-on-main);
+  cursor: pointer;
+}
+.nv-map-contesto--filtro .ico { color: var(--text-on-main); }
+.nv-map-contesto__x {
+  display: grid;
+  place-items: center;
+  width: var(--sp-9);
+  height: var(--sp-9);
+  margin-left: var(--sp-1);
+  border-radius: var(--r-full);
+  background: var(--on-main-veil);
+}
+/* area di tocco da 44px */
+.nv-map-contesto--filtro::after {
+  content: '';
+  position: absolute;
+  inset: calc(var(--sp-2) * -1) 0;
+}
+
+/* Le categorie: pastiglie bianche sulla mappa, la scelta come nel questionario. */
+.nv-map-chips {
+  align-self: stretch;
+  padding-bottom: var(--sp-5);
+  margin-bottom: calc(var(--sp-5) * -1);
+}
+.nv-map-chip {
+  background: var(--surface);
+  box-shadow: var(--shadow-sm), inset 0 0 0 1px var(--light-outline);
+}
+.nv-map-chip:hover { background: var(--passivo); }
+.nv-map-chip .ico { color: var(--nv-map-colore, var(--text-muted)); }
+.nv-map-chip.is-attivo { box-shadow: inset 0 0 0 2px var(--main), var(--shadow-sm); }
+.nv-map-chip.is-attivo .ico { color: var(--main); }
+
+/* ==========================================================================
+   RISULTATI DELLA RICERCA (tendina)
+   ========================================================================== */
+
+.nv-map-tendina {
+  position: absolute;
+  z-index: 8;
+  left: var(--gutter);
+  right: var(--gutter);
+  top: calc(var(--nv-top) + var(--btn-h) + var(--sp-4));
+  max-height: calc(100% - var(--nv-top) - var(--btn-h) - var(--sp-4) - var(--sp-7));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: var(--sp-4) 0;
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm), var(--shadow-lg);
+  animation: nv-map-cala var(--dur) var(--ease);
+}
+@keyframes nv-map-cala { from { opacity: 0; transform: translateY(calc(var(--sp-3) * -1)); } }
+
+.nv-map-tendina__conta {
+  padding: var(--sp-4) var(--sp-7) var(--sp-2);
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  font-weight: var(--fw-bold);
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.nv-map-risultato--categoria + .nv-map-tendina__conta {
+  margin-top: var(--sp-4);
+  padding-top: var(--sp-6);
+  box-shadow: inset 0 1px 0 var(--light-outline);
+}
+
+.nv-map-risultato {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-6);
+  width: 100%;
+  padding: var(--sp-5) var(--sp-7);
+  text-align: left;
+  transition: background var(--dur) var(--ease);
+}
+.nv-map-risultato:hover,
+.nv-map-risultato:focus-visible { background: var(--passivo); outline: 0; }
+.nv-map-risultato__copy {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+.nv-map-risultato__nome,
+.nv-map-risultato__sub {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.nv-map-risultato__nome {
+  font-size: var(--fs-base);
+  line-height: var(--lh-base);
+  font-weight: var(--fw-medium);
+  color: var(--text-toned);
+}
+.nv-map-risultato__sub {
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+  color: var(--text-muted);
+}
+/* il pezzo che hai scritto, in grassetto: si vede perche' e' uscito */
+.nv-map-risultato mark {
+  background: transparent;
+  color: var(--text-highlighted);
+  font-weight: var(--fw-bold);
+}
+.nv-map-risultato--categoria .nv-map-risultato__nome { color: var(--text-highlighted); font-weight: var(--fw-bold); }
+.nv-map-risultato__dove { font-weight: var(--fw-semibold); color: var(--text-toned); }
+.nv-map-risultato__chev { flex: 0 0 auto; display: grid; color: var(--text-dimmed); }
+
+.nv-map-tendina__vuoto {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-8);
+  text-align: center;
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+  color: var(--text-muted);
+}
+.nv-map-tendina__vuoto .ico { margin-bottom: var(--sp-4); color: var(--text-dimmed); }
+.nv-map-tendina__vuoto strong {
+  font-size: var(--fs-base);
+  line-height: var(--lh-base);
+  color: var(--text-highlighted);
+}
+
+/* ==========================================================================
+   PULSANTI SULLA MAPPA
+   ========================================================================== */
+
+.nv-map-controlli {
+  position: absolute;
+  z-index: 4;
+  right: var(--gutter);
+  bottom: calc(var(--nv-map-peek) + var(--sp-7));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-4);
+  transition: opacity var(--dur) var(--ease), transform var(--dur) var(--ease);
+}
+.nv-map.is-elenco .nv-map-controlli,
+.nv-map.is-anteprima .nv-map-controlli {
+  opacity: 0;
+  transform: translateY(var(--sp-4));
+  pointer-events: none;
+}
+
+.nv-map-btn {
+  display: grid;
+  place-items: center;
+  width: var(--nv-bar-h);
+  height: var(--nv-bar-h);
+  border-radius: var(--r-full);
+  background: var(--surface);
+  color: var(--text-highlighted);
+  box-shadow: var(--nv-map-ombra);
+  transition: color var(--dur) var(--ease), background var(--dur) var(--ease), transform 120ms var(--ease);
+}
+.nv-map-btn:hover { background: var(--passivo); }
+.nv-map-btn:active { transform: scale(.94); }
+/* quando la mappa e' centrata su di te, il mirino diventa blu */
+.nv-map-btn.is-attivo { color: var(--main); }
+
+.nv-map-zoom {
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--r-full);
+  background: var(--surface);
+  box-shadow: var(--nv-map-ombra);
+}
+.nv-map-zoom .nv-map-btn { background: transparent; box-shadow: none; }
+.nv-map-zoom .nv-map-btn:hover { background: var(--passivo); }
+.nv-map-zoom .nv-map-btn + .nv-map-btn { position: relative; }
+.nv-map-zoom .nv-map-btn + .nv-map-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: var(--sp-5);
+  right: var(--sp-5);
+  height: 1px;
+  background: var(--light-outline);
+}
+
+/* ==========================================================================
+   PANNELLO DEI RISULTATI
+   Chiuso mostra solo la maniglia e quante cose ci sono; aperto sale fino
+   sotto alle categorie, che restano a portata di dito.
+   ========================================================================== */
+
+.nv-map-pannello {
+  position: absolute;
+  z-index: 5;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  height: var(--nv-map-peek);
+  background: var(--surface);
+  border-radius: var(--r-xl) var(--r-xl) 0 0;
+  box-shadow: var(--nv-map-ombra-su);
+  transition: height var(--dur) var(--ease), transform var(--dur) var(--ease);
+}
+.nv-map.is-elenco .nv-map-pannello { height: calc(100% - var(--nv-map-alto-h) - var(--sp-5)); }
+.nv-map.is-anteprima .nv-map-pannello { transform: translateY(calc(100% + var(--sp-8))); }
+
+.nv-map-pannello__testa {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: var(--nv-map-peek);
+  padding: var(--sp-4) var(--gutter) 0;
+  text-align: left;
+  cursor: pointer;
+}
+.nv-map-pannello__riga { display: flex; align-items: center; gap: var(--sp-6); }
+.nv-map-pannello__copy {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.nv-map-pannello__titolo,
+.nv-map-pannello__sotto {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.nv-map-pannello__titolo {
+  font-size: var(--fs-xl);
+  line-height: var(--lh-xl);
+  font-weight: var(--fw-bold);
+  letter-spacing: -.012em;
+  color: var(--text-highlighted);
+}
+.nv-map-pannello__sotto {
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+  color: var(--text-muted);
+}
+.nv-map-pannello__freccia {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: var(--nv-bar-h);
+  height: var(--nv-bar-h);
+  border-radius: var(--r-full);
+  background: var(--passivo);
+  color: var(--text-highlighted);
+  transition: transform var(--dur) var(--ease), background var(--dur) var(--ease);
+}
+.nv-map-pannello__testa:hover .nv-map-pannello__freccia { background: var(--bg-accented); }
+.nv-map.is-elenco .nv-map-pannello__freccia { transform: rotate(180deg); }
+
+.nv-map-pannello__corpo {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0 var(--gutter) var(--sp-8);
+  box-shadow: inset 0 1px 0 var(--light-outline);
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+.nv-map-gruppo { display: flex; flex-direction: column; }
+.nv-map-gruppo__titolo {
+  padding: var(--sp-8) 0 var(--sp-2);
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  font-weight: var(--fw-bold);
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.nv-map-riga {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-6);
+  padding: var(--sp-6) 0;
+  box-shadow: inset 0 -1px 0 var(--light-outline);
+}
+.nv-map-riga:last-child { box-shadow: none; }
+.nv-map-riga .nv-logo-ente { align-self: flex-start; margin-top: var(--sp-1); }
+.nv-map-riga__copy {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+.nv-map-riga__nome,
+.nv-map-riga__ente {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.nv-map-riga__nome {
+  font-size: var(--fs-base);
+  line-height: var(--lh-base);
+  font-weight: var(--fw-bold);
+  color: var(--text-highlighted);
+}
+.nv-map-riga__ente {
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+  color: var(--text-muted);
+}
+.nv-map-riga__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2) var(--sp-6);
+  margin-top: var(--sp-2);
+}
+.nv-map-riga__chev { flex: 0 0 auto; display: grid; color: var(--text-dimmed); }
+
+/* stato vuoto: la mascotte con la mappa */
+.nv-map-vuoto {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-4);
+  padding: var(--sp-8) 0;
+  text-align: center;
+}
+.nv-map-vuoto__mascotte { width: calc(var(--mascotte-w) * .8); margin-bottom: var(--sp-4); }
+.nv-map-vuoto__titolo {
+  font-size: var(--fs-xl);
+  line-height: var(--lh-xl);
+  font-weight: var(--fw-bold);
+  color: var(--text-highlighted);
+}
+.nv-map-vuoto__testo {
+  max-width: calc(var(--content-w) - var(--sp-12));
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+  color: var(--text-muted);
+}
+.nv-map-vuoto .nv-btn { margin-top: var(--sp-4); }
+
+/* ==========================================================================
+   SCHEDA ANTEPRIMA DEL SEGNAPOSTO
+   ========================================================================== */
+
+.nv-map-anteprima-box {
+  position: absolute;
+  z-index: 6;
+  left: var(--nv-map-margine);
+  right: var(--nv-map-margine);
+  bottom: var(--nv-map-margine);
+  pointer-events: none;
+}
+.nv-map-anteprima {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-7);
+  padding: var(--sp-7);
+  border-radius: var(--r-xl);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm), var(--shadow-lg);
+  pointer-events: auto;
+  animation: nv-su var(--dur) var(--ease);
+}
+.nv-map-anteprima__testa { display: flex; align-items: flex-start; gap: var(--sp-6); }
+.nv-map-anteprima__copy {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+.nv-map-anteprima__cat {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-height: var(--sp-8);
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  font-weight: var(--fw-bold);
+  color: var(--text-muted);
+}
+.nv-map-anteprima__cat .ico { color: var(--nv-map-colore); }
+.nv-map-anteprima__cat .nv-tag { margin-left: var(--sp-3); }
+.nv-map-anteprima__nome {
+  font-size: var(--fs-lg);
+  line-height: var(--lh-lg);
+  font-weight: var(--fw-bold);
+  letter-spacing: -.01em;
+  color: var(--text-highlighted);
+}
+.nv-map-anteprima__ente {
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+  color: var(--text-muted);
+}
+.nv-map-anteprima__chiudi { margin: calc(var(--sp-2) * -1) calc(var(--sp-2) * -1) 0 0; }
+.nv-map-anteprima__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2) var(--sp-7);
+}
+.nv-map-anteprima__meta .nv-meta,
+.nv-map-anteprima__meta .nv-rating {
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+}

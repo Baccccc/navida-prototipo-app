@@ -276,8 +276,9 @@ Per aggiungere una domanda basta copiare un oggetto esistente, cambiare
    - Blocco 2 · 3 ordinamenti, paure, valori, trasferimento, sogno aperto
    - Blocco 3 · 7 domande di personalità da 8 risposte
 
-Più **15 schermate** in `fase3.html`: dashboard, mappa, consulenza, notifiche,
-percorso, catalogo, dettaglio, filtri, impostazioni del contenuto e le sei del profilo.
+Più **14 schermate** in `fase3.html`: dashboard, linea di carriera, dettaglio
+step, scheda attività, scheda info, mappa, consulenza, notifiche e le sei del
+profilo (profilo, modifica, foto, curriculum, preferenze, esci).
 5. **Chiusura** (2) — anteprima della linea di carriera
 
 Ci sono **due barre di avanzamento**, scritte in `barre` in `js/content.js`:
@@ -292,6 +293,69 @@ Alla fine del questionario il pulsante **Vedi il tuo percorso** apre `fase3.html
 La Fase 3 comprende dashboard, linea di carriera con quattro versioni, catalogo,
 filtri, dettaglio opportunità, impostazioni, notifiche e gli stati vuoti previsti
 nel file Figma.
+
+---
+
+## L'app: dashboard, percorso, schede, mappa e profilo
+
+Rifatta da zero il 13/09/2026, **solo per il kit Maturo** (quello definitivo).
+Sta in `fase3.html`. Il file vecchio `js/fase3-render.js` non si carica più.
+
+### Il giro di un utente
+
+```
+Dashboard ──(card dello step)──> Linea di carriera ──(tocco uno step)──> Dettaglio step
+    │                                                                      │
+    │ Formazione / Lavoro                                  (tocco un compito, es. "Prendi un diploma")
+    ▼                                                                      ▼
+Scheda attività  <─────────────────────────────────────────────────────────┘
+    │  Elenco ⇄ Mappa (la mappa si apre già filtrata)
+    ▼
+Scheda info (corso, scuola, evento, libro, offerta)
+```
+
+Barra in basso: **Dashboard · Mappa · Consulenza**. Profilo e notifiche si
+aprono dall'avatar e dalla campanella in alto.
+
+### Dove sta cosa
+
+| Cosa | File |
+|---|---|
+| Elenco e ordine delle schermate | `js/fase3-content.js` |
+| Dati di esempio: il percorso di Marco (UX/AI Designer, step 1 di 5), compiti, scuole, corsi, eventi, libri, offerte, curriculum | `js/app/dati.js` |
+| Pezzi comuni: barre, pastiglie, schede, pannelli, navigazione (`NV`) | `js/app/base.js`, `css/app/base.css` |
+| Una schermata | `js/app/<schermata>.js` + `css/app/<schermata>.css` |
+
+Prezzi, voti, distanze e contatti in `dati.js` sono **inventati**.
+
+### Le versioni da confrontare
+
+Si scelgono dalla barra di modifica, scheda **Versione**.
+
+| Schermata | Versioni |
+|---|---|
+| Dashboard | Essenziale · Card eroe · Prossima mossa |
+| Linea di carriera | Sentiero · Pianeti · Tappe |
+| Dettaglio step | Lista chiara · Checklist · Carosello |
+| Scheda attività | Elenco per te · Copertine · Compatta |
+| Scheda info | tre versioni: copertina, schede a tab, scheda luogo |
+
+La **linea di carriera** alla fine del questionario (`index.html`, schermata
+`preview`) è la stessa vista dell'app, con le stesse tre versioni.
+
+Mappa, consulenza, notifiche e profilo (con modifica, foto, curriculum,
+preferenze ed esci) hanno una versione sola.
+
+### Link diretti per provare
+
+Aggiungi `&brand=maturo` per vederle nel kit giusto, `&cattura=1` per
+nascondere la barra di modifica.
+
+- `fase3.html?screen=dashboard&variant=eroe`
+- `fase3.html?screen=step&step=2`
+- `fase3.html?screen=attivita&compito=diploma` · `&ambito=lavoro`
+- `fase3.html?screen=scheda&opp=sid` · `&opp=googleux` · `&opp=workshopAi`
+- `fase3.html?screen=mappa&categoria=scuole&compito=diploma`
 
 ---
 
@@ -361,12 +425,14 @@ con la tastiera del computer, ma anche i tasti a schermo funzionano.
 ## Altre cose ancora da fare
 
 1. **Sezione ludica** — funzionante ma da ridisegnare.
-2. **Fase 3** — dashboard, linea di carriera e catalogo sono in `fase3.html`.
-   **Mappa** e **Consulenza** hanno la loro voce nella barra in basso e una
-   schermata "in arrivo": il contenuto vero resta da costruire.
-   Restano da fare anche lo scorrimento orizzontale fra gli step e la vista a
-   mappa delle attività (punti 3.1.2 e 3.1.3 del flusso su FigJam).
-3. **Fase 4** — profilo, modifica dati e foto, profilo professionale, preferenze e logout sono in `fase3.html`.
+2. **App (Fase 3 e 4)** — rifatta nel kit Maturo, vedi *L'app* qui sopra.
+   Resta "in arrivo" solo la **Consulenza**. Scegliere una delle tre versioni
+   per dashboard, linea di carriera, dettaglio step, scheda attività e scheda
+   info. Niente viene salvato: foto, preferenze e dati tornano come prima
+   ricaricando la pagina.
+3. **Pulizia** — `js/fase3-render.js`, `css/fase3.css` e il vecchio disegno
+   dell'anteprima in `js/render.js` non si usano più. Si possono togliere
+   quando si è sicuri della scelta.
 4. **Testi placeholder** — le 4 schede di onboarding hanno copy provvisorio.
 
 ---
