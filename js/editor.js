@@ -94,7 +94,6 @@
       this.host = document.getElementById('editor');
       this.pronto = true;
       this.setupMobile();
-      this.setupSkip();
       this.paint();
     },
 
@@ -160,48 +159,6 @@
         text: 'Esci',
         onclick: function () { Editor.setMode(null); Editor.paint(); }
       }));
-    },
-
-    /* ==================================================================
-       Salto rapido — invisibile finché non premi Tab
-       ================================================================== */
-    setupSkip: function () {
-      var btn = document.getElementById('skip');
-      if (!btn) return;
-
-      btn.addEventListener('click', function () {
-        var target = btn.getAttribute('data-target');
-        if (target) {
-          window.location.href = target;
-          return;
-        }
-        // riempie il questionario con risposte finte e va al risultato
-        window.NavidaApp.compilaTutto();
-        window.NavidaApp.goTo('preview');
-        btn.blur();
-      });
-
-      /* Il primo Tab deve portare QUI, non alla freccia indietro.
-         Intercettiamo il Tab quando il fuoco è ancora sul documento. */
-      document.addEventListener('keydown', function (e) {
-        if (e.key === 'Tab' && !e.shiftKey) {
-          var a = document.activeElement;
-          var fuori = !a || a === document.body || a === document.documentElement;
-          if (fuori) {
-            e.preventDefault();
-            btn.classList.add('is-shown');
-            btn.focus();
-            return;
-          }
-        }
-        if (e.key === 'Alt' || e.altKey) {
-          btn.classList.add('is-shown');
-          btn.focus();
-        }
-        if (e.key === 'Escape') { btn.classList.remove('is-shown'); btn.blur(); }
-      }, true);
-
-      btn.addEventListener('blur', function () { btn.classList.remove('is-shown'); });
     },
 
     /* ================================================================== */

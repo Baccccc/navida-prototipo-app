@@ -7,9 +7,9 @@
                   arriva dalla dashboard e toccando una tappa si apre lo step
      index.html   schermata "preview": alla fine del questionario. E' la
                   stessa pagina, senza pulsante in fondo. La freccia torna
-                  indietro nel questionario; toccando una tappa si entra
-                  nell'app vera, nella pagina dello step
-                  (fase3.html?screen=step&step=n)
+                  indietro nel questionario; toccando lo step 1 si entra
+                  nella dashboard, toccando gli altri nella pagina dello
+                  step (fase3.html?screen=step&step=n)
 
    Bac l'ha chiesta "come un percorso, un filo ludico, stile Duolingo", ma
    con pochi step molto distanziati, una piccola mappa diretta dallo step 1
@@ -177,13 +177,14 @@
   /* ==================================================================
      APRIRE UNA TAPPA
      Nell'app si va al dettaglio dello step. Nell'anteprima si entra
-     nell'app vera, direttamente nella pagina dello step: l'app sta in
-     fase3.html. Il brand kit dell'indirizzo, se c'e', viaggia con noi.
+     nell'app vera: lo step 1 porta alla dashboard, gli altri alla
+     pagina dello step. L'app sta in fase3.html. Il brand kit
+     dell'indirizzo, se c'e', viaggia con noi.
      ================================================================== */
 
   function apri(i, anteprima) {
     if (!anteprima) { NV.apriStep(i); return; }
-    var url = 'fase3.html?screen=step&step=' + (i + 1);
+    var url = i === 0 ? 'fase3.html?screen=dashboard' : 'fase3.html?screen=step&step=' + (i + 1);
     try {
       var kit = new URLSearchParams(window.location.search).get('brand');
       if (kit) url += '&brand=' + encodeURIComponent(kit);

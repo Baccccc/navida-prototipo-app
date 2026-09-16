@@ -435,32 +435,6 @@
   }
 }
 
-/* ==========================================================================
-   Salto rapido — accessibile da Tab
-   ========================================================================== */
-
-.skiplink {
-  position: fixed;
-  top: 16px; left: 16px;
-  z-index: 200;
-  transform: translateY(-200%);
-  padding: 12px 20px;
-  border-radius: var(--r-md);
-  background: var(--main);
-  color: #fff;
-  font-family: var(--font);
-  font-size: 14px;
-  font-weight: var(--fw-semibold);
-  box-shadow: var(--shadow-lg);
-  transition: transform 200ms var(--ease);
-}
-.skiplink:focus,
-.skiplink.is-shown {
-  transform: none;
-  outline: 3px solid #ffffff8a;
-  outline-offset: 2px;
-}
-
 /* --- mascotte: griglia con anteprime ----------------------------------- */
 .ed-search {
   width: 100%;
