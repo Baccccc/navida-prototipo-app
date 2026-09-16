@@ -349,7 +349,8 @@
    ========================================================================== */
 
 /* I pallini stanno nella barra, al centro */
-.nv-step--checklist .nv-bar .nv-step-pallini { flex: 1; }
+.nv-step--checklist .nv-bar .nv-step-pallini,
+.nv-step--definitiva .nv-bar .nv-step-pallini { flex: 1; }
 
 .nv-step-testa { display: flex; flex-direction: column; gap: var(--sp-3); }
 .nv-step-testa--spenta {
@@ -629,3 +630,24 @@
 .nv-step-tessera__meta { margin-bottom: var(--sp-4); font-size: var(--fs-xs); line-height: var(--lh-xs); color: var(--text-muted); }
 /* l'etichetta sta sempre in fondo, allineata fra le tessere della stessa fila */
 .nv-step-tessera .nv-tag { margin-top: auto; }
+
+/* ==========================================================================
+   VERSIONE DEFINITIVA
+   I pallini nella barra (regola sopra, con la checklist), titolo e
+   obiettivo, "Leggi tutto" e le attivita' come "In primo piano" della
+   dashboard: le righe usano le classi nv-dash-voce di dashboard.css.
+   ========================================================================== */
+
+.nv-step--definitiva {
+  /* la colonna delle icone delle righe, come nella dashboard */
+  --nv-dash-data-w: 44px;
+  /* qui non si trascina: la pagina scorre e basta */
+  touch-action: auto;
+}
+/* in dashboard.css il display flex arriva da .nv-dash, che qui non c'e' */
+.nv-step--definitiva .nv-dash-voce { display: flex; width: 100%; text-align: left; }
+.nv-step--definitiva .nv-step-testata .nv-step-leggi { margin-top: calc(var(--sp-2) * -1); }
+.nv-step--definitiva .nv-step-dati[hidden] { display: none; }
+.nv-step--definitiva .nv-dash-voce.is-fatto .nv-dash-voce__titolo { color: var(--text-toned); }
+/* "Step 1" sopra il titolo: vicino al titolo, non staccato */
+.nv-step--definitiva .nv-step-numero { margin-bottom: calc(var(--sp-2) * -1); }

@@ -246,7 +246,9 @@ div.nv-pro-voce.nv-press:hover { background: var(--bg); }
   justify-content: space-between;
   gap: var(--sp-7);
 }
-.nv-pro-id__modifica { margin-bottom: var(--sp-2); }
+
+/* le schede Profilo | Impostazioni e il loro contenuto */
+.nv-pro-schede { display: flex; flex-direction: column; gap: var(--sp-8); }
 .nv-pro-id__testi { display: flex; flex-direction: column; gap: var(--sp-2); }
 .nv-pro-id__meta {
   display: flex;
@@ -1061,11 +1063,11 @@ div.nv-pro-voce.nv-press:hover { background: var(--bg); }
 }
 .nv-cv-carta__testa { display: flex; align-items: center; gap: var(--sp-6); }
 .nv-cv-carta__foto {
+  flex: 0 0 auto;
   width: 48px;
   height: 48px;
+  overflow: hidden;
   border-radius: var(--r-full);
-  object-fit: cover;
-  object-position: 50% 18%;
   background: var(--risposte-bg);
 }
 .nv-cv-carta__nome { display: flex; flex-direction: column; min-width: 0; }

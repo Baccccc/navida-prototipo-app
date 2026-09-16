@@ -4,14 +4,18 @@
    Si apre toccando uno step nella linea di carriera. In alto dice che step
    e', a cosa serve e quanto dura; sotto elenca le attivita' da fare per
    completarlo (non corsi: i passi veri, "prendi un diploma", "fai sei mesi
-   in uno studio"), ognuna con l'etichetta Obbligatoria o Facoltativa.
+   in uno studio"), ognuna con l'etichetta Necessaria o Facoltativa.
    Toccando un'attivita' si apre la scheda attivita' con i posti dove farla.
 
    Da qui si passa agli altri step con le frecce, le linguette, i pallini o
    con uno swipe orizzontale (dito o mouse). Lo swipe non blocca lo
    scorrimento verticale: la pagina ha touch-action: pan-y.
 
-   Tre versioni (pannello "Versione"):
+   Quattro versioni (pannello "Versione"):
+     definitiva  La scelta di Bac: pallini degli step in alto (l'unico modo
+                 per cambiare step, niente swipe ne' frecce), titolo e
+                 obiettivo, "Leggi tutto" per i dettagli, attivita' divise
+                 in Tutte / Necessarie / Consigliate come "In primo piano"
      base        Lista chiara: linguette degli step, testata, righe divise
                  in obbligatorie e facoltative
      checklist   Checklist: testata con la sfumatura, spunte grandi,
@@ -20,6 +24,7 @@
                  le attivita' sotto come tessere
 
    Prove:
+     fase3.html?screen=step&step=2&variant=definitiva&filtro=consigliate
      fase3.html?screen=step&step=2&variant=base
      fase3.html?screen=step&step=1&variant=checklist&filtro=facoltative
      fase3.html?screen=step&step=5&variant=carosello
@@ -40,8 +45,9 @@
   window.NAVIDA_PAGE_VARIANTS = window.NAVIDA_PAGE_VARIANTS || {};
   window.NAVIDA_PAGE_VARIANTS.step = {
     etichetta: 'Versione del dettaglio step',
-    predefinita: 'base',
+    predefinita: 'definitiva',
     options: [
+      { value: 'definitiva', label: 'Definitiva' },
       { value: 'base', label: 'Lista chiara' },
       { value: 'checklist', label: 'Checklist' },
       { value: 'carosello', label: 'Carosello' }
@@ -402,7 +408,7 @@
           /* il traguardo non ha una durata: si dice quanto manca */
           traguardo ? dato('Mancano', plurale(Math.max(0, i - NV.stepAttuale()), 'step', 'step')) : dato('Durata', s.durata),
           dato('Attività fatte', k.fatti + ' di ' + k.totali),
-          dato('Obbligatorie', k.obbligatorieFatte + ' di ' + k.obbligatorie)
+          dato('Necessarie', k.obbligatorieFatte + ' di ' + k.obbligatorie)
         ]),
         !traguardo && s.stipendio ? NV.meta('euro', s.stipendio.replace('€ ', '')) : null,
         /* Le competenze qui sono una frase, non pastiglie: stanno in due
@@ -417,7 +423,7 @@
           NV.testo(screen, 'cosaFare', 'Cosa fare in questo step', 'h2', 'nv-step-sezione__titolo'),
           NV.testo(screen, 'cosaFareSub', 'Tocca un’attività per vedere dove e come farla.', 'p', 'nv-step-sezione__sub')
         ]),
-        gruppoBase(screen, 'obbligatorie', 'Obbligatorie', compiti.filter(function (c) { return c.obbligatoria; })),
+        gruppoBase(screen, 'obbligatorie', 'Necessarie', compiti.filter(function (c) { return c.obbligatoria; })),
         gruppoBase(screen, 'facoltative', 'Facoltative', compiti.filter(function (c) { return !c.obbligatoria; }))
       ]),
       dopo || arrivo(screen, s)
@@ -504,7 +510,7 @@
       h('p', { class: 'nv-step-testa__obiettivo', text: s.obiettivo }),
       h('div', { class: 'nv-step-testa__conto' }, [
         h('span', {}, [h('strong', { text: k.fatti + ' di ' + k.totali }), ' attività fatte']),
-        h('span', { text: 'Obbligatorie ' + k.obbligatorieFatte + ' di ' + k.obbligatorie })
+        h('span', { text: 'Necessarie ' + k.obbligatorieFatte + ' di ' + k.obbligatorie })
       ]),
       NV.avanzamento(k.fatti, k.totali, sfumatura)
     ]);
@@ -517,7 +523,7 @@
       filtroBox.innerHTML = '';
       filtroBox.appendChild(NV.segmenti([
         { value: 'tutte', label: 'Tutte' },
-        { value: 'obbligatorie', label: 'Obbligatorie' },
+        { value: 'obbligatorie', label: 'Necessarie' },
         { value: 'facoltative', label: 'Facoltative' }
       ], filtro, function (val) { filtro = val; disegna(); }, 'nv-seg--piena'));
 
@@ -535,7 +541,7 @@
       if (!scelti.length) {
         listaBox.appendChild(h('p', {
           class: 'nv-tile nv-step-vuoto',
-          text: 'In questo step non ci sono attività ' + (filtro === 'facoltative' ? 'facoltative' : 'obbligatorie') + '.'
+          text: 'In questo step non ci sono attività ' + (filtro === 'facoltative' ? 'facoltative' : 'necessarie') + '.'
         }));
       }
       if (aperti.length) listaBox.appendChild(gruppoCheck(screen, 'daFare', 'Da fare', aperti));
@@ -657,7 +663,7 @@
     }, [leggiTesto, icon('chevron-down', ICO.SM)]);
 
     var facoltative = k.totali - k.obbligatorie;
-    var conto = [plurale(k.obbligatorie, 'obbligatoria', 'obbligatorie')];
+    var conto = [plurale(k.obbligatorie, 'necessaria', 'necessarie')];
     if (facoltative) conto.push(plurale(facoltative, 'facoltativa', 'facoltative'));
 
     sotto = h('div', { class: 'nv-step-sotto' }, [
@@ -711,6 +717,146 @@
   }
 
   /* ==================================================================
+     VERSIONE DEFINITIVA
+     ------------------------------------------------------------------
+     Si cambia step solo toccando i pallini in alto. Le attivita' sono
+     righe come "In primo piano" della dashboard (classi nv-dash-voce).
+     ================================================================== */
+
+  /* Scheda scelta: resta uguale passando da uno step all'altro.
+     Per le prove: &filtro=necessarie oppure &filtro=consigliate */
+  var FILTRI_DEF = { tutte: 'Tutte', necessarie: 'Necessarie', consigliate: 'Consigliate' };
+  var filtroDef = (function () {
+    var f = null;
+    try { f = new URLSearchParams(window.location.search).get('filtro'); } catch (e) {}
+    if (f === 'obbligatorie') f = 'necessarie';
+    if (f === 'facoltative') f = 'consigliate';
+    return FILTRI_DEF[f] ? f : 'tutte';
+  })();
+
+  /** Necessaria / Consigliata: in questa versione "Facoltativa" diventa "Consigliata". */
+  function tagDef(obbligatoria) {
+    return h('span', {
+      class: 'nv-tag ' + (obbligatoria ? 'nv-tag--obbligatoria' : 'nv-tag--facoltativa'),
+      text: obbligatoria ? 'Necessaria' : 'Consigliata'
+    });
+  }
+
+  function rigaDef(c) {
+    var cat = NV.categoria(c.categoria);
+    var fatto = c.stato === 'fatto';
+    return h('button', {
+      class: 'nv-dash-voce nv-press is-' + (c.stato || 'da-fare'),
+      type: 'button',
+      onclick: function () { NV.apriCompito(c.id); }
+    }, [
+      fatto ? NV.icoChip('check', 'ok') : NV.icoChip(cat.icona, cat.tono),
+      h('span', { class: 'nv-row__copy' }, [
+        h('span', { class: 'nv-dash-voce__tags' }, [
+          tagDef(c.obbligatoria),
+          c.stato === 'in-corso' ? NV.etichetta('In corso', 'main') : null,
+          fatto ? NV.etichetta('Fatta', 'ok') : null
+        ]),
+        h('span', { class: 'nv-dash-voce__titolo', text: c.titolo }),
+        h('span', { class: 'nv-dash-dati' }, [h('span', { text: fatto ? cat.etichetta : (c.nota || c.durata) })])
+      ]),
+      h('span', { class: 'nv-row__chev' }, [icon('chevron-right', ICO.MD)])
+    ]);
+  }
+
+  function attivitaDef(screen, s) {
+    var ordine = { 'in-corso': 0, 'da-fare': 1, 'fatto': 2 };
+    var tutte = (s.compiti || []).slice().sort(function (a, b) {
+      return ((ordine[a.stato] || 0) - (ordine[b.stato] || 0)) || (b.obbligatoria - a.obbligatoria);
+    });
+    var gruppi = {
+      tutte: tutte,
+      necessarie: tutte.filter(function (c) { return c.obbligatoria; }),
+      consigliate: tutte.filter(function (c) { return !c.obbligatoria; })
+    };
+    var contenuto = h('div', { class: 'nv-dash-schede__contenuto' });
+
+    /* Cambiando scheda si ridisegna solo l'elenco: la pagina non salta. */
+    function disegna(valore) {
+      filtroDef = valore;
+      var opzioni = Object.keys(FILTRI_DEF).map(function (k) {
+        return { value: k, label: FILTRI_DEF[k] };
+      });
+      var lista = gruppi[valore];
+      contenuto.replaceChildren(
+        NV.segmenti(opzioni, valore, disegna, 'nv-seg--piena'),
+        lista.length
+          ? h('div', { class: 'nv-dash-gruppo' }, lista.map(rigaDef))
+          : h('div', { class: 'nv-dash-vuoto' }, [
+              icon('sparkles', ICO.MD),
+              h('p', { text: 'In questo step non ci sono attività ' + (valore === 'consigliate' ? 'consigliate' : 'necessarie') + '.' })
+            ])
+      );
+    }
+    disegna(filtroDef);
+
+    return h('section', { class: 'nv-section' }, [
+      h('div', { class: 'nv-section__head' }, [
+        NV.testo(screen, 'definitivaAttivita', 'Le attività dello step', 'h2', 'nv-section__title')
+      ]),
+      contenuto
+    ]);
+  }
+
+  function corpoDefinitiva(screen, s, i, st) {
+    var n = totaleStep();
+    var k = NV.conteggio(s);
+    var traguardo = s.tipo === 'Traguardo';
+
+    /* I dettagli restano chiusi sotto "Leggi tutto". */
+    var extra = h('div', { class: 'nv-tile nv-step-dati', hidden: true }, [
+      h('p', { class: 'nv-body', text: s.descrizione }),
+      h('div', { class: 'nv-step-dati__griglia' }, [
+        traguardo ? dato('Mancano', plurale(Math.max(0, i - NV.stepAttuale()), 'step', 'step')) : dato('Durata', s.durata),
+        dato('Attività fatte', k.fatti + ' di ' + k.totali),
+        dato('Necessarie', k.obbligatorieFatte + ' di ' + k.obbligatorie)
+      ]),
+      !traguardo && s.stipendio ? NV.meta('euro', s.stipendio.replace('€ ', '')) : null,
+      s.competenze && s.competenze.length ? h('p', { class: 'nv-step-dati__impari' }, [
+        NV.testo(screen, 'cosaImpari', 'Cosa impari', 'span', 'nv-step-dati__label'),
+        h('span', { text: s.competenze.join(', ') })
+      ]) : null
+    ]);
+    var leggiTesto = h('span', { text: 'Leggi tutto' });
+    var leggi = h('button', {
+      class: 'nv-link nv-step-leggi',
+      type: 'button',
+      'aria-expanded': 'false',
+      onclick: function () {
+        var apri = extra.hidden;
+        extra.hidden = !apri;
+        leggi.setAttribute('aria-expanded', apri ? 'true' : 'false');
+        leggiTesto.textContent = apri ? 'Mostra meno' : 'Leggi tutto';
+      }
+    }, [leggiTesto, icon('chevron-down', ICO.SM)]);
+
+    /* Per gli step futuri resta l'avviso, ma senza il link per cambiare step. */
+    var avviso = avvisoFuturo(screen, s, i, st);
+    if (avviso) {
+      var link = avviso.querySelector('.nv-step-avviso__link');
+      if (link) link.remove();
+    }
+
+    return h('div', { class: 'nv-step-corpo' }, [
+      h('header', { class: 'nv-step-testata' }, [
+        h('span', { class: 'nv-eyebrow nv-step-numero', text: 'Step ' + (i + 1) }),
+        h('h1', { class: 'nv-title', text: s.titolo }),
+        h('p', { class: 'nv-lead', text: s.obiettivo }),
+        leggi
+      ]),
+      extra,
+      avviso,
+      attivitaDef(screen, s),
+      i === n - 1 ? arrivo(screen, s) : null
+    ]);
+  }
+
+  /* ==================================================================
      PROVA DELLO SWIPE (per le catture senza dito)
      ------------------------------------------------------------------
        &swipe=-140     trascina di 140px verso sinistra e rilascia: step dopo
@@ -743,7 +889,7 @@
      ================================================================== */
 
   window.NavidaRender.screens.nvStep = function (screen) {
-    var v = NV.variante(screen.id) || 'base';
+    var v = NV.variante(screen.id) || 'definitiva';
     var n = totaleStep();
     var i = indiceAperto();
     var s = NV.step(i);
@@ -755,6 +901,14 @@
       (dir ? ' nv-step--entra nv-step--da-' + (dir > 0 ? 'destra' : 'sinistra') : '');
     var titoloBarra = 'Step ' + (i + 1) + ' di ' + n;
     var pagina, corpo;
+
+    if (v === 'definitiva') {
+      /* Niente swipe: si cambia step solo con i pallini nella barra. */
+      var barraDef = NV.barra({ indietro: 'percorso' });
+      var spazioDef = barraDef.querySelector('.nv-bar__spazio');
+      if (spazioDef) barraDef.replaceChild(pallini(i), spazioDef);
+      return [NV.pagina(classi, [barraDef, corpoDefinitiva(screen, s, i, st)])];
+    }
 
     if (v === 'carosello') {
       var c = corpoCarosello(screen, s, i, st);

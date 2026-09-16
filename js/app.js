@@ -218,6 +218,12 @@
         else if (out) wrap.appendChild(out);
       }
 
+      /* App (Fase 3 e 4): la barra in basso c'e' sempre */
+      if (window.NV && window.NV.navPerSchermata && !wrap.querySelector('.nv-nav')) {
+        var nav = window.NV.navPerSchermata(screen);
+        if (nav) wrap.appendChild(nav);
+      }
+
       // queste schermate occupano tutto lo spazio, senza margini
       if (screen.type === 'hero' || screen.type === 'splash' ||
           screen.type === 'dream' || screen.type === 'circles' || screen.type === 'loading' || screen.fullBleed) {

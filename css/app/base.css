@@ -172,20 +172,46 @@
 
 .nv-avatar {
   flex: 0 0 auto;
+  display: block;
   width: var(--nv-bar-h);
   height: var(--nv-bar-h);
   padding: 0;
   border-radius: var(--r-full);
   overflow: hidden;
   background: var(--risposte-bg);
-  box-shadow: inset 0 0 0 2px var(--surface), 0 0 0 1px var(--light-outline);
 }
-.nv-avatar img {
+/* La foto profilo, uguale ovunque: la foto scelta oppure l'icona persona. */
+.nv-foto-profilo {
   display: block;
   width: 100%;
   height: 100%;
   object-fit: cover;
   object-position: 50% 18%;
+}
+.nv-foto-profilo--icona {
+  display: grid;
+  place-items: center;
+  color: var(--main);
+}
+
+/* Il saluto della barra principale: foto profilo e "Ciao Nome". */
+.nv-utente {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-5);
+  text-align: left;
+}
+.nv-utente__saluto {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--fs-lg);
+  line-height: var(--lh-lg);
+  font-weight: var(--fw-bold);
+  letter-spacing: -.01em;
+  color: var(--text-highlighted);
 }
 
 /* ==========================================================================
@@ -373,6 +399,16 @@
 }
 .nv-logo-ente--sm { width: 40px; height: 40px; font-size: var(--fs-xs); }
 .nv-logo-ente--lg { width: 64px; height: 64px; border-radius: var(--r-lg); font-size: var(--fs-lg); }
+/* il logo vero: immagine su fondo bianco, con un filo per staccarlo dal bianco della scheda */
+.nv-logo-ente--img {
+  overflow: hidden;
+  padding: var(--sp-2);
+  background: var(--surface);
+  box-shadow: inset 0 0 0 1px var(--light-outline);
+  /* senza questo un logo alto e stretto sfonda il riquadro */
+  grid-template: minmax(0, 1fr) / minmax(0, 1fr);
+}
+.nv-logo-ente--img img { display: block; width: 100%; height: 100%; object-fit: contain; }
 
 /* ==========================================================================
    ETICHETTE E PASTIGLIE
@@ -393,7 +429,7 @@
 }
 .nv-tag--obbligatoria { background: var(--risposte-bg); color: var(--main); }
 /* Facoltativa: solo il contorno. Si legge sia sulle schede bianche sia
-   sulle zone grigie, e pesa meno della piena "Obbligatoria". */
+   sulle zone grigie, e pesa meno della piena "Necessaria". */
 .nv-tag--facoltativa { background: transparent; color: var(--text-muted); box-shadow: inset 0 0 0 1.5px var(--bg-accented); }
 .nv-tag--neutra { background: var(--passivo); color: var(--text-toned); }
 .nv-tag--main { background: var(--main); color: var(--text-on-main); }

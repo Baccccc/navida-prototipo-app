@@ -918,7 +918,7 @@
         'aria-label': 'Apri il profilo',
         title: 'Profilo',
         onclick: function () { NV.vai('profilo'); }
-      }, [h('img', { src: D.utente.avatar, alt: '' })])
+      }, [NV.fotoProfilo()])
     ]);
 
     var filtro = filtroContesto(m);

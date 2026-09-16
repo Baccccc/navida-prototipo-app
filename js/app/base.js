@@ -135,7 +135,9 @@
       ambito: null,
       opportunita: 'googleux',
       mappa: { categoria: 'tutte', compito: null, ambito: null, cerca: '' },
-      storia: []
+      storia: [],
+      /* l'ultima voce toccata nella barra in basso */
+      tab: 'dashboard'
     };
   }
 
@@ -206,6 +208,7 @@
   /** Una delle tre voci della barra in basso: si riparte da capo. */
   function vaiTab(id) {
     ctx.storia = [];
+    ctx.tab = id;
     if (id === 'mappa') ctx.mappa = contestoIniziale().mappa;
     salva();
     window.NavidaApp.goTo(id);
@@ -259,6 +262,29 @@
     return null;
   }
   function compito(id) { var t = cercaCompito(id); return t ? t.compito : null; }
+
+  /** I compiti ancora da fare di uno step: prima quelli in corso, poi le necessarie. */
+  function compitiAperti(s) {
+    function peso(c) { return (c.stato === 'in-corso' ? 0 : 2) + (c.obbligatoria ? 0 : 1); }
+    return ((s && s.compiti) || [])
+      .filter(function (c) { return c.stato !== 'fatto'; })
+      .sort(function (a, b) { return peso(a) - peso(b); });
+  }
+
+  /**
+   * "La tua prossima mossa": il compito in primo piano, o il primo aperto.
+   * La usano la dashboard (la card sfumata) e la scheda attività (la testata
+   * diventa sfumata quando stai guardando proprio quel compito).
+   */
+  function prossimaMossa(i) {
+    if (i == null) i = stepAttuale();
+    if (i === stepAttuale()) {
+      var p = (D.primoPiano || []).filter(function (x) { return x.tipo === 'compito'; })[0];
+      if (p && compito(p.id)) return { compito: compito(p.id), etichetta: p.etichetta };
+    }
+    var c = compitiAperti(step(i))[0];
+    return c ? { compito: c, etichetta: 'Da fare adesso' } : null;
+  }
 
   function opportunita(id) {
     var o = D.opportunita[id];
@@ -390,23 +416,41 @@
     return (D.notifiche || []).filter(function (n) { return n.nuova; }).length;
   }
 
-  /** Barra delle tre schermate principali: logotipo, campanella, avatar. */
+  /**
+   * Il contenuto del cerchio della foto profilo, uguale in tutta l'app.
+   * Se l'utente ha scelto una foto (D.utente.avatar) si vede la foto,
+   * altrimenti l'icona persona. Cambiare la foto dal profilo la cambia ovunque.
+   *   dim   grandezza dell'icona (default ICO.MD)
+   */
+  function fotoProfilo(dim) {
+    if (D.utente.avatar) return h('img', { class: 'nv-foto-profilo', src: D.utente.avatar, alt: '' });
+    return h('span', { class: 'nv-foto-profilo nv-foto-profilo--icona', 'aria-hidden': 'true' }, [icon('user-round', dim || ICO.MD)]);
+  }
+
+  /**
+   * Barra delle schermate principali, uguale ovunque: a sinistra il cerchio
+   * con la foto profilo e "Ciao Nome" (tocco → profilo), a destra la campanella.
+   *   screen   la schermata, per rendere modificabile "Ciao" (facoltativo)
+   */
   function barraHome(opts) {
     opts = opts || {};
     var campanella = iconBtn('bell', 'Notifiche', function () { vai('notifiche'); }, 'nv-bell');
     if (nuoveNotifiche()) campanella.appendChild(h('span', { class: 'nv-dot', 'aria-hidden': 'true' }));
-    return h('header', { class: 'nv-bar nv-bar--home' + (opts.classe ? ' ' + opts.classe : '') }, [
-      opts.sinistra || logotipo(),
-      h('div', { class: 'nv-bar__azioni' }, [
-        campanella,
-        h('button', {
-          class: 'nv-avatar',
-          type: 'button',
-          'aria-label': 'Apri il profilo',
-          title: 'Profilo',
-          onclick: function () { vai('profilo'); }
-        }, [h('img', { src: D.utente.avatar, alt: '' })])
+    var saluto = h('button', {
+      class: 'nv-utente',
+      type: 'button',
+      'aria-label': 'Apri il profilo',
+      onclick: function () { vai('profilo'); }
+    }, [
+      h('span', { class: 'nv-avatar' }, [fotoProfilo()]),
+      h('span', { class: 'nv-utente__saluto' }, [
+        opts.screen ? testo(opts.screen, 'saluto', 'Ciao') : 'Ciao',
+        ' ' + D.utente.nome
       ])
+    ]);
+    return h('header', { class: 'nv-bar nv-bar--home' + (opts.classe ? ' ' + opts.classe : '') }, [
+      saluto,
+      h('div', { class: 'nv-bar__azioni' }, [campanella])
     ]);
   }
 
@@ -446,20 +490,37 @@
     { id: 'consulenza', icona: 'users', label: 'Consulenza' }
   ];
 
-  /** Barra in basso: solo sulle tre schermate principali. */
+  /**
+   * Barra in basso. attivo = la voce accesa. Sulle tre schermate principali
+   * la voce accesa non fa niente; sulle altre (step, scheda...) riporta
+   * all'inizio di quella sezione.
+   */
   function navBasso(attivo) {
+    var qui = schermataCorrente();
     return h('nav', { class: 'nv-nav', 'aria-label': 'Sezioni principali' }, VOCI_NAV.map(function (v) {
       var on = v.id === attivo;
+      var ferma = v.id === qui;
       return h('button', {
         class: 'nv-nav__voce' + (on ? ' is-attiva' : ''),
         type: 'button',
-        'aria-current': on ? 'page' : null,
-        onclick: on ? null : function () { vaiTab(v.id); }
+        'aria-current': ferma ? 'page' : null,
+        onclick: ferma ? null : function () { vaiTab(v.id); }
       }, [
         h('span', { class: 'nv-nav__icona' }, [icon(v.icona, ICO.LG)]),
         h('span', { class: 'nv-nav__label', text: v.label })
       ]);
     }));
+  }
+
+  /**
+   * La barra in basso sta su tutte le schermate dell'app (Fase 3 e 4),
+   * non nel questionario. La chiama js/app.js dopo ogni schermata che non
+   * l'ha gia' messa da sola. Si accende la sezione da cui sei partito.
+   */
+  function navPerSchermata(screen) {
+    if (!screen || (screen.chapter !== 'fase3' && screen.chapter !== 'fase4')) return null;
+    var attivo = VOCI_NAV.some(function (v) { return v.id === screen.id; }) ? screen.id : (ctx.tab || 'dashboard');
+    return navBasso(attivo);
   }
 
   /** Blocco con titoletto e, a destra, un link "Vedi tutti". */
@@ -475,11 +536,11 @@
     ].concat(figli || []));
   }
 
-  /** Etichetta Obbligatoria / Facoltativa. */
+  /** Etichetta Necessaria / Facoltativa (nei dati il campo resta "obbligatoria"). */
   function tag(obbligatoria) {
     return h('span', {
       class: 'nv-tag ' + (obbligatoria ? 'nv-tag--obbligatoria' : 'nv-tag--facoltativa'),
-      text: obbligatoria ? 'Obbligatoria' : 'Facoltativa'
+      text: obbligatoria ? 'Necessaria' : 'Facoltativa'
     });
   }
 
@@ -555,10 +616,19 @@
     ]);
   }
 
-  /** Logo di ripiego di un ente: la sigla su fondo colorato. dim: sm | lg */
+  /**
+   * Logo di un ente. Con o.logo mostra l'immagine su fondo bianco; senza,
+   * il ripiego: la sigla su fondo colorato. dim: sm | lg
+   */
   function logo(o, dim) {
+    var misura = dim ? ' nv-logo-ente--' + dim : '';
+    if (o && o.logo) {
+      return h('span', { class: 'nv-logo-ente nv-logo-ente--img' + misura, 'aria-hidden': 'true' }, [
+        h('img', { src: o.logo, alt: '', loading: 'lazy' })
+      ]);
+    }
     return h('span', {
-      class: 'nv-logo-ente nv-tono-' + ((o && o.tono) || 1) + (dim ? ' nv-logo-ente--' + dim : ''),
+      class: 'nv-logo-ente nv-tono-' + ((o && o.tono) || 1) + misura,
       'aria-hidden': 'true',
       text: (o && o.sigla) || ((o && (o.ente || o.nome)) || '?').charAt(0)
     });
@@ -710,6 +780,8 @@
     stepAttuale: stepAttuale,
     cercaCompito: cercaCompito,
     compito: compito,
+    compitiAperti: compitiAperti,
+    prossimaMossa: prossimaMossa,
     opportunita: opportunita,
     tutteLeOpportunita: tutteLeOpportunita,
     opportunitaPer: opportunitaPer,
@@ -728,9 +800,11 @@
     /* componenti */
     pagina: pagina,
     barraHome: barraHome,
+    fotoProfilo: fotoProfilo,
     barra: barra,
     intestazione: intestazione,
     navBasso: navBasso,
+    navPerSchermata: navPerSchermata,
     iconBtn: iconBtn,
     logotipo: logotipo,
     sezione: sezione,

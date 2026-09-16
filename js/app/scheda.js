@@ -18,8 +18,8 @@
 
    Prove dall'indirizzo:
      ?screen=scheda&opp=sid&variant=luogo
-     &tab=programma     apre una scheda della versione "schede"
-     &foglio=contatta   apre un pannello (contatta | menu | condividi | azione | fatto)
+     &tab=recensioni    apre una scheda della versione "schede"
+     &foglio=contatta   apre un pannello (contatta | menu | condividi | fatto)
 
    Stile: css/app/scheda.css (prefisso nv-info-).
    ========================================================================== */
@@ -52,16 +52,15 @@
 
   /* ==================================================================
      IL TIPO DI SCHEDA
-     Ogni categoria diventa uno di cinque tipi. Il tipo decide l'azione
-     principale, i nomi delle sezioni e cosa conviene chiedere a chi lo offre.
+     Ogni categoria diventa uno di cinque tipi. Il tipo decide i nomi
+     delle sezioni e cosa conviene chiedere a chi lo offre.
      ================================================================== */
   var TIPI = { scuole: 'scuola', corsi: 'corso', workshop: 'evento', eventi: 'evento', libri: 'libro', lavoro: 'lavoro' };
 
   var PER_TIPO = {
     scuola: {
-      azione: 'Iscriviti',
       fatto: ['Segna come fatto', 'Fatto'],
-      punti: 'Perché sceglierla', programma: 'Il piano di studi', docenti: 'Alcuni docenti',
+      punti: 'Perché sceglierla',
       descrizione: 'Di cosa si tratta', sede: 'Dove si trova',
       domande: ['Quando c’è il prossimo open day?', 'Ci sono borse di studio o rate?', 'Quante ore di stage si fanno?'],
       messaggio: function (o) {
@@ -69,9 +68,8 @@
       }
     },
     corso: {
-      azione: 'Iscriviti',
       fatto: ['Segna come completato', 'Completato'],
-      punti: 'Cosa impari', programma: 'Programma', docenti: 'Chi insegna',
+      punti: 'Cosa impari',
       descrizione: 'Di cosa si tratta', sede: 'Dove si tiene',
       domande: ['Il certificato è riconosciuto dalle aziende?', 'Quante ore servono a settimana?', 'Si può provare gratis?'],
       messaggio: function (o) {
@@ -79,9 +77,8 @@
       }
     },
     evento: {
-      azione: 'Prenota il posto',
       fatto: ['Segna come fatto', 'Fatto'],
-      punti: 'Cosa porti a casa', programma: 'Programma', docenti: 'Chi lo guida',
+      punti: 'Cosa porti a casa',
       descrizione: 'Di cosa si tratta', sede: 'Dove',
       domande: ['Serve portare il portatile?', 'C’è una lista d’attesa?', 'Rilasciate un attestato?'],
       messaggio: function (o) {
@@ -89,17 +86,15 @@
       }
     },
     libro: {
-      azione: 'Vai al sito',
       fatto: ['Segna come letto', 'Letto'],
-      punti: 'Cosa ti lascia', programma: 'Indice', docenti: 'Autori',
+      punti: 'Cosa ti lascia',
       descrizione: 'Di cosa parla', sede: 'Dove trovarlo',
       domande: null,
       messaggio: null
     },
     lavoro: {
-      azione: 'Candidati',
       fatto: ['Segna come fatto', 'Fatto'],
-      punti: 'Cosa offrono', programma: 'Come funziona', docenti: 'Con chi lavori',
+      punti: 'Cosa offrono',
       descrizione: 'Il lavoro', sede: 'Dove lavorerai',
       domande: ['Com’è fatto il colloquio?', 'Chi mi affiancherà nei primi mesi?', 'C’è la possibilità di essere assunti?'],
       messaggio: function (o) {
@@ -183,11 +178,11 @@
     var ente = dividiEnte(o);
     switch (s.tipo) {
       case 'scuola':
-        add('durata', 'clock', 'Durata', o.durata);
         add('prezzo', 'wallet','Costo', o.prezzo);
+        add('certificazione', 'award', 'Titolo', o.certificazione);
+        add('durata', 'clock', 'Durata', o.durata);
         add('inizio', 'calendar', 'Inizio', o.inizio);
         add('modalita', iconaModalita(o.modalita), 'Frequenza', o.modalita);
-        add('certificazione', 'award', 'Titolo', o.certificazione);
         add('lingua', 'languages', 'Lingua', o.lingua);
         break;
       case 'corso':
@@ -233,11 +228,6 @@
 
   function haContatti(o) { var c = o.contatti || {}; return !!(c.email || c.telefono); }
   function haSito(o) { return !!(o.contatti && o.contatti.sito); }
-
-  function etichettaAzione(s) {
-    if (s.tipo === 'corso' && s.o.completato) return 'Vai al corso';
-    return PER_TIPO[s.tipo].azione;
-  }
 
   /* ---- stato "fatto" e "salvato" ------------------------------------ */
   function eFatto(s) {
@@ -446,7 +436,9 @@
     ]);
   }
 
-  /** Quanto è in linea con te e perché te lo consigliamo. */
+  /** Quanto è in linea con te e perché te lo consigliamo.
+      È il dato che rende credibile il consiglio: numero grande con la
+      sua barra, poi la frase breve e la spiegazione per intero. */
   function affinita(s) {
     var o = s.o;
     if (!o.affinita && !o.perche) return null;
@@ -455,7 +447,11 @@
         h('strong', { text: o.affinita + '%' }),
         NV.testo(s.screen, 'match', 'in linea con te', 'span')
       ]) : null,
-      o.perche ? h('p', { class: 'nv-info-match__perche', text: o.perche }) : null
+      o.affinita ? h('span', { class: 'nv-info-match__barra', 'aria-hidden': 'true' }, [
+        h('span', { style: 'width:' + o.affinita + '%' })
+      ]) : null,
+      o.perche ? h('p', { class: 'nv-info-match__perche', text: o.perche }) : null,
+      o.percheLungo ? h('p', { class: 'nv-info-match__spiega', text: o.percheLungo }) : null
     ]);
   }
 
@@ -493,54 +489,8 @@
     return sezione(s, 'punti.' + s.tipo, PER_TIPO[s.tipo].punti, [corpo]);
   }
 
-  /** Moduli numerati; per gli eventi diventa l'agenda con gli orari.
-      max: quante voci mostrare prima di "Mostra tutto". */
-  function programma(s, max) {
-    var l = s.o.programma;
-    if (!l || !l.length) return null;
-    var agenda = s.tipo === 'evento';
-    var chiusa = !!max && l.length > max + 1;
-    var ol = h('ol', { class: 'nv-info-prog' + (agenda ? ' nv-info-prog--agenda' : '') }, l.map(function (m, i) {
-      return h('li', { class: 'nv-info-prog__voce', hidden: chiusa && i >= max ? true : null }, [
-        agenda
-          ? h('span', { class: 'nv-info-prog__ora', text: m.durata })
-          : h('span', { class: 'nv-info-prog__n', text: String(i + 1) }),
-        h('div', { class: 'nv-info-prog__copy' }, [
-          h('strong', { text: m.titolo }),
-          agenda ? null : h('span', { text: m.durata })
-        ])
-      ]);
-    }));
-    var figli = [ol];
-    if (chiusa) {
-      var altro = h('button', { class: 'nv-info-altro', type: 'button' }, [
-        h('span', { text: 'Mostra tutto (' + l.length + ')' }), icon('chevron-down', ICO.SM)
-      ]);
-      altro.addEventListener('click', function () {
-        Array.prototype.forEach.call(ol.children, function (li) { li.hidden = false; });
-        altro.remove();
-      });
-      figli.push(altro);
-    }
-    return sezione(s, 'programma.' + s.tipo, PER_TIPO[s.tipo].programma, figli);
-  }
-
   function avatar(nome, tono) {
     return h('span', { class: 'nv-info-avatar nv-tono-' + tono, 'aria-hidden': 'true', text: iniziali(nome) });
-  }
-
-  function docenti(s) {
-    var l = s.o.docenti;
-    if (!l || !l.length) return null;
-    var tono = s.o.tono || 1;
-    return sezione(s, 'docenti.' + s.tipo, PER_TIPO[s.tipo].docenti, [
-      h('ul', { class: 'nv-info-persone' }, l.map(function (p, i) {
-        return h('li', { class: 'nv-info-persona' }, [
-          avatar(p.nome, ((tono - 1 + i) % 5) + 1),
-          h('div', { class: 'nv-info-persona__copy' }, [h('strong', { text: p.nome }), h('span', { text: p.ruolo })])
-        ]);
-      }))
-    ]);
   }
 
   function galleria(s) {
@@ -568,7 +518,6 @@
   function miniMappa(s, classe) {
     var o = s.o;
     if (!o.pos) return null;
-    var tu = D.mappa && D.mappa.tu;
     return h('button', {
       class: 'nv-info-mappa' + (classe ? ' ' + classe : ''),
       type: 'button',
@@ -576,9 +525,7 @@
       onclick: function () { vediMappa(s); }
     }, [
       h('span', { class: 'nv-info-mappa__disegno', html: '<svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">' + PIANTA + '</svg>' }),
-      tu ? h('span', { class: 'nv-info-mappa__tu', style: 'left:' + tu.x + '%;top:' + tu.y + '%' }) : null,
-      h('span', { class: 'nv-info-mappa__pin', style: 'left:' + o.pos.x + '%;top:' + o.pos.y + '%' }, [icon(s.cat.icona, ICO.SM)]),
-      h('span', { class: 'nv-info-mappa__apri' }, [icon('map', ICO.SM), h('span', { text: 'Apri la mappa' })])
+      h('span', { class: 'nv-info-mappa__pin', style: 'left:' + o.pos.x + '%;top:' + o.pos.y + '%' }, [icon(s.cat.icona, ICO.SM)])
     ]);
   }
 
@@ -586,10 +533,7 @@
     var o = s.o;
     if (!o.indirizzo) return null;
     var dist = o.distanza ? 'A ' + o.distanza + ' da te' : o.citta;
-    var pulsanti = [
-      o.pos ? NV.pulsante('Sulla mappa', { variante: 'secondario', icona: 'map', piccolo: true, onclick: function () { vediMappa(s); } }) : null,
-      NV.pulsante('Indicazioni', { variante: 'secondario', icona: 'navigation', piccolo: true, onclick: function () { indicazioni(s); } })
-    ];
+    /* le indicazioni stanno nella pagina Mappa, quando tocchi il posto */
     return sezione(s, 'sede.' + s.tipo, PER_TIPO[s.tipo].sede, [
       miniMappa(s),
       h('div', { class: 'nv-info-indirizzo' }, [
@@ -598,8 +542,7 @@
           h('strong', { class: 'nv-row__title', text: o.indirizzo }),
           dist ? h('span', { class: 'nv-row__sub', text: dist }) : null
         ])
-      ]),
-      h('div', { class: o.pos ? 'nv-btns' : 'nv-info-btn1' }, pulsanti)
+      ])
     ]);
   }
 
@@ -699,36 +642,16 @@
     ]);
   }
 
-  /* ---- azione principale ---------------------------------------------- */
-
-  function azionePrincipale(s) {
-    if (s.tipo === 'evento') return foglioPrenota(s);
-    if (s.tipo === 'lavoro') return foglioCandidatura(s);
-    var sito = haSito(s.o) ? s.o.contatti.sito : 'il sito di ' + s.o.ente;
-    if (s.tipo === 'libro') return NV.avviso('Apriamo ' + sito + ' per comprarlo');
-    NV.avviso(s.o.completato ? 'Apriamo ' + sito + ' per riprendere il corso' : 'Apriamo ' + sito + ': lì trovi come iscriverti');
-  }
+  /* ---- barra in basso ------------------------------------------------- */
 
   function minuscola(t) { return t ? t.charAt(0).toLowerCase() + t.slice(1) : ''; }
 
-  /** forma: 'doppia' (contatta + principale) | 'prezzo' (prezzo + principale) | 'piena' */
-  function barraAzioni(s, forma) {
-    var o = s.o;
-    var principale = NV.pulsante(etichettaAzione(s), { onclick: function () { azionePrincipale(s); } });
-    var sinistra = null;
-    if (forma === 'doppia') {
-      sinistra = haContatti(o)
-        ? NV.pulsante('Contatta', { variante: 'secondario', icona: 'message-circle', classe: 'nv-info-cta__sec', onclick: function () { foglioContatta(s); } })
-        : bottoneSalva(s, 'pulsante');
-    } else if (forma === 'prezzo' && o.prezzo) {
-      var sotto = s.tipo === 'evento' ? o.inizio
-        : s.tipo === 'lavoro' ? o.contratto
-        : s.tipo === 'libro' ? o.durata
-        : o.inizio === 'Quando vuoi' ? 'Inizi quando vuoi'
-        : o.inizio ? 'Inizio ' + minuscola(o.inizio) : '';
-      sinistra = h('div', { class: 'nv-info-cta__prezzo' }, [h('strong', { text: o.prezzo }), sotto ? h('span', { text: sotto }) : null]);
-    }
-    return h('div', { class: 'nv-info-cta nv-info-cta--' + forma }, [sinistra, principale]);
+  /** Uguale in tutte le versioni: Contatta e Vai al sito. */
+  function barraAzioni(s) {
+    return h('div', { class: 'nv-info-cta' }, [
+      NV.pulsante('Contatta', { variante: 'secondario', icona: 'message-circle', classe: 'nv-info-cta__sec', onclick: function () { foglioContatta(s); } }),
+      NV.pulsante('Vai al sito', { icona: 'globe', onclick: function () { apriSito(s); } })
+    ]);
   }
 
   /* ==================================================================
@@ -872,55 +795,6 @@
     });
   }
 
-  function foglioPrenota(s) {
-    var o = s.o;
-    NV.apriFoglio({
-      titolo: 'Prenota il posto',
-      sottotitolo: o.nome,
-      classe: 'nv-info-foglio',
-      contenuto: [
-        h('div', { class: 'nv-info-infos' }, [
-          rigaInfo('calendar', 'Quando', o.inizio),
-          rigaInfo('map-pin', 'Dove', o.indirizzo),
-          rigaInfo('ticket', 'Ingresso', o.prezzo),
-          rigaInfo('hourglass', 'Posti', o.posti)
-        ]),
-        h('p', { class: 'nv-info-nota', text: 'Ti mandiamo la conferma per email e un promemoria il giorno prima.' })
-      ],
-      azioni: [NV.pulsante('Conferma la prenotazione', { onclick: function () {
-        NV.chiudiFoglio();
-        NV.avviso('Posto prenotato: ti ricordiamo l’evento il giorno prima');
-      } })]
-    });
-  }
-
-  /** Candidatura con quello che Navida sa già di te: niente moduli da rifare. */
-  function foglioCandidatura(s) {
-    var o = s.o, cv = D.curriculum || {};
-    var pronto = NV.etichetta('Pronto', 'ok', 'check');
-    NV.apriFoglio({
-      titolo: 'Candidati',
-      sottotitolo: o.ente,
-      classe: 'nv-info-foglio',
-      contenuto: [
-        h('div', { class: 'nv-info-gruppo' }, [
-          occhiello('Cosa mandiamo'),
-          h('div', { class: 'nv-info-righe' }, [
-            voceFoglio('file-text', 1, 'Curriculum', cv.cvCaricato ? 'Il file che hai caricato' : 'Creato dal tuo profilo Navida', null, pronto),
-            voceFoglio('layers', 2, 'Portfolio', cv.portfolio ? 'Il link che hai aggiunto' : 'Non l’hai ancora aggiunto',
-              function () { NV.avviso('Qui aggiungi il link al tuo portfolio'); },
-              cv.portfolio ? NV.etichetta('Pronto', 'ok', 'check') : h('span', { class: 'nv-link', text: 'Aggiungi' }))
-          ])
-        ]),
-        messaggioPronto(s, true)
-      ],
-      azioni: [NV.pulsante('Invia la candidatura', { onclick: function () {
-        NV.chiudiFoglio();
-        NV.avviso('Candidatura inviata a ' + o.ente);
-      } })]
-    });
-  }
-
   /** Il momento di completamento: la mascotte festeggia con te. */
   function festeggia(s) {
     var c = s.compito, conta = NV.conteggio(c.step);
@@ -945,7 +819,6 @@
     contatta: foglioContatta,
     menu: foglioMenu,
     condividi: foglioCondividi,
-    azione: azionePrincipale,
     fatto: function (s) { if (s.compito) festeggia(s); }
   };
 
@@ -953,7 +826,7 @@
      VERSIONE 1 · COPERTINA
      La grafica a tutta larghezza, il corpo della pagina che ci sale
      sopra e tutte le informazioni in fila, dalla più utile per decidere
-     alla meno. In basso, ferme: Contatta e l'azione principale.
+     alla meno. In basso, ferme: Contatta e Vai al sito.
      ================================================================== */
 
   function vaiARecensioni(e) {
@@ -1003,8 +876,6 @@
         compitoBlocco(s, 'blocco'),
         descrizione(s),
         punti(s, 'lista'),
-        programma(s, 4),
-        docenti(s),
         galleria(s),
         sede(s),
         recensioni(s, { max: 3 }),
@@ -1027,19 +898,19 @@
     pagina.addEventListener('scroll', function () {
       barra.classList.toggle('is-solida', pagina.scrollTop > cover.offsetHeight - barra.offsetHeight - 8);
     }, { passive: true });
-    return [pagina, barra, barraAzioni(s, 'doppia')];
+    return [pagina, barra, barraAzioni(s)];
   }
 
   /* ==================================================================
      VERSIONE 2 · SCHEDE
      Testata compatta (grafica piccola, nome, dati in pastiglie) e un
      interruttore che divide il contenuto in schede corte: Panoramica,
-     Programma, Recensioni, Contatti. Compaiono solo le schede che hanno
-     qualcosa dentro. In basso, fermi: il prezzo e l'azione principale.
+     Recensioni, Contatti. Compaiono solo le schede che hanno
+     qualcosa dentro. In basso, fermi: Contatta e Vai al sito.
      ================================================================== */
 
   /* "Info" e non "Panoramica": con quattro schede la parola lunga non ci sta in 341px */
-  var TAB = { panoramica: 'Info', programma: 'Programma', recensioni: 'Recensioni', contatti: 'Contatti' };
+  var TAB = { panoramica: 'Info', recensioni: 'Recensioni', contatti: 'Contatti' };
 
   function pastiglia(icona, testo) {
     return h('span', { class: 'nv-info-pill' }, [icon(icona, ICO.SM), h('span', { text: testo })]);
@@ -1097,7 +968,6 @@
 
   function tabDisponibili(s) {
     var o = s.o, l = ['panoramica'];
-    if (o.programma && o.programma.length) l.push('programma');
     if (o.recensioniLista && o.recensioniLista.length) l.push('recensioni');
     if (o.indirizzo || haContatti(o) || haSito(o)) l.push('contatti');
     return l;
@@ -1105,10 +975,6 @@
 
   function contenutoTab(s, tab) {
     var o = s.o;
-    if (tab === 'programma') {
-      var n = o.programma.length;
-      return [senzaTitolo(programma(s), n + (s.tipo === 'evento' ? ' momenti' : ' moduli') + (o.durata ? ' · ' + o.durata : ''))];
-    }
     if (tab === 'recensioni') return [senzaTitolo(recensioni(s, { barre: true }))];
     if (tab === 'contatti') {
       var righe = righeContatto(s);
@@ -1118,7 +984,7 @@
         PER_TIPO[s.tipo].messaggio ? sezione(s, 'primoPasso', 'Scrivi per primo', [messaggioPronto(s), cosaChiedere(s)]) : null
       ];
     }
-    return [affinita(s), elencoDati(s), descrizione(s), punti(s, 'lista'), galleria(s), docenti(s)];
+    return [affinita(s), elencoDati(s), descrizione(s), punti(s, 'lista'), galleria(s)];
   }
 
   function versioneSchede(s) {
@@ -1154,7 +1020,7 @@
       classe: 'nv-info-barra--fissa',
       azioni: [bottoneSalva(s, 'barra'), NV.iconBtn('ellipsis', 'Altre opzioni', function () { foglioMenu(s); })]
     });
-    return [barra, pagina, barraAzioni(s, 'prezzo')];
+    return [barra, pagina, barraAzioni(s)];
   }
 
   /* ==================================================================
@@ -1162,7 +1028,7 @@
      Come la scheda di un posto sulle mappe: striscia di immagini, nome e
      voto, una fila di azioni tonde (sito, chiama, indicazioni, salva,
      condividi) e poi un elenco di informazioni, una per riga con la sua
-     icona. Recensioni in fondo. In basso, ferma: l'azione principale.
+     icona. Recensioni in fondo. In basso, fermi: Contatta e Vai al sito.
      ================================================================== */
 
   function striscia(s) {
@@ -1249,8 +1115,6 @@
       elencoLuogo(s),
       descrizione(s),
       punti(s, 'pastiglie'),
-      programma(s, 3),
-      docenti(s),
       recensioni(s, { barre: true, max: 2 }),
       pieDiPagina()
     ]);
@@ -1259,7 +1123,7 @@
       classe: 'nv-info-barra--fissa',
       azioni: [NV.iconBtn('ellipsis', 'Altre opzioni', function () { foglioMenu(s); })]
     });
-    return [barra, pagina, barraAzioni(s, 'piena')];
+    return [barra, pagina, barraAzioni(s)];
   }
 
   /* ==================================================================

@@ -1,40 +1,27 @@
 /* ==========================================================================
-   NAVIDA — Dashboard (3 versioni)
+   NAVIDA — Dashboard
    ==========================================================================
    Disegno in js/app/dashboard.js. Prefisso di tutte le classi: nv-dash-.
    Il vestito comune (barra, righe, pulsanti, etichette) arriva da
    css/app/base.css: qui ci sono solo i pezzi della dashboard.
 
-     PEZZI COMUNI      pulsante tondo, tracciato della linea, compiti fatti,
-                       riquadro della data, dati piccoli
-     1 · ESSENZIALE    card dello step, obiettivo, righe, due pulsanti
-     2 · CARD EROE     sfumatura, fumetto con mascotte, carosello, tessere
-     3 · PROSSIMA MOSSA striscia, compito da fare adesso, elenco per tipo
+     BARRA            avatar e saluto a sinistra
+     PROMEMORIA       lo step in cui sei, piccolo, con i pallini
+     PROSSIMA MOSSA   il compito da fare adesso, sulla sfumatura di marca
+     IN PRIMO PIANO   schede Da fare | Eventi | Notizie
+     OPPORTUNITÀ      tessere Formazione e Lavoro
    ========================================================================== */
 
 .nv-dash {
-  /* il pallino di una tappa della linea di carriera */
-  --nv-dash-tappa: 28px;
-  /* la tappa in cui sei: un filo piu' grande dell'altra */
-  --nv-dash-tappa-attuale: 32px;
-  /* l'alone intorno alla tappa in cui sei */
-  --nv-dash-alone: 4px;
-  /* spessore del tratto fra due tappe */
-  --nv-dash-tratto: 3px;
+  /* un pallino dello step (promemoria in cima) */
+  --nv-dash-pallino: 6px;
+  /* il pallino dello step in cui sei: si allunga in una pastiglia */
+  --nv-dash-pallino-attuale: 16px;
   /* il riquadro con giorno e mese degli eventi */
   --nv-dash-data-w: 44px;
   --nv-dash-data-h: 48px;
-  /* larghezza di una scheda del carosello (Card eroe): la successiva si
-     vede spuntare, cosi' si capisce che si scorre di lato */
-  --nv-dash-scheda-w: 248px;
-  /* larghezza della mascotte accanto al fumetto (Card eroe) */
-  --nv-dash-mascotte-w: 76px;
-  /* altezza minima delle tessere Formazione e Lavoro (Card eroe) */
+  /* altezza minima delle tessere Formazione e Lavoro */
   --nv-dash-tessera-h: 164px;
-  /* spessore dei segmenti della striscia compatta (Prossima mossa) */
-  --nv-dash-segmento-h: 6px;
-  /* il pallino col numero accanto a Formazione e Lavoro (Prossima mossa) */
-  --nv-dash-conta: 24px;
 }
 
 /* Tutto cio' che si tocca ed e' fatto di piu' righe: una colonna.
@@ -53,113 +40,8 @@
   border-radius: var(--r-full);
   display: grid;
   place-items: center;
-  background: var(--passivo);
+  background: var(--surface);
   color: var(--text-highlighted);
-  transition: background var(--dur) var(--ease);
-}
-.nv-press:hover .nv-dash-freccia { background: var(--bg-accented); }
-.nv-dash-freccia--chiara,
-.nv-press:hover .nv-dash-freccia--chiara { background: var(--on-main-veil); color: var(--text-on-main); }
-.nv-dash-freccia--bianca,
-.nv-press:hover .nv-dash-freccia--bianca { background: var(--surface); color: var(--text-highlighted); }
-
-/* --- Tracciato della linea di carriera ---------------------------------- */
-.nv-dash-traccia {
-  display: flex;
-  align-items: center;
-  width: 100%;
-}
-.nv-dash-tratto {
-  flex: 1 1 0;
-  min-width: var(--sp-4);
-  height: var(--nv-dash-tratto);
-  margin: 0 var(--sp-2);
-  border-radius: var(--r-full);
-  background: var(--bg-accented);
-}
-.nv-dash-tratto.is-fatto { background: var(--main); }
-
-.nv-dash-tappa {
-  flex: 0 0 auto;
-  width: var(--nv-dash-tappa);
-  height: var(--nv-dash-tappa);
-  border-radius: var(--r-full);
-  display: grid;
-  place-items: center;
-  font-size: var(--fs-xs);
-  line-height: 1;
-  font-weight: var(--fw-bold);
-  background: var(--passivo);
-  color: var(--text-muted);
-}
-.nv-dash-tappa.is-fatto { background: var(--main); color: var(--text-on-main); }
-.nv-dash-tappa.is-attuale {
-  width: var(--nv-dash-tappa-attuale);
-  height: var(--nv-dash-tappa-attuale);
-  margin: 0 var(--nv-dash-alone);
-  background: var(--main);
-  color: var(--text-on-main);
-  font-size: var(--fs-sm);
-  box-shadow: 0 0 0 var(--nv-dash-alone) var(--main-ring);
-}
-.nv-dash-tappa.is-attuale:first-child { margin-left: var(--nv-dash-alone); }
-.nv-dash-tappa.is-traguardo { background: var(--tema-4-bg); color: var(--tema-4-text); }
-
-/* Sopra la sfumatura: le tappe raggiunte sono bianche, le altre velate. */
-.nv-dash-traccia--chiara .nv-dash-tratto { background: var(--on-main-dim); }
-.nv-dash-traccia--chiara .nv-dash-tratto.is-fatto { background: var(--surface); }
-.nv-dash-traccia--chiara .nv-dash-tappa { background: var(--on-main-veil); color: var(--text-on-main); }
-.nv-dash-traccia--chiara .nv-dash-tappa.is-fatto,
-.nv-dash-traccia--chiara .nv-dash-tappa.is-attuale { background: var(--surface); color: var(--main); }
-.nv-dash-traccia--chiara .nv-dash-tappa.is-attuale { box-shadow: 0 0 0 var(--nv-dash-alone) var(--on-main-dim); }
-
-/* "Sei qui" sotto la tappa attuale, il traguardo sotto la coppa. */
-.nv-dash-traccia__note {
-  position: relative;
-  display: block;
-  height: var(--lh-xs);
-}
-.nv-dash-traccia__nota {
-  position: absolute;
-  top: 0;
-  left: calc(var(--nv-dash-tappa) / 2 + var(--pos, 0) * (100% - var(--nv-dash-tappa)));
-  transform: translateX(-50%);
-  font-size: var(--fs-xs);
-  line-height: var(--lh-xs);
-  font-weight: var(--fw-semibold);
-  color: var(--text-muted);
-  white-space: nowrap;
-}
-.nv-dash-traccia__nota.is-attuale { color: var(--main); font-weight: var(--fw-bold); }
-.nv-dash-traccia__nota.is-inizio { left: 0; transform: none; }
-.nv-dash-traccia__nota.is-fine { left: auto; right: 0; transform: none; }
-
-/* --- Compiti fatti: numero, link e barretta ------------------------------ */
-.nv-dash-compiti {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-4);
-  width: 100%;
-}
-.nv-dash-compiti__riga {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--sp-6);
-  font-size: var(--fs-sm);
-  line-height: var(--lh-sm);
-  color: var(--text-muted);
-}
-.nv-dash-compiti__conto strong { font-weight: var(--fw-bold); color: var(--text-highlighted); }
-.nv-dash-compiti__link {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--sp-1);
-  font-size: var(--fs-sm);
-  line-height: var(--lh-sm);
-  font-weight: var(--fw-semibold);
-  color: var(--main);
-  white-space: nowrap;
 }
 
 /* --- Giorno e mese di un evento ----------------------------------------- */
@@ -201,288 +83,188 @@
   color: var(--text-muted);
 }
 
-.nv-dash-riga__etichetta {
-  font-size: var(--fs-xs);
-  line-height: var(--lh-xs);
-  font-weight: var(--fw-bold);
-  color: var(--text-muted);
-}
-.nv-dash-riga__etichetta.is-main { color: var(--main); }
-
 .nv-dash-nota {
   font-size: var(--fs-sm);
   line-height: var(--lh-sm);
   color: var(--text-muted);
 }
 
-.nv-dash-ambiti__head { display: flex; flex-direction: column; gap: var(--sp-2); }
-
 .nv-dash-notizia { font-size: var(--fs-base); line-height: var(--lh-base); }
 
 /* ==========================================================================
-   1 · ESSENZIALE
+   PROMEMORIA DELLO STEP — piccolo, una riga sola di peso
    ========================================================================== */
 
-.nv-dash-saluto { margin-top: var(--sp-4); }
-
-/* Card dello step: bianca col filo, e' la prima cosa che si guarda. */
-.nv-dash-step {
-  gap: var(--sp-8);
-  padding: var(--sp-8);
-  border-radius: var(--r-xl);
-  background: var(--surface);
-  box-shadow: var(--nv-ring);
-}
-.nv-dash-step:hover { box-shadow: inset 0 0 0 1px var(--main-ring); }
-.nv-dash-step__head {
-  display: flex;
+.nv-dash .nv-dash-promemoria {
+  flex-direction: row;
   align-items: center;
-  gap: var(--sp-6);
-}
-.nv-dash-step__copy {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-1);
-}
-.nv-dash-step__copy .nv-eyebrow { margin-bottom: var(--sp-2); }
-.nv-dash-step__num {
-  font-size: var(--fs-2xl);
-  line-height: var(--lh-2xl);
-  font-weight: var(--fw-bold);
-  letter-spacing: -.018em;
-  color: var(--text-highlighted);
-}
-.nv-dash-step__nome {
-  font-size: var(--fs-base);
-  line-height: var(--lh-base);
-  font-weight: var(--fw-medium);
-  color: var(--text-toned);
-}
-.nv-dash-step__traccia {
-  display: flex;
-  flex-direction: column;
   gap: var(--sp-5);
-}
-
-/* Lo step di adesso: zona grigia piatta, come le risposte del questionario. */
-.nv-dash-adesso__tile {
-  gap: var(--sp-7);
-  padding: var(--sp-8);
-  border-radius: var(--r-xl);
+  margin-top: var(--sp-2);
+  padding: var(--sp-4) var(--sp-5) var(--sp-4) var(--sp-7);
+  border-radius: var(--r-lg);
   background: var(--passivo);
 }
-.nv-dash-adesso__tile:hover { background: var(--bg-accented); }
-/* sul grigio la traccia della barretta diventa bianca, altrimenti sparisce */
-.nv-dash-adesso__tile .nv-progress { background: var(--surface); }
-
-/* Nelle righe il quadratino dell'icona prende la stessa larghezza del
-   riquadro della data: i titoli partono tutti dalla stessa colonna. */
-.nv-dash-riga .nv-icochip { margin: 0 calc((var(--nv-dash-data-w) - var(--ico-chip)) / 2); }
-
-.nv-dash-adesso .nv-section__head { align-items: center; }
-.nv-dash-adesso__meta {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--sp-2);
-  font-size: var(--fs-xs);
-  line-height: var(--lh-xs);
-  font-weight: var(--fw-semibold);
-  color: var(--text-muted);
-  white-space: nowrap;
-}
-.nv-dash-adesso__blocco {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-3);
-}
-.nv-dash-obiettivo {
-  font-size: var(--fs-lg);
-  line-height: var(--lh-lg);
-  font-weight: var(--fw-bold);
-  letter-spacing: -.01em;
-  color: var(--text-highlighted);
-}
-.nv-dash-adesso__desc { margin-top: calc(var(--sp-4) * -1); }
-
-/* Righe di "In primo piano" */
-.nv-dash-riga { align-items: center; }
-.nv-dash-riga:hover { box-shadow: inset 0 0 0 1px var(--main-ring); }
-.nv-dash-riga .nv-row__copy { gap: var(--sp-1); }
-.nv-dash-riga__titolo {
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-/* Pulsanti Formazione / Lavoro */
-.nv-dash-ambiti { gap: var(--sp-7); }
-
-/* ==========================================================================
-   2 · CARD EROE
-   ========================================================================== */
-
-.nv-dash--eroe .nv-dash-eroe { margin-top: var(--sp-4); }
-
-.nv-dash-eroe {
-  position: relative;
-  gap: 0;
-  overflow: hidden;
-  text-align: left;
-}
-.nv-dash-eroe__head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--sp-6);
-}
-.nv-dash-eroe__saluto {
-  font-size: var(--fs-base);
-  line-height: var(--lh-base);
-  font-weight: var(--fw-semibold);
-}
-.nv-dash-eroe__num {
-  margin-top: var(--sp-2);
-  font-size: var(--fs-2xl);
-  line-height: var(--lh-4xl);
-  letter-spacing: -.01em;
-}
-.nv-dash-eroe__num strong {
-  font-size: var(--fs-4xl);
-  font-weight: var(--fw-bold);
-  letter-spacing: -.03em;
-}
-.nv-dash-eroe__nome {
-  font-size: var(--fs-lg);
-  line-height: var(--lh-lg);
-  font-weight: var(--fw-semibold);
-}
-.nv-dash-eroe .nv-dash-traccia { margin: var(--sp-8) 0; }
-.nv-dash-eroe__piede {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-3);
-  padding-top: var(--sp-7);
-  box-shadow: inset 0 1px 0 var(--on-main-veil);
-  font-size: var(--fs-sm);
-  line-height: var(--lh-sm);
-}
-.nv-dash-eroe__meta { flex: 1; min-width: 0; }
-.nv-dash-eroe__meta strong { font-weight: var(--fw-bold); }
-.nv-dash-eroe__durata { white-space: nowrap; }
-
-/* Il fumetto: la mascotte spiega l'obiettivo, come nel questionario. */
-.nv-dash-fumetto {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-7);
-}
-.nv-dash-fumetto__riga {
-  display: flex;
-  align-items: flex-end;
-  gap: var(--sp-6);
-}
-.nv-dash-fumetto__mascotte {
-  flex: 0 0 var(--nv-dash-mascotte-w);
-  width: var(--nv-dash-mascotte-w);
-}
-.nv-dash-fumetto__nuvola {
-  position: relative;
+.nv-dash-promemoria:hover { background: var(--bg-accented); }
+.nv-dash-promemoria__testo {
   flex: 1 1 auto;
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: var(--sp-2);
-  padding: var(--sp-6) var(--sp-7);
-  background: var(--surface);
-  border: 1px solid var(--light-outline);
-  border-radius: var(--r-lg);
 }
-/* codina verso la mascotte (la stessa del fumetto del questionario) */
-.nv-dash-fumetto__nuvola::before,
-.nv-dash-fumetto__nuvola::after {
-  content: '';
-  position: absolute;
-  left: calc(var(--sp-4) * -1);
-  bottom: var(--sp-7);
-  width: 0;
-  height: 0;
-  border: var(--sp-4) solid transparent;
-  border-right-color: var(--light-outline);
-  border-left: 0;
-}
-.nv-dash-fumetto__nuvola::after {
-  left: calc(var(--sp-4) * -1 + 1px);
-  border-right-color: var(--surface);
-}
-.nv-dash-fumetto__obiettivo {
-  font-size: var(--fs-base);
-  line-height: var(--lh-base);
-  font-weight: var(--fw-bold);
+.nv-dash-promemoria__titolo {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+  font-weight: var(--fw-semibold);
   color: var(--text-highlighted);
 }
-.nv-dash-fumetto__corpo {
-  gap: var(--sp-7);
-  padding: var(--sp-7) 0 0;
-  box-shadow: inset 0 1px 0 var(--light-outline);
+.nv-dash-promemoria__num {
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  font-weight: var(--fw-medium);
+  color: var(--text-muted);
 }
+.nv-dash-promemoria .nv-row__chev { color: var(--text-muted); }
 
-/* Carosello di "In primo piano": esce dai margini e scorre di lato. */
-.nv-dash-carosello {
+.nv-dash-pallini {
+  flex: 0 0 auto;
   display: flex;
-  gap: var(--sp-6);
-  overflow-x: auto;
-  scrollbar-width: none;
-  scroll-snap-type: x mandatory;
-  scroll-padding: 0 var(--gutter);
-  margin: 0 calc(var(--gutter) * -1);
-  padding: var(--sp-1) var(--gutter) var(--sp-2);
-}
-.nv-dash-carosello::-webkit-scrollbar { display: none; }
-.nv-dash-carosello::after { content: ''; flex: 0 0 var(--sp-1); }
-
-.nv-dash-scheda.nv-press {
-  flex: 0 0 var(--nv-dash-scheda-w);
-  width: var(--nv-dash-scheda-w);
-  scroll-snap-align: start;
+  align-items: center;
   gap: var(--sp-2);
-  padding: var(--sp-7);
-  border-radius: var(--r-lg);
-  background: var(--surface);
-  box-shadow: var(--nv-ring);
 }
-.nv-dash-scheda:hover { box-shadow: inset 0 0 0 1px var(--main-ring); }
-.nv-dash-scheda__top {
+.nv-dash-pallino {
+  width: var(--nv-dash-pallino);
+  height: var(--nv-dash-pallino);
+  border-radius: var(--r-full);
+  background: var(--bg-accented);
+}
+.nv-dash-pallino.is-fatto { background: var(--main-ring); }
+.nv-dash-pallino.is-attuale {
+  width: var(--nv-dash-pallino-attuale);
+  background: var(--main);
+}
+
+/* ==========================================================================
+   LA TUA PROSSIMA MOSSA — sfumatura di marca, testi bianchi
+   ========================================================================== */
+
+.nv-dash-mossa { display: flex; flex-direction: column; gap: var(--sp-6); }
+.nv-dash-mossa__card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+.nv-dash-mossa__top {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--sp-4);
-  min-height: var(--nv-dash-data-h);
   margin-bottom: var(--sp-4);
 }
-.nv-dash-scheda__etichetta {
+.nv-dash-mossa__card .nv-icochip { background: var(--surface); }
+.nv-dash-mossa__tags { display: flex; gap: var(--sp-3); }
+.nv-dash-mossa__titolo {
+  font-size: var(--fs-xl);
+  line-height: var(--lh-xl);
+  font-weight: var(--fw-bold);
+  letter-spacing: -.012em;
+}
+.nv-dash-mossa__nota {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+  font-weight: var(--fw-semibold);
+}
+.nv-dash-mossa__desc {
+  font-size: var(--fs-sm);
+  line-height: 22px;
+  opacity: .88;
+}
+.nv-dash-mossa__card .nv-btn { margin-top: var(--sp-4); }
+.nv-dash-mossa__link.nv-link {
+  align-self: center;
+  min-height: var(--nv-bar-h);
+  margin-bottom: calc(var(--sp-4) * -1);
+  color: var(--text-on-main);
+}
+
+/* ==========================================================================
+   IN PRIMO PIANO — diviso per tipo
+   ========================================================================== */
+
+.nv-dash-schede__contenuto { display: flex; flex-direction: column; gap: var(--sp-6); }
+
+.nv-dash-gruppo {
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  box-shadow: var(--nv-ring);
+  overflow: hidden;
+}
+.nv-dash-voce.nv-press {
+  position: relative;
+  flex-direction: row;
+  align-items: center;
+  gap: var(--sp-6);
+  padding: var(--sp-7);
+}
+.nv-dash-voce:hover { background: var(--passivo); }
+/* la riga divisoria parte dal testo, non dal bordo: divide senza tagliare */
+.nv-dash-voce + .nv-dash-voce::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: calc(var(--sp-7) + var(--nv-dash-data-w) + var(--sp-6));
+  height: 1px;
+  background: var(--light-outline);
+}
+.nv-dash-voce .nv-row__copy { gap: var(--sp-2); }
+/* il quadratino dell'icona prende la larghezza del riquadro della data:
+   i titoli partono tutti dalla stessa colonna */
+.nv-dash-voce .nv-icochip { margin: 0 calc((var(--nv-dash-data-w) - var(--ico-chip)) / 2); }
+.nv-dash-voce__tags { display: flex; gap: var(--sp-3); }
+.nv-dash-voce__etichetta {
   font-size: var(--fs-xs);
   line-height: var(--lh-xs);
   font-weight: var(--fw-bold);
   color: var(--text-muted);
 }
-.nv-dash-scheda__etichetta.is-main { color: var(--main); }
-.nv-dash-scheda__titolo {
+.nv-dash-voce__titolo {
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  min-height: calc(var(--lh-base) * 2);
   font-size: var(--fs-base);
-  line-height: var(--lh-base);
+  line-height: 22px;
   font-weight: var(--fw-bold);
   color: var(--text-highlighted);
 }
-.nv-dash-scheda__dati { margin-top: auto; padding-top: var(--sp-4); }
 
-/* Tessere Formazione e Lavoro: due coppie colore, stessa importanza. */
+.nv-dash-vuoto {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-6);
+  padding: var(--sp-7);
+  border-radius: var(--r-lg);
+  background: var(--passivo);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+  color: var(--text-toned);
+}
+.nv-dash-vuoto svg { flex: 0 0 auto; color: var(--main); }
+
+/* ==========================================================================
+   OPPORTUNITÀ PER TE — due tessere, stessa importanza
+   ========================================================================== */
+
+.nv-dash-ambiti__head { display: flex; flex-direction: column; gap: var(--sp-2); }
+
 .nv-dash-tessere {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -517,196 +299,4 @@
   line-height: var(--lh-sm);
   font-weight: var(--fw-medium);
   color: var(--text-toned);
-}
-
-/* ==========================================================================
-   3 · PROSSIMA MOSSA
-   ========================================================================== */
-
-/* Striscia compatta dello step: una riga di testo e cinque segmenti. */
-.nv-dash-striscia {
-  gap: var(--sp-5);
-  margin-top: var(--sp-4);
-  padding: var(--sp-6) var(--sp-7) var(--sp-7);
-  border-radius: var(--r-lg);
-  background: var(--surface);
-  box-shadow: var(--nv-ring);
-}
-.nv-dash-striscia:hover { box-shadow: inset 0 0 0 1px var(--main-ring); }
-.nv-dash-striscia__riga {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-4);
-}
-.nv-dash-striscia__testo {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  gap: var(--sp-3);
-  font-size: var(--fs-sm);
-  line-height: var(--lh-sm);
-  color: var(--text-muted);
-  white-space: nowrap;
-}
-.nv-dash-striscia__testo strong { font-weight: var(--fw-bold); color: var(--text-highlighted); }
-.nv-dash-striscia__testo span { overflow: hidden; text-overflow: ellipsis; }
-.nv-dash-segmenti {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-2);
-}
-.nv-dash-segmento {
-  flex: 1;
-  height: var(--nv-dash-segmento-h);
-  border-radius: var(--r-full);
-  background: var(--bg-accented);
-}
-.nv-dash-segmento.is-fatto,
-.nv-dash-segmento.is-attuale { background: var(--main); }
-.nv-dash-segmenti__coppa { display: grid; margin-left: var(--sp-2); color: var(--tema-4-text); }
-
-/* La prossima mossa: la zona lavanda e' quella "scelta per te". */
-.nv-dash-mossa { display: flex; flex-direction: column; gap: var(--sp-6); }
-.nv-dash-mossa__card {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-4);
-  padding: var(--sp-8);
-  border-radius: var(--r-xl);
-  background: var(--risposte-bg);
-}
-.nv-dash-mossa__top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--sp-4);
-  margin-bottom: var(--sp-4);
-}
-.nv-dash-mossa__card .nv-icochip { background: var(--surface); }
-.nv-dash-mossa__tags { display: flex; gap: var(--sp-3); }
-.nv-dash-mossa__card .nv-tag--obbligatoria { background: var(--surface); }
-.nv-dash-mossa__titolo {
-  font-size: var(--fs-xl);
-  line-height: var(--lh-xl);
-  font-weight: var(--fw-bold);
-  letter-spacing: -.012em;
-  color: var(--text-highlighted);
-}
-.nv-dash-mossa__nota {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-3);
-  font-size: var(--fs-sm);
-  line-height: var(--lh-sm);
-  font-weight: var(--fw-semibold);
-  color: var(--main);
-}
-.nv-dash-mossa__desc {
-  font-size: var(--fs-sm);
-  line-height: 22px;
-  color: var(--text-toned);
-}
-.nv-dash-mossa__card .nv-btn { margin-top: var(--sp-4); }
-.nv-dash-mossa__link {
-  align-self: center;
-  min-height: var(--nv-bar-h);
-  margin-bottom: calc(var(--sp-4) * -1);
-}
-
-/* Dentro la striscia: l'obiettivo della fase e il conto dei compiti. */
-.nv-dash-striscia__obiettivo {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-1);
-  padding-top: var(--sp-6);
-  box-shadow: inset 0 1px 0 var(--light-outline);
-}
-.nv-dash-striscia__frase {
-  font-size: var(--fs-sm);
-  line-height: var(--lh-sm);
-  font-weight: var(--fw-semibold);
-  color: var(--text-highlighted);
-}
-.nv-dash-striscia__piede {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-3);
-  font-size: var(--fs-xs);
-  line-height: var(--lh-xs);
-  color: var(--text-muted);
-}
-.nv-dash-striscia__piede strong { font-weight: var(--fw-bold); color: var(--text-highlighted); }
-
-
-/* In primo piano diviso per tipo */
-.nv-dash-schede__contenuto { display: flex; flex-direction: column; gap: var(--sp-6); }
-
-.nv-dash-gruppo {
-  display: flex;
-  flex-direction: column;
-  border-radius: var(--r-lg);
-  background: var(--surface);
-  box-shadow: var(--nv-ring);
-  overflow: hidden;
-}
-.nv-dash-voce.nv-press {
-  position: relative;
-  flex-direction: row;
-  align-items: center;
-  gap: var(--sp-6);
-  padding: var(--sp-7);
-}
-.nv-dash-voce:hover { background: var(--passivo); }
-/* la riga divisoria parte dal testo, non dal bordo: divide senza tagliare */
-.nv-dash-voce + .nv-dash-voce::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  right: 0;
-  left: calc(var(--sp-7) + var(--nv-dash-data-w) + var(--sp-6));
-  height: 1px;
-  background: var(--light-outline);
-}
-.nv-dash-voce .nv-row__copy { gap: var(--sp-2); }
-.nv-dash-voce .nv-icochip { margin: 0 calc((var(--nv-dash-data-w) - var(--ico-chip)) / 2); }
-.nv-dash-voce__tags { display: flex; gap: var(--sp-3); }
-.nv-dash-voce__titolo {
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  font-size: var(--fs-base);
-  line-height: 22px;
-  font-weight: var(--fw-bold);
-  color: var(--text-highlighted);
-}
-
-.nv-dash-vuoto {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-6);
-  padding: var(--sp-7);
-  border-radius: var(--r-lg);
-  background: var(--passivo);
-  font-size: var(--fs-sm);
-  line-height: var(--lh-sm);
-  color: var(--text-toned);
-}
-.nv-dash-vuoto__mascotte { flex: 0 0 auto; width: 56px; }
-
-/* Formazione e Lavoro: pastiglie lavanda con il numero di proposte.
-   L'azione forte della pagina resta la prossima mossa. */
-.nv-dash-ambito { justify-content: center; }
-.nv-dash-conta {
-  display: inline-grid;
-  place-items: center;
-  min-width: var(--nv-dash-conta);
-  height: var(--nv-dash-conta);
-  padding: 0 var(--sp-3);
-  border-radius: var(--r-full);
-  background: var(--surface);
-  font-size: var(--fs-xs);
-  line-height: 1;
-  font-weight: var(--fw-bold);
-  color: var(--main);
 }

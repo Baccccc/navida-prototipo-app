@@ -5,9 +5,12 @@
    alla fine del questionario (index.html, schermata "preview").
    Disegno: js/app/percorso.js. Prefisso delle classi: nv-path-
 
-     base     Sentiero   nodi tondi da gioco su un sentiero che serpeggia
-     pianeti  Pianeti    cielo notturno, dalla Terra al traguardo
-     tappe    Tappe      mini mappa + carte grandi che scorrono di lato
+     base          Sentiero         nodi tondi da gioco su un sentiero che serpeggia
+     sentieroCard  Sentiero a card  lo stesso sentiero, con una card per tappa
+     pianeti       Pianeti          cielo notturno illustrato, dalla Terra al traguardo
+     pianetiSoft   Pianeti leggeri  lo stesso cielo a tinta unita, Terra piatta
+     pianetiFlat   Pianeti flat     fondo chiaro, pianeti a cerchi pieni
+     tappe         Tappe            mini mappa + carte grandi che scorrono di lato
 
    Solo variabili del kit. Le misure nuove stanno qui sotto, con il
    perche'. Niente altezze fisse sul contenuto: le tappe stanno nel flusso
@@ -24,8 +27,13 @@
   --nv-path-tratto: 8px;            /* spessore del sentiero */
   --nv-path-lucchetto: 26px;        /* bollino del lucchetto sulle tappe chiuse */
   --nv-path-mascotte: 72px;         /* astronauta accanto alla tappa attuale */
-  /* aria verticale fra due tappe: pochi step, quindi molto spazio (88px) */
-  --nv-path-passo: calc(var(--sp-12) + var(--sp-4));
+  /* aria verticale fra due tappe: pochi step, quindi moltissimo spazio (160px) */
+  --nv-path-passo: calc(var(--sp-12) * 2);
+  /* con le card ogni tappa e' gia' alta: un po' meno aria (120px) */
+  --nv-path-passo-card: calc(var(--sp-12) + var(--sp-10));
+  --nv-path-card: 68%;              /* card di lato: il sentiero resta visibile accanto */
+  --nv-path-card-centro: 86%;       /* card della tappa attuale e del traguardo */
+  --nv-path-card-bollino: 36px;     /* numero, spunta o coppa in cima alla card */
 
   /* colore del gradino sotto i nodi: il colore del nodo, un tono piu' scuro */
   --nv-path-labbro-main: color-mix(in srgb, var(--main-2) 55%, var(--text-highlighted));
@@ -39,6 +47,11 @@
   --nv-path-saturno: 176px;         /* il traguardo, largo */
   --nv-path-razzo: 64px;            /* il razzo appoggiato alla tappa attuale */
   --nv-path-terra-h: 212px;         /* quanta Terra si vede in fondo */
+  --nv-path-terra-piatta-h: 176px;  /* la Terra piatta: basta un arco */
+  /* aria verticale fra due pianeti: moltissimo spazio (120px) */
+  --nv-path-cielo-passo: calc(var(--sp-12) + var(--sp-10));
+  --nv-path-globo: 72px;            /* pianeta flat */
+  --nv-path-globo-attuale: 96px;    /* pianeta flat dove sei */
   /* testo tenue sul cielo: il bianco al 72%, leggibile sull'indaco */
   --nv-path-notte-tenue: color-mix(in srgb, var(--text-on-main) 72%, transparent);
   --nv-path-notte-velo: color-mix(in srgb, var(--text-on-main) 10%, transparent);
@@ -137,6 +150,7 @@
 .nv-path-tappa,
 .nv-path-astro,
 .nv-path-carta,
+.nv-path-card,
 .nv-path-mini__tappa {
   -webkit-tap-highlight-color: transparent;
   cursor: pointer;
@@ -144,40 +158,12 @@
 .nv-path-tappa:focus-visible,
 .nv-path-astro:focus-visible,
 .nv-path-carta:focus-visible,
+.nv-path-card:focus-visible,
 .nv-path-mini__tappa:focus-visible {
   outline: 2px solid var(--main);
   outline-offset: var(--sp-2);
   border-radius: var(--r-lg);
 }
-
-/* Pulsante fisso in fondo all'anteprima */
-.nv-path-piede {
-  flex: 0 0 auto;
-  position: relative;
-  z-index: 3;
-  padding: var(--sp-6) var(--gutter) calc(var(--nv-nav-bottom) + var(--sp-4));
-  background: var(--bg);
-  box-shadow: 0 -1px 0 var(--light-outline);
-}
-.nv-path-piede--notte {
-  background: var(--indigo-950);
-  box-shadow: 0 -1px 0 var(--nv-path-notte-velo);
-}
-
-/* Pannello di una tappa (solo anteprima) */
-.nv-path-foglio__stato { display: flex; flex-wrap: wrap; gap: var(--sp-3); }
-.nv-path-foglio__obiettivo { font-size: var(--fs-base); line-height: var(--lh-base); }
-.nv-path-foglio__dati {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--sp-7);
-  padding: var(--sp-7);
-  border-radius: var(--r-lg);
-  background: var(--passivo);
-}
-.nv-path-foglio__largo { grid-column: 1 / -1; }
-.nv-path-foglio__blocco { display: flex; flex-direction: column; gap: var(--sp-4); }
-.nv-path-foglio__competenze { display: flex; flex-wrap: wrap; gap: var(--sp-3); }
 
 /* ==========================================================================
    VERSIONE 1 · SENTIERO
@@ -431,6 +417,112 @@
 }
 
 /* ==========================================================================
+   VERSIONE 1B · SENTIERO A CARD
+   Lo stesso sentiero, ma ogni tappa e' una card con i dati dentro. Le card
+   di lato si alternano a destra e a sinistra; quella attuale e il
+   traguardo stanno al centro, piu' larghe. Il sentiero passa dietro.
+   ========================================================================== */
+
+.nv-path-sentiero--card { gap: var(--nv-path-passo-card); }
+.nv-path-sentiero--card .nv-path-riga--sinistra { justify-content: flex-start; }
+.nv-path-sentiero--card .nv-path-riga--destra { justify-content: flex-end; }
+/* spazio sopra per il fumetto e la mascotte che spuntano dalla card */
+.nv-path-sentiero--card .nv-path-riga--attuale { padding-top: calc(var(--sp-10) + var(--sp-8)); }
+
+.nv-path-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-1);
+  width: var(--nv-path-card);
+  padding: var(--sp-7);
+  border-radius: var(--r-xl);
+  background: var(--surface);
+  box-shadow: var(--nv-ring), 0 var(--sp-2) var(--sp-8) var(--light-outline);
+  text-align: left;
+  color: var(--text);
+  transition: transform 120ms var(--ease);
+}
+.nv-path-card--centro { width: var(--nv-path-card-centro); padding: var(--sp-8); }
+.nv-path-card:active { transform: scale(.985); }
+
+.nv-path-card__testa {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  width: 100%;
+  margin-bottom: var(--sp-4);
+}
+.nv-path-card__bollino {
+  flex: 0 0 auto;
+  width: var(--nv-path-card-bollino);
+  height: var(--nv-path-card-bollino);
+  border-radius: var(--r-full);
+  display: grid;
+  place-items: center;
+  background: var(--bg-accented);
+  color: var(--text-muted);
+  font-size: var(--fs-base);
+  line-height: 1;
+  font-weight: var(--fw-bold);
+}
+.nv-path-card__bollino--fatto { background: var(--success); color: var(--text-on-main); }
+.nv-path-card__bollino--attuale { background: var(--surface); color: var(--main); }
+.nv-path-card__bollino--fine { background: var(--contrast); color: var(--contrast-2); }
+.nv-path-card__lucchetto {
+  width: var(--nv-path-lucchetto);
+  height: var(--nv-path-lucchetto);
+  border-radius: var(--r-full);
+  display: grid;
+  place-items: center;
+  background: var(--bg-accented);
+  color: var(--text-muted);
+}
+
+.nv-path-card__titolo {
+  font-size: var(--fs-lg);
+  line-height: var(--lh-base);
+  font-weight: var(--fw-bold);
+  letter-spacing: -.01em;
+  color: var(--text-highlighted);
+  text-wrap: balance;
+}
+.nv-path-card--centro .nv-path-card__titolo {
+  font-size: var(--fs-xl);
+  line-height: var(--lh-xl);
+  letter-spacing: -.012em;
+}
+.nv-path-card.is-da-fare .nv-path-card__titolo { color: var(--text-toned); }
+.nv-path-card .nv-path-apri { margin-top: var(--sp-6); }
+
+/* dove sei: la sfumatura di marca e un alone fermo */
+.nv-path-card.is-attuale {
+  background: var(--grad-brand);
+  box-shadow: 0 0 0 var(--sp-4) var(--risposte-bg);
+  color: var(--text-on-main);
+}
+.nv-path-card.is-attuale .nv-path-etichetta__occhiello,
+.nv-path-card.is-attuale .nv-path-dati .nv-meta,
+.nv-path-card.is-attuale .nv-path-dati .nv-meta .ico { color: var(--nv-path-notte-tenue); }
+.nv-path-card.is-attuale .nv-path-card__titolo { color: var(--text-on-main); }
+.nv-path-card.is-attuale .nv-path-apri { background: var(--surface); color: var(--main); }
+
+/* il traguardo: oro tenue, ma pieno, perche' il sentiero passa dietro */
+.nv-path-card.is-fine { background: color-mix(in srgb, var(--contrast) 16%, var(--surface)); }
+
+/* il fumetto "Sei qui" e la mascotte spuntano sopra la card */
+.nv-path-card .nv-path-fumetto { bottom: calc(100% + var(--sp-7)); }
+.nv-path-card__mascotte {
+  position: absolute;
+  right: var(--sp-7);
+  bottom: calc(100% - var(--sp-4));
+  width: var(--nv-path-mascotte);
+  pointer-events: none;
+}
+
+/* ==========================================================================
    VERSIONE 2 · PIANETI
    ========================================================================== */
 
@@ -470,7 +562,7 @@
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
-  gap: var(--sp-10);
+  gap: var(--nv-path-cielo-passo);
   /* sopra resta lo spazio della barra che galleggia */
   padding: calc(var(--nv-top) + var(--nv-bar-h) + var(--sp-9)) var(--gutter) 0;
   background: var(--indigo-950) url("../../assets/percorso/spazio-navida.webp") center bottom / cover no-repeat;
@@ -688,6 +780,171 @@
 @keyframes nv-path-volo {
   0%, 100% { translate: 0 0; }
   50%      { translate: var(--sp-2) calc(var(--sp-3) * -1); }
+}
+
+/* ==========================================================================
+   VERSIONE 2B · PIANETI LEGGERI
+   Lo stesso cielo, meno illustrato: fondo a tinta unita con poche stelle
+   a puntino e la Terra come un grande arco piatto. Pianeti e razzo
+   restano disegni.
+   ========================================================================== */
+
+.nv-path-cielo--leggero {
+  background-color: var(--indigo-950);
+  background-image:
+    linear-gradient(to bottom, transparent 55%, color-mix(in srgb, var(--main-2) 40%, var(--indigo-950))),
+    radial-gradient(circle, var(--nv-path-notte-tenue) 1.5px, transparent 2px),
+    radial-gradient(circle, var(--nv-path-notte-tenue) 1px, transparent 1.5px);
+  background-size: 100% 100%, 96px 118px, 150px 170px;
+  background-position: 0 0, 14px 22px, 64px 90px;
+}
+
+/* La Terra piatta: si vede solo la cima di un grande cerchio */
+.nv-path-terra--piatta { height: var(--nv-path-terra-piatta-h); }
+.nv-path-terra__arco {
+  position: absolute;
+  left: 50%;
+  top: var(--sp-9);
+  width: 180%;
+  aspect-ratio: 1;
+  border-radius: var(--r-full);
+  transform: translateX(-50%);
+  background: var(--main-1);
+  box-shadow: 0 0 0 var(--sp-6) color-mix(in srgb, var(--main-1) 30%, transparent);
+  pointer-events: none;
+}
+
+/* ==========================================================================
+   VERSIONE 2C · PIANETI FLAT
+   Il concetto dei pianeti, ma piatto: fondo chiaro dell'app, pianeti a
+   cerchi pieni con il numero dello step, razzo a icona su un disco giallo.
+   ========================================================================== */
+
+.nv-path--pianeti-flat { background: var(--bg); color: var(--text); }
+.nv-path-cielo--flat {
+  background-color: var(--bg);
+  background-image:
+    radial-gradient(circle, var(--bg-accented) 1.5px, transparent 2px),
+    radial-gradient(circle, var(--disabled) 1px, transparent 1.5px);
+  background-size: 110px 130px, 170px 190px;
+  background-position: 18px 30px, 70px 100px;
+}
+
+/* la barra galleggia sul fondo chiaro */
+.nv-path-barra-notte--chiara {
+  background: linear-gradient(to bottom, var(--bg) 55%, transparent);
+  color: var(--text-highlighted);
+}
+.nv-path-barra-notte--chiara .nv-iconbtn { background: var(--surface); color: var(--text-highlighted); box-shadow: var(--nv-ring); }
+.nv-path-barra-notte--chiara .nv-iconbtn:hover { background: var(--bg-accented); }
+.nv-path-barra-notte--chiara .nv-bar__titolo { color: var(--text-highlighted); }
+
+/* testi scuri sul fondo chiaro */
+.nv-path--pianeti-flat .nv-path-etichetta__occhiello { color: var(--text-muted); }
+.nv-path--pianeti-flat .nv-path-astro.is-attuale .nv-path-etichetta__occhiello { color: var(--main); }
+.nv-path--pianeti-flat .nv-path-etichetta__titolo { color: var(--text-highlighted); }
+.nv-path--pianeti-flat .nv-path-astro.is-da-fare .nv-path-etichetta__titolo { color: var(--text-toned); }
+.nv-path--pianeti-flat .nv-path-dati .nv-meta { color: var(--text-toned); }
+.nv-path--pianeti-flat .nv-path-dati .nv-meta .ico { color: var(--text-dimmed); }
+
+/* la scia: grigia a puntini, blu dove sei gia' passato */
+.nv-path-cielo--flat .nv-path-scia__futuro { stroke: var(--disabled); stroke-width: 4px; stroke-dasharray: 0 var(--sp-6); }
+.nv-path-cielo--flat .nv-path-scia__fatta { stroke: var(--main); }
+
+/* --- il pianeta flat ---------------------------------------------------- */
+.nv-path-cielo--flat .nv-path-astro__corpo { width: var(--nv-path-globo); }
+.nv-path-cielo--flat .nv-path-astro.is-attuale .nv-path-astro__corpo { width: var(--nv-path-globo-attuale); }
+.nv-path-cielo--flat .nv-path-astro.is-attuale .nv-path-astro__corpo::before { box-shadow: 0 0 0 2px var(--main); }
+
+.nv-path-globo {
+  --nv-path-globo-c: var(--main);
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  border-radius: var(--r-full);
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: var(--nv-path-globo-c);
+  color: var(--text-on-main);
+  /* l'ombra piatta: una falce piu' scura in basso a destra */
+  box-shadow: inset calc(var(--sp-5) * -1) calc(var(--sp-4) * -1) 0 color-mix(in srgb, var(--nv-path-globo-c) 70%, var(--text-highlighted));
+}
+/* un cratere, in alto a sinistra */
+.nv-path-globo::before {
+  content: '';
+  position: absolute;
+  top: 16%;
+  left: 20%;
+  width: 20%;
+  aspect-ratio: 1;
+  border-radius: var(--r-full);
+  background: color-mix(in srgb, var(--nv-path-globo-c) 80%, var(--text-highlighted));
+}
+.nv-path-globo--tinta-0 { --nv-path-globo-c: var(--main); }
+.nv-path-globo--tinta-1 { --nv-path-globo-c: var(--main-1); }
+.nv-path-globo--tinta-2 { --nv-path-globo-c: var(--main-2); }
+.nv-path-globo--tinta-3 { --nv-path-globo-c: var(--contrast-2); }
+
+.nv-path-globo__faccia {
+  position: relative;
+  font-size: var(--fs-3xl);
+  line-height: 1;
+  font-weight: var(--fw-bold);
+  letter-spacing: -.02em;
+}
+.nv-path-astro.is-attuale .nv-path-globo__faccia { font-size: var(--fs-4xl); }
+/* le tappe da raggiungere: stesso colore, piu' spento */
+.nv-path-cielo--flat .nv-path-astro.is-da-fare .nv-path-globo { filter: saturate(.4) brightness(1.1); }
+
+/* il traguardo: un Saturno piatto, giallo, con l'anello dietro */
+.nv-path-cielo--flat .nv-path-astro--fine .nv-path-astro__corpo { width: var(--nv-path-saturno); }
+.nv-path-globo--fine {
+  --nv-path-globo-c: var(--contrast);
+  width: 58%;
+  height: auto;
+  aspect-ratio: 1;
+  color: var(--contrast-2);
+}
+.nv-path-globo--fine::before { display: none; }
+.nv-path-cielo--flat .nv-path-astro--fine .nv-path-astro__corpo::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 96%;
+  height: 34%;
+  border: var(--sp-3) solid var(--contrast-2);
+  border-radius: var(--r-full);
+  transform: translate(-50%, -50%) rotate(-16deg);
+}
+
+/* il razzo: un'icona su un disco giallo */
+.nv-path-razzo--flat {
+  width: var(--nv-bar-h);
+  height: var(--nv-bar-h);
+  left: 56%;
+  bottom: 88%;
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-full);
+  background: var(--contrast);
+  color: var(--indigo-950);
+  z-index: 2;
+}
+.nv-path-cielo--flat .nv-path-astro__bollino { z-index: 2; box-shadow: 0 0 0 2px var(--bg); }
+
+/* la Terra flat: un arco tenue del colore di marca */
+.nv-path-cielo--flat .nv-path-terra__arco {
+  background: color-mix(in srgb, var(--main) 10%, var(--bg));
+  box-shadow: 0 0 0 var(--sp-6) color-mix(in srgb, var(--main) 5%, var(--bg));
+}
+.nv-path-cielo--flat .nv-path-terra__partenza { box-shadow: var(--nv-ring); }
+.nv-path-cielo--flat .nv-path-terra__dati .nv-meta {
+  background: var(--surface);
+  color: var(--text-toned);
+  box-shadow: var(--nv-ring);
 }
 
 /* ==========================================================================

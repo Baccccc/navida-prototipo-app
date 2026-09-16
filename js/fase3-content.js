@@ -5,10 +5,10 @@
    I dati di esempio (percorso, opportunità, curriculum...) stanno in
    js/app/dati.js. Ogni schermata si disegna nel suo file in js/app/.
 
-     dashboard        js/app/dashboard.js    3 versioni
+     dashboard        js/app/dashboard.js    1 versione
      percorso         js/app/percorso.js     3 versioni (anche l'anteprima nel questionario)
      step             js/app/step.js         3 versioni
-     attivita         js/app/attivita.js     3 versioni
+     attivita         js/app/attivita.js     1 versione (copertine)
      scheda           js/app/scheda.js       3 versioni
      mappa            js/app/mappa.js
      consulenza, notifiche, profilo e sotto-pagine   js/app/profilo.js

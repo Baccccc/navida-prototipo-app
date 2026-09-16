@@ -33,7 +33,8 @@ window.NAVIDA_DATI = {
   utente: {
     nome: 'Marco',
     cognome: 'Bacchin',
-    avatar: 'assets/mascotte-laptop-seduto.png',
+    /* foto profilo: vuota = icona persona in tutta l'app */
+    avatar: '',
     email: 'bacchin.marco03@gmail.com',
     telefono: '+39 345 123 4567',
     nascita: '12 marzo 2003',
@@ -174,7 +175,7 @@ window.NAVIDA_DATI = {
         compiti: [
           { id: 'lavoroJunior', titolo: 'Trova un lavoro da Junior UX/UI Designer', breve: 'Primo lavoro', obbligatoria: true, stato: 'da-fare', categoria: 'lavoro', durata: '2-4 mesi di ricerca', descrizione: 'Con tirocinio e portfolio sei pronto. Punta su aziende che hanno un team di design interno.' },
           { id: 'designSystem', titolo: 'Impara a lavorare con un design system', breve: 'Design system', obbligatoria: true, stato: 'da-fare', categoria: 'corsi', durata: '2 mesi', descrizione: 'Componenti, regole e varianti: è così che si progettano prodotti grandi senza perdere la coerenza.' },
-          { id: 'certUx', titolo: 'Ottieni una certificazione UX riconosciuta', breve: 'Certificazione', obbligatoria: false, stato: 'da-fare', categoria: 'corsi', durata: '3-6 mesi', descrizione: 'Non è obbligatoria, ma aiuta a farsi notare nei colloqui con le aziende più grandi.' },
+          { id: 'certUx', titolo: 'Ottieni una certificazione UX riconosciuta', breve: 'Certificazione', obbligatoria: false, stato: 'da-fare', categoria: 'corsi', durata: '3-6 mesi', descrizione: 'Non è necessaria, ma aiuta a farsi notare nei colloqui con le aziende più grandi.' },
           { id: 'inglese', titolo: 'Porta l’inglese al livello C1', breve: 'Inglese C1', obbligatoria: false, stato: 'da-fare', categoria: 'corsi', durata: '6 mesi', descrizione: 'Documentazione, strumenti e team internazionali: l’inglese ti apre molte più porte.' }
         ]
       },
@@ -256,6 +257,7 @@ window.NAVIDA_DATI = {
        nome         titolo della scheda (il corso, il libro, l'offerta)
        ente         chi lo offre (scuola, piattaforma, azienda, autore)
        sigla, tono  il logo di ripiego: lettere su fondo colorato
+       logo         immagine del logo (se c'è, prende il posto della sigla)
        immagine     foto di copertina (se c'è)
        citta, indirizzo, distanza, pos {x,y}  pos in % sulla mappa; null = fuori mappa o online
        modalita     In presenza | Online | Ibrido
@@ -263,6 +265,7 @@ window.NAVIDA_DATI = {
        rating, recensioni
        affinita     quanto è adatta all'utente, da 0 a 100 (serve a ordinare)
        perche       la frase "perché te la consigliamo"
+       percheLungo  lo stesso perché, spiegato in due o tre frasi (scheda info)
        sponsorizzato  true = in cima con l'etichetta "Sponsorizzato"
      Campi facoltativi, per la scheda info:
        descrizione, punti, programma, docenti, recensioniLista, galleria, contatti
@@ -275,12 +278,13 @@ window.NAVIDA_DATI = {
       nome: 'ITS in UX/UI Design',
       ente: 'Accademia Digitale Nordest',
       sigla: 'AD', tono: 2,
-      immagine: '',
+      immagine: 'assets/opportunita/foto/its.jpg', logo: 'assets/opportunita/loghi/accademia-digitale-nordest.svg',
       citta: 'Padova', indirizzo: 'Via Venezia 59, Padova', distanza: '3,1 km', pos: { x: 72, y: 34 },
       modalita: 'In presenza', durata: '2 anni', prezzo: 'Gratis, finanziato', inizio: 'Ottobre 2026', lingua: 'Italiano',
       certificazione: 'Diploma di tecnico superiore (V livello EQF)',
       rating: 4.6, recensioni: 128, affinita: 93,
       perche: 'Due anni, tanta pratica e 800 ore di stage in azienda',
+      percheLungo: 'Nel test hai detto che impari meglio facendo e che vuoi lavorare presto. Qui metà del percorso è stage in azienda e il corso è gratis, a 3 km da casa tua. Dà meno teoria di un diploma accademico, ma in due anni ti porta al primo lavoro.',
       sponsorizzato: true,
       descrizione: 'Un corso post diploma di due anni pensato con le aziende del territorio. Metà del tempo lo passi in aula, l’altra metà in stage.',
       punti: ['800 ore di stage in azienda', 'Docenti che lavorano negli studi', 'Classi da 25 persone', '9 studenti su 10 lavorano entro un anno'],
@@ -291,12 +295,13 @@ window.NAVIDA_DATI = {
       nome: 'Diploma in Interaction Design',
       ente: 'SID · Scuola Italiana Design',
       sigla: 'SID', tono: 1,
-      immagine: 'assets/fase3/detail-hero.png',
+      immagine: 'assets/opportunita/foto/sid.jpg', logo: 'assets/opportunita/loghi/sid-scuola-italiana-design.svg',
       citta: 'Padova', indirizzo: 'Via Tommaseo 67, Padova', distanza: '2,4 km', pos: { x: 58, y: 44 },
       modalita: 'In presenza', durata: '3 anni', prezzo: '€ 6.900 / anno', inizio: 'Ottobre 2026', lingua: 'Italiano',
       certificazione: 'Diploma accademico di I livello',
       rating: 4.8, recensioni: 214, affinita: 96,
       perche: 'Didattica a progetto: impari facendo, come preferisci tu',
+      percheLungo: 'Nel test hai detto che impari meglio lavorando su progetti concreti e che ti interessano le interfacce e l’AI. Qui si studia così dal primo anno, con aziende vere, e dal secondo anno scegli l’indirizzo in UX e AI: la stessa direzione del tuo obiettivo. Il liceo artistico ti ha già dato le basi visive che servono, e la sede è a 2,4 km da casa tua.',
       sponsorizzato: false,
       descrizione: 'Tre anni per diventare designer di prodotti digitali. Si lavora per progetti, spesso con aziende vere, e dal secondo anno si sceglie l’indirizzo in UX e AI.',
       punti: ['Progetti con aziende vere dal primo anno', 'Indirizzo in UX e AI dal secondo anno', 'Laboratori sempre aperti', 'Stage finale garantito'],
@@ -315,7 +320,7 @@ window.NAVIDA_DATI = {
         { nome: 'Davide R.', voto: 5, testo: 'Docenti che fanno questo lavoro tutti i giorni. Si sente la differenza.', quando: '5 mesi fa' },
         { nome: 'Elena B.', voto: 4, testo: 'Molto impegnativa ma ne vale la pena. Laboratori sempre aperti.', quando: '1 anno fa' }
       ],
-      galleria: ['assets/fase3/detail-gallery-1.png', 'assets/fase3/detail-gallery-2.png', 'assets/fase3/detail-gallery-3.png'],
+      galleria: ['assets/opportunita/foto/workshopAi.jpg', 'assets/opportunita/foto/designSystemCorso.jpg', 'assets/opportunita/foto/naba.jpg'],
       contatti: { sito: 'scuolaitalianadesign.example', email: 'info@sid.example', telefono: '049 765 4321' }
     },
     iuav: {
@@ -323,11 +328,13 @@ window.NAVIDA_DATI = {
       nome: 'Laurea triennale in Design',
       ente: 'Università Iuav di Venezia',
       sigla: 'IUAV', tono: 3,
+      immagine: 'assets/opportunita/foto/iuav.jpg', logo: 'assets/opportunita/loghi/iuav.svg',
       citta: 'Venezia', indirizzo: 'Santa Croce 191, Venezia', distanza: '38 km', pos: null,
       modalita: 'In presenza', durata: '3 anni', prezzo: 'da € 900 / anno', inizio: 'Ottobre 2026', lingua: 'Italiano',
       certificazione: 'Laurea triennale',
       rating: 4.5, recensioni: 356, affinita: 84,
       perche: 'Ottima base teorica, ma meno pratica di quello che cerchi',
+      percheLungo: 'Il titolo è tra i più riconosciuti in Italia e costa poco. Però le lezioni sono soprattutto teoriche, e nel test hai detto che preferisci fare pratica. In più ogni giorno devi andare e tornare da Venezia.',
       sponsorizzato: false,
       contatti: { sito: 'iuav.example', email: 'orientamento@iuav.example', telefono: '041 000 0000' }
     },
@@ -336,11 +343,13 @@ window.NAVIDA_DATI = {
       nome: 'Diploma in Digital Design',
       ente: 'IED · Istituto Europeo di Design',
       sigla: 'IED', tono: 5,
+      immagine: 'assets/opportunita/foto/ied.jpg', logo: 'assets/opportunita/loghi/ied.svg',
       citta: 'Milano', indirizzo: 'Via Sciesa 4, Milano', distanza: '240 km', pos: null,
       modalita: 'In presenza', durata: '3 anni', prezzo: '€ 13.500 / anno', inizio: 'Ottobre 2026', lingua: 'Italiano o inglese',
       certificazione: 'Diploma accademico di I livello',
       rating: 4.4, recensioni: 502, affinita: 79,
       perche: 'Molto pratica, ma lontana da casa e costosa',
+      percheLungo: 'Il metodo è molto pratico, come piace a te, e il corso punta sul digitale. Pesano però la distanza, perché devi trasferirti a Milano, e il costo: quasi il doppio delle scuole vicino a te.',
       sponsorizzato: false,
       contatti: { sito: 'ied.example', email: 'info@ied.example', telefono: '02 000 0000' }
     },
@@ -349,11 +358,13 @@ window.NAVIDA_DATI = {
       nome: 'Diploma in Design della comunicazione',
       ente: 'NABA · Nuova Accademia di Belle Arti',
       sigla: 'NABA', tono: 4,
+      immagine: 'assets/opportunita/foto/naba.jpg', logo: 'assets/opportunita/loghi/naba.svg',
       citta: 'Milano', indirizzo: 'Via Darwin 20, Milano', distanza: '241 km', pos: null,
       modalita: 'In presenza', durata: '3 anni', prezzo: '€ 12.800 / anno', inizio: 'Ottobre 2026', lingua: 'Italiano o inglese',
       certificazione: 'Diploma accademico di I livello',
       rating: 4.3, recensioni: 311, affinita: 72,
       perche: 'Più orientata alla grafica che alle interfacce',
+      percheLungo: 'È una scuola pratica e seria, ma il corso è pensato per la grafica più che per le interfacce. Per diventare UX/AI Designer dovresti aggiungere molti corsi dopo. Anche qui devi trasferirti a Milano.',
       sponsorizzato: false,
       contatti: { sito: 'naba.example', email: 'info@naba.example', telefono: '02 000 0001' }
     },
@@ -362,11 +373,13 @@ window.NAVIDA_DATI = {
       nome: 'Master in AI & Interaction Design',
       ente: 'Accademia Digitale Nordest',
       sigla: 'AD', tono: 2,
+      immagine: 'assets/opportunita/foto/masterAi.jpg', logo: 'assets/opportunita/loghi/accademia-digitale-nordest.svg',
       citta: 'Padova', indirizzo: 'Via Venezia 59, Padova', distanza: '3,1 km', pos: { x: 72, y: 34 },
       modalita: 'Ibrido', durata: '1 anno, nel weekend', prezzo: '€ 5.400', inizio: 'Febbraio 2027', lingua: 'Italiano',
       certificazione: 'Master di I livello',
       rating: 4.7, recensioni: 64, affinita: 91,
       perche: 'Si fa lavorando: lezioni il venerdì sera e il sabato',
+      percheLungo: 'Unisce le due cose del tuo obiettivo: interfacce e intelligenza artificiale. Le lezioni sono il venerdì sera e il sabato, così puoi già lavorare. Ti conviene più avanti, quando hai finito il diploma.',
       sponsorizzato: false
     },
 
@@ -376,12 +389,13 @@ window.NAVIDA_DATI = {
       nome: 'Google UX Design',
       ente: 'Coursera · Google',
       sigla: 'G', tono: 3,
-      immagine: 'assets/fase3/detail-hero.png',
+      immagine: 'assets/opportunita/foto/googleux.jpg', logo: 'assets/opportunita/loghi/google.svg',
       citta: '', indirizzo: '', distanza: '', pos: null,
       modalita: 'Online', durata: '6 mesi, 10 ore a settimana', prezzo: '€ 39 / mese', inizio: 'Quando vuoi', lingua: 'Inglese, sottotitoli in italiano',
       certificazione: 'Certificato professionale',
       rating: 4.8, recensioni: 88000, affinita: 92,
       perche: 'Il certificato più richiesto negli annunci per junior',
+      percheLungo: 'È il certificato che compare più spesso negli annunci per UX designer junior. Lo segui online ai tuoi tempi, quindi va d’accordo con la scuola. Alla fine hai tre progetti veri da mettere nel portfolio.',
       sponsorizzato: false,
       completato: true,
       livello: 'Principiante',
@@ -403,7 +417,7 @@ window.NAVIDA_DATI = {
         { nome: 'Alessandro R.', voto: 4, testo: 'Tanti esempi reali. Un po’ lungo, ma il certificato aiuta davvero.', quando: '2 mesi fa' },
         { nome: 'Sara F.', voto: 5, testo: 'Perfetto per partire da zero. I tre progetti finali valgono il prezzo.', quando: '4 mesi fa' }
       ],
-      galleria: ['assets/fase3/detail-gallery-1.png', 'assets/fase3/detail-gallery-2.png', 'assets/fase3/detail-gallery-3.png'],
+      galleria: ['assets/opportunita/foto/portfolioCorso.jpg', 'assets/opportunita/foto/aiLab.jpg', 'assets/opportunita/foto/designSystemCorso.jpg'],
       contatti: { sito: 'coursera.example/google-ux', email: '', telefono: '' }
     },
     figmaAula: {
@@ -411,11 +425,13 @@ window.NAVIDA_DATI = {
       nome: 'Figma da zero, in aula',
       ente: 'SID · Scuola Italiana Design',
       sigla: 'SID', tono: 1,
+      immagine: 'assets/opportunita/foto/figmaAula.jpg', logo: 'assets/opportunita/loghi/sid-scuola-italiana-design.svg',
       citta: 'Padova', indirizzo: 'Via Tommaseo 67, Padova', distanza: '2,4 km', pos: { x: 60, y: 47 },
       modalita: 'In presenza', durata: '4 sabati', prezzo: '€ 290', inizio: '4 ottobre 2026', lingua: 'Italiano',
       certificazione: 'Attestato di frequenza',
       rating: 4.9, recensioni: 87, affinita: 88,
       perche: 'In aula, con un docente accanto: ideale se parti da zero',
+      percheLungo: 'Figma è lo strumento che userai ogni giorno da designer. In quattro sabati impari le basi con un docente accanto che ti corregge subito, come preferisci tu. La sede è a 2,4 km da casa tua.',
       sponsorizzato: false
     },
     aiDesigner: {
@@ -423,11 +439,13 @@ window.NAVIDA_DATI = {
       nome: 'AI for Designers',
       ente: 'Interaction Design Foundation',
       sigla: 'IxDF', tono: 2,
+      immagine: 'assets/opportunita/foto/aiDesigner.jpg', logo: 'assets/opportunita/loghi/interaction-design-foundation.svg',
       citta: '', indirizzo: '', distanza: '', pos: null,
       modalita: 'Online', durata: '8 settimane', prezzo: '€ 16 / mese', inizio: 'Quando vuoi', lingua: 'Inglese',
       certificazione: 'Certificato del corso',
       rating: 4.7, recensioni: 5400, affinita: 95,
       perche: 'Il corso di AI più completo pensato per chi fa design',
+      percheLungo: 'Nel tuo obiettivo c’è l’AI, e questo corso è pensato proprio per chi progetta interfacce. Parte dalle basi e arriva a un progetto finale. È online e costa poco al mese, quindi lo segui quando vuoi.',
       sponsorizzato: false,
       livello: 'Principiante',
       studenti: '38 mila',
@@ -446,11 +464,13 @@ window.NAVIDA_DATI = {
       nome: 'Progettare con l’AI generativa',
       ente: 'Domestika',
       sigla: 'D', tono: 5,
+      immagine: 'assets/opportunita/foto/promptUx.jpg', logo: 'assets/opportunita/loghi/domestika.png',
       citta: '', indirizzo: '', distanza: '', pos: null,
       modalita: 'Online', durata: '5 ore', prezzo: '€ 12,90', inizio: 'Quando vuoi', lingua: 'Italiano',
       certificazione: 'Attestato',
       rating: 4.6, recensioni: 2100, affinita: 83,
       perche: 'Breve e in italiano: buono per iniziare questa settimana',
+      percheLungo: 'Sono solo 5 ore, in italiano, e costa meno di una pizza. È un buon modo per capire subito se l’AI generativa ti piace, prima di un corso più lungo.',
       sponsorizzato: false
     },
     aiLab: {
@@ -458,11 +478,13 @@ window.NAVIDA_DATI = {
       nome: 'AI Design Lab, corso serale',
       ente: 'Officina Digitale Padova',
       sigla: 'OD', tono: 4,
+      immagine: 'assets/opportunita/foto/aiLab.jpg', logo: 'assets/opportunita/loghi/officina-digitale-padova.svg',
       citta: 'Padova', indirizzo: 'Via Savonarola 99, Padova', distanza: '1,2 km', pos: { x: 34, y: 40 },
       modalita: 'In presenza', durata: '10 serate', prezzo: '€ 450', inizio: '20 ottobre 2026', lingua: 'Italiano',
       certificazione: 'Attestato di frequenza',
       rating: 4.7, recensioni: 42, affinita: 86,
       perche: 'Di sera: si concilia con la scuola',
+      percheLungo: 'Le lezioni sono di sera, quindi non tolgono tempo alla scuola. Si lavora in aula su esercizi pratici, con altre persone della tua città. La sede è a 1,2 km da casa tua.',
       sponsorizzato: false
     },
     portfolioCorso: {
@@ -470,11 +492,13 @@ window.NAVIDA_DATI = {
       nome: 'Il portfolio UX che ti fa assumere',
       ente: 'Udemy',
       sigla: 'U', tono: 2,
+      immagine: 'assets/opportunita/foto/portfolioCorso.jpg', logo: 'assets/opportunita/loghi/udemy.svg',
       citta: '', indirizzo: '', distanza: '', pos: null,
       modalita: 'Online', durata: '3 ore', prezzo: '€ 19,99', inizio: 'Quando vuoi', lingua: 'Italiano',
       certificazione: 'Attestato',
       rating: 4.5, recensioni: 3900, affinita: 87,
       perche: 'Ti mostra come raccontare un progetto dal problema alla soluzione',
+      percheLungo: 'Il portfolio è quello che le aziende guardano per primo. Questo corso ti insegna a raccontare un progetto dal problema alla soluzione, con esempi di portfolio che hanno funzionato. Bastano tre ore.',
       sponsorizzato: false
     },
     designSystemCorso: {
@@ -482,10 +506,12 @@ window.NAVIDA_DATI = {
       nome: 'Design system in Figma',
       ente: 'Domestika',
       sigla: 'D', tono: 5,
+      immagine: 'assets/opportunita/foto/designSystemCorso.jpg', logo: 'assets/opportunita/loghi/domestika.png',
       citta: '', indirizzo: '', distanza: '', pos: null,
       modalita: 'Online', durata: '8 ore', prezzo: '€ 14,90', inizio: 'Quando vuoi', lingua: 'Italiano',
       rating: 4.7, recensioni: 1300, affinita: 85,
       perche: 'Pratico, con un file Figma da usare subito',
+      percheLungo: 'I design system sono richiesti in quasi tutti gli studi di prodotto. Il corso è pratico e ti lascia un file Figma pronto da riusare nei tuoi progetti.',
       sponsorizzato: false
     },
 
@@ -495,7 +521,7 @@ window.NAVIDA_DATI = {
       nome: 'Workshop: prototipare con l’AI',
       ente: 'Officina Digitale Padova',
       sigla: 'OD', tono: 4,
-      immagine: 'assets/fase3/detail-gallery-2.png',
+      immagine: 'assets/opportunita/foto/workshopAi.jpg', logo: 'assets/opportunita/loghi/officina-digitale-padova.svg',
       citta: 'Padova', indirizzo: 'Via Savonarola 99, Padova', distanza: '1,2 km', pos: { x: 31, y: 43 },
       modalita: 'In presenza', durata: '3 ore', prezzo: 'Gratis', inizio: 'Mercoledì 15 ottobre · 18:30', lingua: 'Italiano',
       data: { giorno: '15', mese: 'OTT', ora: '18:30' },
@@ -503,6 +529,7 @@ window.NAVIDA_DATI = {
       partecipanti: 98,
       rating: 4.8, recensioni: 36, affinita: 94,
       perche: 'Vicino a te e gratis: porti a casa un prototipo per il portfolio',
+      percheLungo: 'È a 1,2 km da casa tua, è gratis e dura una sera. Lavori a coppie e alla fine hai un prototipo da mettere nel portfolio. È anche un modo per conoscere i designer della tua zona.',
       sponsorizzato: false,
       descrizione: 'Tre ore pratiche: parti da un’idea e arrivi a un prototipo cliccabile usando strumenti di AI generativa. Porta il tuo portatile.',
       punti: ['Dall’idea al prototipo in 3 ore', 'Strumenti AI gratuiti', 'Lavoro a coppie', 'Aperitivo finale con i designer della zona'],
@@ -520,13 +547,15 @@ window.NAVIDA_DATI = {
       nome: 'Portfolio Review Day',
       ente: 'Meetup UX Padova',
       sigla: 'UX', tono: 1,
+      immagine: 'assets/opportunita/foto/portfolioDay.jpg', logo: 'assets/opportunita/loghi/meetup.png',
       citta: 'Padova', indirizzo: 'Piazza dei Signori 1, Padova', distanza: '0,9 km', pos: { x: 45, y: 30 },
       modalita: 'In presenza', durata: 'Mattina', prezzo: 'Gratis', inizio: 'Domenica 26 ottobre · 10:00', lingua: 'Italiano',
       data: { giorno: '26', mese: 'OTT', ora: '10:00' },
-      posti: 'Prenotazione obbligatoria',
+      posti: 'Prenotazione necessaria',
       partecipanti: 64,
       rating: 4.9, recensioni: 21, affinita: 90,
       perche: 'Designer esperti guardano il tuo portfolio e ti danno consigli',
+      percheLungo: 'Designer che lavorano negli studi guardano il tuo portfolio e ti dicono cosa migliorare. Un parere esperto adesso ti fa risparmiare mesi di tentativi. È gratis e in centro a Padova.',
       sponsorizzato: false
     },
     festival: {
@@ -534,12 +563,14 @@ window.NAVIDA_DATI = {
       nome: 'Festival del Design Digitale',
       ente: 'Padova Congressi',
       sigla: 'FDD', tono: 3,
+      immagine: 'assets/opportunita/foto/festival.jpg', logo: 'assets/opportunita/loghi/padova-congressi.png',
       citta: 'Padova', indirizzo: 'Via Tommaseo 59, Padova', distanza: '2,2 km', pos: { x: 64, y: 58 },
       modalita: 'In presenza', durata: '3 giorni', prezzo: '€ 15', inizio: '8-10 novembre 2026', lingua: 'Italiano e inglese',
       data: { giorno: '8', mese: 'NOV', ora: '9:30' },
       partecipanti: 2300,
       rating: 4.6, recensioni: 180, affinita: 81,
       perche: 'Talk, studi e aziende: il posto giusto per farti conoscere',
+      percheLungo: 'In tre giorni incontri studi, aziende e designer da tutta Italia. È il posto giusto per capire come lavorano e per farti conoscere. Il biglietto costa solo 15 €.',
       sponsorizzato: false
     },
 
@@ -549,10 +580,12 @@ window.NAVIDA_DATI = {
       nome: 'La caffettiera del masochista',
       ente: 'Donald A. Norman · Giunti',
       sigla: 'DN', tono: 4,
+      immagine: 'assets/opportunita/foto/caffettiera.jpg', logo: 'assets/opportunita/loghi/giunti.png',
       citta: '', indirizzo: '', distanza: '', pos: null,
       modalita: 'Libro', durata: '320 pagine', prezzo: '€ 16', inizio: '', lingua: 'Italiano',
       rating: 4.6, recensioni: 2800, affinita: 90,
       perche: 'Il classico che spiega perché alcuni oggetti sono facili da usare',
+      percheLungo: 'È il libro da cui partono quasi tutti i designer. Spiega con esempi di tutti i giorni perché alcuni oggetti sono facili da usare e altri no. Si legge bene anche se parti da zero.',
       sponsorizzato: false,
       letto: true,
       descrizione: 'Perché certe porte si spingono quando andrebbero tirate? Norman spiega con esempi di tutti i giorni i principi del buon design.',
@@ -563,10 +596,12 @@ window.NAVIDA_DATI = {
       nome: 'Don’t Make Me Think',
       ente: 'Steve Krug · New Riders',
       sigla: 'SK', tono: 5,
+      immagine: 'assets/opportunita/foto/dontthink.jpg', logo: 'assets/opportunita/loghi/pearson.svg',
       citta: '', indirizzo: '', distanza: '', pos: null,
       modalita: 'Libro', durata: '216 pagine', prezzo: '€ 28', inizio: '', lingua: 'Inglese',
       rating: 4.7, recensioni: 5100, affinita: 88,
       perche: 'Si legge in un weekend ed è pieno di esempi sul web',
+      percheLungo: 'È corto, pieno di immagini e si legge in un weekend. Ti insegna a guardare un sito con gli occhi di chi lo usa. È in inglese, ma semplice.',
       sponsorizzato: false,
       letto: true
     },
@@ -577,12 +612,14 @@ window.NAVIDA_DATI = {
       nome: 'Grafiche per i social, collaborazione',
       ente: 'Libreria Il Portico',
       sigla: 'IP', tono: 4,
+      immagine: 'assets/opportunita/foto/freelance.jpg', logo: 'assets/opportunita/loghi/libreria-il-portico.svg',
       citta: 'Padova', indirizzo: 'Via Roma 12, Padova', distanza: '0,6 km', pos: { x: 49, y: 50 },
       modalita: 'Ibrido', durata: '5 ore a settimana', prezzo: '€ 15 / ora', inizio: 'Subito', lingua: 'Italiano',
       contratto: 'Collaborazione occasionale',
       pubblicato: '2 giorni fa',
       rating: 4.4, recensioni: 12, affinita: 89,
       perche: 'Poche ore, compatibili con lo studio: il tuo primo lavoro da designer',
+      percheLungo: 'Sono poche ore a settimana e puoi lavorare anche da casa, quindi va d’accordo con la scuola. Sarebbe il tuo primo lavoro da designer: un cliente vero da mettere nel curriculum.',
       sponsorizzato: false,
       adatto: 'Compatibile con lo studio'
     },
@@ -591,12 +628,14 @@ window.NAVIDA_DATI = {
       nome: 'Junior UI Designer part-time',
       ente: 'Agenzia Frame',
       sigla: 'F', tono: 1,
+      immagine: 'assets/opportunita/foto/partFrame.jpg', logo: 'assets/opportunita/loghi/agenzia-frame.svg',
       citta: 'Padova', indirizzo: 'Corso Milano 20, Padova', distanza: '1,5 km', pos: { x: 26, y: 56 },
       modalita: 'Ibrido', durata: 'Part-time, 20 ore', prezzo: '€ 12.000 / anno', inizio: 'Novembre 2026', lingua: 'Italiano',
       contratto: 'Apprendistato',
       pubblicato: '5 giorni fa',
       rating: 4.2, recensioni: 18, affinita: 82,
       perche: 'Part-time: puoi farlo mentre finisci gli studi',
+      percheLungo: 'Sono 20 ore a settimana, quindi puoi farlo mentre finisci gli studi. Lavori su interfacce vere accanto a designer esperti. L’agenzia è a 1,5 km da casa tua.',
       sponsorizzato: false,
       adatto: 'Compatibile con lo studio'
     },
@@ -605,13 +644,14 @@ window.NAVIDA_DATI = {
       nome: 'Tirocinio UX/UI Designer',
       ente: 'Studio Lumen',
       sigla: 'L', tono: 2,
-      immagine: 'assets/fase3/detail-gallery-2.png',
+      immagine: 'assets/opportunita/foto/tirLumen.jpg', logo: 'assets/opportunita/loghi/studio-lumen.svg',
       citta: 'Padova', indirizzo: 'Via Niccolò Tommaseo 12, Padova', distanza: '2,0 km', pos: { x: 55, y: 64 },
       modalita: 'In presenza', durata: '6 mesi', prezzo: 'Rimborso € 800 / mese', inizio: 'Gennaio 2027', lingua: 'Italiano',
       contratto: 'Tirocinio extracurricolare',
       pubblicato: '3 giorni fa',
       rating: 4.7, recensioni: 23, affinita: 91,
       perche: 'Uno studio piccolo dove segui i progetti dall’inizio alla fine',
+      percheLungo: 'In uno studio piccolo segui i progetti dall’inizio alla fine, non solo un pezzo. Hai un senior che ti affianca e c’è la possibilità di essere assunto. Ti conviene allo step 2 del tuo percorso.',
       sponsorizzato: false,
       adatto: 'Per lo step 2',
       descrizione: 'Studio Lumen progetta app e servizi digitali per aziende del Nordest. Cerchiamo una persona curiosa che voglia imparare il mestiere su progetti veri.',
@@ -623,12 +663,14 @@ window.NAVIDA_DATI = {
       nome: 'Stage Product Designer',
       ente: 'Pixel Nord',
       sigla: 'PN', tono: 3,
+      immagine: 'assets/opportunita/foto/stagePixel.jpg', logo: 'assets/opportunita/loghi/pixel-nord.svg',
       citta: 'Vicenza', indirizzo: 'Viale Mazzini 5, Vicenza', distanza: '33 km', pos: null,
       modalita: 'Ibrido', durata: '6 mesi', prezzo: 'Rimborso € 600 / mese', inizio: 'Febbraio 2027', lingua: 'Italiano e inglese',
       contratto: 'Tirocinio extracurricolare',
       pubblicato: '1 settimana fa',
       rating: 4.3, recensioni: 31, affinita: 80,
       perche: 'Azienda di prodotto con un team di design interno',
+      percheLungo: 'Pixel Nord fa prodotti suoi e ha un team di design interno: impari come si cura un prodotto nel tempo. È a Vicenza, ma puoi lavorare anche da casa. Ti conviene allo step 2 del tuo percorso.',
       sponsorizzato: false,
       adatto: 'Per lo step 2'
     }

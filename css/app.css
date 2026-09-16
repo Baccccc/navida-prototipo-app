@@ -74,6 +74,8 @@ input, textarea { font-family: inherit; }
 
 /* cornice nera stile iPhone, solo da desktop */
 .device--framed {
+  /* livello nero dietro a tutte le schermate: copre il filo chiaro sui bordi */
+  background: #000;
   border: 12px solid #0b0b12;
   border-radius: 56px;
   box-shadow:

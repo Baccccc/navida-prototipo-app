@@ -5,23 +5,32 @@
 
      fase3.html   schermata "percorso" (type nvPercorso): dentro l'app, si
                   arriva dalla dashboard e toccando una tappa si apre lo step
-     index.html   schermata "preview": alla fine del questionario. Qui le
-                  schermate dell'app non esistono, quindi la freccia torna
-                  indietro nel questionario, una tappa apre un pannello con
-                  i suoi dati e il pulsante in fondo porta alla dashboard
+     index.html   schermata "preview": alla fine del questionario. E' la
+                  stessa pagina, senza pulsante in fondo. La freccia torna
+                  indietro nel questionario; toccando una tappa si entra
+                  nell'app vera, nella pagina dello step
+                  (fase3.html?screen=step&step=n)
 
    Bac l'ha chiesta "come un percorso, un filo ludico, stile Duolingo", ma
    con pochi step molto distanziati, una piccola mappa diretta dallo step 1
    al traguardo, pochi dati per tappa e lo stato chiarissimo. Niente
    percentuali.
 
-   Tre versioni (pannello Versione):
-     base     Sentiero  sentiero che serpeggia dall'alto in basso, nodi tondi
-                        da gioco, "Sei qui" con la mascotte sulla tappa attuale
-     pianeti  Pianeti   cielo notturno: si parte dalla Terra in basso e il
-                        razzo sale di pianeta in pianeta fino al traguardo
-     tappe    Tappe     mini mappa orizzontale da 1 a 5 e grandi carte-tappa
-                        che scorrono di lato
+   Sei versioni (pannello Versione):
+     base          Sentiero         sentiero che serpeggia dall'alto in basso,
+                                    nodi tondi da gioco, "Sei qui" con la
+                                    mascotte sulla tappa attuale
+     sentieroCard  Sentiero a card  lo stesso sentiero, ma ogni tappa e' una
+                                    card con i dati dentro
+     pianeti       Pianeti          cielo notturno illustrato: si parte dalla
+                                    Terra in basso e il razzo sale di pianeta
+                                    in pianeta fino al traguardo
+     pianetiSoft   Pianeti leggeri  lo stesso cielo, meno illustrato: fondo a
+                                    tinta unita, Terra disegnata piatta
+     pianetiFlat   Pianeti flat     fondo chiaro, pianeti a cerchi pieni con
+                                    il numero dello step, razzo a icona
+     tappe         Tappe            mini mappa orizzontale da 1 a 5 e grandi
+                                    carte-tappa che scorrono di lato
 
    Dati: NV.dati.percorso e NV.steps() (js/app/dati.js).
    Stile: css/app/percorso.css. Prefisso delle classi: nv-path-
@@ -40,14 +49,17 @@
 
   /* ==================================================================
      VERSIONI
-     Le stesse tre per l'app e per l'anteprima: e' la stessa vista.
+     Le stesse per l'app e per l'anteprima: e' la stessa vista.
      "preview" sostituisce la voce vecchia di js/variants.js (lista,
      serpentina, mappa), che disegnava js/render.js.
      ================================================================== */
   var OPZIONI = [
-    { value: 'base',    label: 'Sentiero' },
-    { value: 'pianeti', label: 'Pianeti' },
-    { value: 'tappe',   label: 'Tappe' }
+    { value: 'base',         label: 'Sentiero' },
+    { value: 'sentieroCard', label: 'Sentiero a card' },
+    { value: 'pianeti',      label: 'Pianeti' },
+    { value: 'pianetiSoft',  label: 'Pianeti leggeri' },
+    { value: 'pianetiFlat',  label: 'Pianeti flat' },
+    { value: 'tappe',        label: 'Tappe' }
   ];
 
   window.NAVIDA_PAGE_VARIANTS = window.NAVIDA_PAGE_VARIANTS || {};
@@ -164,49 +176,19 @@
 
   /* ==================================================================
      APRIRE UNA TAPPA
-     Nell'app si va al dettaglio dello step. Nell'anteprima quella pagina
-     non esiste: si apre un pannello con i dati della tappa.
+     Nell'app si va al dettaglio dello step. Nell'anteprima si entra
+     nell'app vera, direttamente nella pagina dello step: l'app sta in
+     fase3.html. Il brand kit dell'indirizzo, se c'e', viaggia con noi.
      ================================================================== */
 
   function apri(i, anteprima) {
-    if (anteprima) foglioTappa(i);
-    else NV.apriStep(i);
-  }
-
-  function foglioTappa(i) {
-    var lista = NV.steps();
-    var s = lista[i];
-    if (!s) return;
-    var st = stato(s);
-    var tipo = s.stato === 'attuale' ? 'main' : s.stato === 'fatto' ? 'ok' : s.stato === 'traguardo' ? 'sponsor' : 'neutra';
-    var c = NV.conteggio(s);
-    var tot = durataTotale();
-
-    function dato(etichetta, valore) {
-      return h('div', { class: 'nv-dato' }, [h('small', { text: etichetta }), h('strong', { text: valore })]);
-    }
-
-    NV.apriFoglio({
-      titolo: s.titolo,
-      sottotitolo: 'Step ' + (i + 1) + ' di ' + lista.length + ' · ' + s.tipo,
-      classe: 'nv-path-foglio',
-      contenuto: [
-        h('div', { class: 'nv-path-foglio__stato' }, [NV.etichetta(st.etichetta, tipo, st.icona)]),
-        s.obiettivo ? h('p', { class: 'nv-body nv-path-foglio__obiettivo', text: s.obiettivo }) : null,
-        h('div', { class: 'nv-path-foglio__dati' }, [
-          eUltima(i) ? dato('Ci arrivi in', tot.valore) : dato('Durata', durata(s) || '—'),
-          dato('Compiti', c.totali ? String(c.totali) : '—'),
-          s.stipendio ? h('div', { class: 'nv-dato nv-path-foglio__largo' }, [h('small', { text: 'Stipendio' }), h('strong', { text: s.stipendio })]) : null
-        ]),
-        (s.competenze && s.competenze.length) ? h('div', { class: 'nv-path-foglio__blocco' }, [
-          h('span', { class: 'nv-eyebrow', text: 'Cosa impari' }),
-          h('div', { class: 'nv-path-foglio__competenze' }, s.competenze.map(function (x) {
-            return h('span', { class: 'nv-tag nv-tag--neutra', text: x });
-          }))
-        ]) : null
-      ],
-      azioni: [NV.pulsante('Ho capito', { variante: 'secondario', onclick: NV.chiudiFoglio })]
-    });
+    if (!anteprima) { NV.apriStep(i); return; }
+    var url = 'fase3.html?screen=step&step=' + (i + 1);
+    try {
+      var kit = new URLSearchParams(window.location.search).get('brand');
+      if (kit) url += '&brand=' + encodeURIComponent(kit);
+    } catch (e) {}
+    window.location.href = url;
   }
 
   /* ==================================================================
@@ -253,19 +235,6 @@
     ]);
   }
 
-  /* Il pulsante fisso in fondo all'anteprima: si va alla dashboard. */
-  function piede(screen, notte) {
-    var btn = NV.pulsante(screen.cta || 'Vai alla dashboard', {
-      variante: notte ? 'bianco' : null,
-      iconaDopo: 'arrow-right',
-      onclick: function () { window.location.href = screen.href || 'fase3.html'; }
-    });
-    /* il testo resta modificabile dalla barra, come nel questionario */
-    var etichetta = btn.querySelector('span:not(.ico)');
-    if (etichetta) btn.replaceChild(NV.testo(screen, 'cta', screen.cta || 'Vai alla dashboard', 'span'), etichetta);
-    return h('div', { class: 'nv-path-piede' + (notte ? ' nv-path-piede--notte' : '') }, [btn]);
-  }
-
   /* Il contenuto del nodo tondo: numero, spunta o coppa. */
   function faccia(s, i) {
     if (eUltima(i)) return h('span', { class: 'nv-path-nodo__medaglia' }, [icon('trophy', ICO.LG)]);
@@ -281,14 +250,21 @@
      e a sinistra. Il sentiero e' un SVG disegnato dai centri veri dei
      nodi, misurati a schermata pronta: pieno fino a dove sei, a puntini
      dopo.
+
+     Con card = true (versione "Sentiero a card") ogni tappa e' una card
+     con i dati dentro, al posto del nodo tondo. Il sentiero passa dietro
+     le card e unisce i loro centri.
      ================================================================== */
-  function vistaSentiero(screen, anteprima) {
+  function vistaSentiero(screen, anteprima, card) {
     var lista = NV.steps();
     var p = NV.dati.percorso;
     var ultima = lista.length - 1;
     var attuale = NV.stepAttuale();
 
-    var mappa = h('section', { class: 'nv-path-sentiero', 'aria-label': 'Le tappe del tuo percorso' });
+    var mappa = h('section', {
+      class: 'nv-path-sentiero' + (card ? ' nv-path-sentiero--card' : ''),
+      'aria-label': 'Le tappe del tuo percorso'
+    });
 
     var svg = document.createElementNS(SVG, 'svg');
     svg.setAttribute('class', 'nv-path-sentiero__traccia');
@@ -318,6 +294,15 @@
       var pos = posizioni[i];
       var qui = s.stato === 'attuale';
 
+      if (card) {
+        var scheda = cardTappa(s, i, pos);
+        nodi.push(scheda);
+        mappa.appendChild(h('div', {
+          class: 'nv-path-riga nv-path-riga--' + pos + (qui ? ' nv-path-riga--attuale' : '')
+        }, [scheda]));
+        return;
+      }
+
       var nodo = h('span', {
         class: 'nv-path-nodo nv-path-nodo--' + s.stato + (i === ultima ? ' nv-path-nodo--fine' : '')
       }, [faccia(s, i)]);
@@ -339,7 +324,7 @@
         h('strong', { class: 'nv-path-etichetta__titolo', text: s.titolo }),
         datiBrevi(s, i),
         qui ? h('span', { class: 'nv-path-apri' }, [
-          h('span', { text: anteprima ? 'Vedi i dettagli' : 'Apri lo step' }),
+          h('span', { text: 'Apri lo step' }),
           icon('chevron-right', ICO.SM)
         ]) : null
       ]);
@@ -357,10 +342,60 @@
       }, [tappa]));
     });
 
+    /* La card di una tappa: bollino (numero, spunta o coppa), stato,
+       titolo e i dati brevi. Sulla tappa attuale "Sei qui", la mascotte
+       e l'invito ad aprire. */
+    function cardTappa(s, i, pos) {
+      var qui = s.stato === 'attuale';
+      var fine = i === ultima;
+      var st = stato(s);
+      var tipoTag = qui ? 'chiara' : s.stato === 'fatto' ? 'ok' : fine ? 'sponsor' : 'neutra';
+
+      var bollino = h('span', {
+        class: 'nv-path-card__bollino nv-path-card__bollino--' + (fine ? 'fine' : s.stato)
+      }, [
+        fine ? icon('trophy', ICO.SM)
+          : s.stato === 'fatto' ? icon('check', ICO.SM)
+          : h('span', { text: String(i + 1) })
+      ]);
+
+      return h('button', {
+        class: 'nv-path-card nv-path-card--' + pos + ' is-' + s.stato + (fine ? ' is-fine' : ''),
+        type: 'button',
+        'aria-label': descrizioneAccessibile(s, i),
+        'aria-current': qui ? 'step' : null,
+        onclick: function () { apri(i, anteprima); }
+      }, [
+        qui ? h('span', { class: 'nv-path-fumetto', text: st.etichetta }) : null,
+        qui ? NV.mascotte('salutare', 'nv-path-card__mascotte') : null,
+        h('span', { class: 'nv-path-card__testa' }, [
+          bollino,
+          /* a destra: lucchetto se e' chiusa, altrimenti lo stato. Sulla
+             tappa attuale lo stato lo dice gia' il fumetto */
+          qui ? null
+            : s.stato === 'da-fare' && !fine
+              ? h('span', { class: 'nv-path-card__lucchetto' }, [icon('lock', ICO.SM)])
+              : NV.etichetta(fine ? 'Traguardo' : st.etichetta, tipoTag, fine ? 'trophy' : st.icona)
+        ]),
+        h('span', { class: 'nv-path-etichetta__occhiello', text: occhiello(s, i) }),
+        h('strong', { class: 'nv-path-card__titolo', text: s.titolo }),
+        datiBrevi(s, i),
+        qui ? h('span', { class: 'nv-path-apri' }, [
+          h('span', { text: 'Apri lo step' }),
+          icon('chevron-right', ICO.SM)
+        ]) : null
+      ]);
+    }
+
     /* --- il sentiero --------------------------------------------------- */
     function tratto(a, b) {
       var s = 'M ' + f(a.x) + ' ' + f(a.y);
       var dx = b.x - a.x;
+      /* con le card il sentiero passa dietro: basta una curva morbida */
+      if (card) {
+        var m = (b.y - a.y) / 2;
+        return s + ' C ' + f(a.x) + ' ' + f(a.y + m) + ', ' + f(b.x) + ' ' + f(b.y - m) + ', ' + f(b.x) + ' ' + f(b.y) + ' ';
+      }
       /* dal centro verso un lato: esce di fianco al nodo e scende dritto,
          cosi' non passa sopra l'etichetta che sta sotto */
       if (a.pos === 'centro' && b.pos !== 'centro' && Math.abs(dx) > 1) {
@@ -403,13 +438,13 @@
       if (window.ResizeObserver) new ResizeObserver(disegna).observe(mappa);
     });
 
-    var pagina = NV.pagina('nv-path nv-path--base' + (anteprima ? ' nv-path--anteprima' : ''), [
+    var pagina = NV.pagina('nv-path nv-path--base' + (card ? ' nv-path--card' : '') + (anteprima ? ' nv-path--anteprima' : ''), [
       barra(anteprima),
       testa(screen, 'Ogni step ti avvicina a ' + p.obiettivo + '.'),
       riepilogo(),
       mappa
     ]);
-    return [pagina, anteprima ? piede(screen) : null];
+    return [pagina];
   }
 
   /* ==================================================================
@@ -419,17 +454,30 @@
      partenza, il razzo sta sul pianeta dove sei, il traguardo e' Saturno
      in cima. All'apertura la pagina scorre fino alla tappa attuale.
      I pianeti di passaggio sono lo stesso disegno con tinte diverse.
+
+     stile:
+       illustrato  (Pianeti)         immagini del cielo, della Terra e dei pianeti
+       leggero     (Pianeti leggeri) cielo a tinta unita con poche stelle e
+                                     Terra piatta; pianeti e razzo restano
+                                     disegni
+       flat        (Pianeti flat)    fondo chiaro, pianeti a cerchi pieni col
+                                     numero dello step, razzo a icona
      ================================================================== */
   var TINTE = [-38, 62, -88, 22, -60];
 
-  function vistaPianeti(screen, anteprima) {
+  function vistaPianeti(screen, anteprima, stile) {
+    stile = stile || 'illustrato';
+    var flat = stile === 'flat';
     var lista = NV.steps();
     var p = NV.dati.percorso;
     var ultima = lista.length - 1;
     var attuale = NV.stepAttuale();
     var tot = durataTotale();
 
-    var cielo = h('section', { class: 'nv-path-cielo', 'aria-label': 'Le tappe del tuo percorso, dalla partenza al traguardo' });
+    var cielo = h('section', {
+      class: 'nv-path-cielo nv-path-cielo--' + stile,
+      'aria-label': 'Le tappe del tuo percorso, dalla partenza al traguardo'
+    });
     var svg = document.createElementNS(SVG, 'svg');
     svg.setAttribute('class', 'nv-path-cielo__traccia');
     svg.setAttribute('aria-hidden', 'true');
@@ -445,18 +493,32 @@
       var fine = i === ultima;
       var pos = fine ? 'fine' : (i % 2 === 0 ? 'sinistra' : 'destra');
 
+      /* flat: un cerchio pieno con il numero (o la spunta, o la coppa);
+         il colore cambia da tappa a tappa */
+      var disegno = flat
+        ? h('span', { class: 'nv-path-globo nv-path-globo--' + (fine ? 'fine' : 'tinta-' + (i % 4)) }, [
+            h('span', { class: 'nv-path-globo__faccia' }, [
+              fine ? icon('trophy', ICO.LG)
+                : s.stato === 'fatto' ? icon('check', ICO.LG)
+                : h('span', { text: String(i + 1) })
+            ])
+          ])
+        : h('img', {
+            class: 'nv-path-astro__img',
+            src: IMMAGINI + (fine ? 'pianeta-anelli.webp' : 'pianeta-viola.webp'),
+            alt: '',
+            decoding: 'async'
+          });
+
       var corpo = h('span', {
         class: 'nv-path-astro__corpo',
-        style: fine ? null : '--nv-path-tinta:' + TINTE[i % TINTE.length] + 'deg'
-      }, [
-        h('img', {
-          class: 'nv-path-astro__img',
-          src: IMMAGINI + (fine ? 'pianeta-anelli.webp' : 'pianeta-viola.webp'),
-          alt: '',
-          decoding: 'async'
-        })
-      ]);
-      if (qui) corpo.appendChild(h('img', { class: 'nv-path-razzo', src: IMMAGINI + 'razzo-navida.webp', alt: '', decoding: 'async' }));
+        style: fine || flat ? null : '--nv-path-tinta:' + TINTE[i % TINTE.length] + 'deg'
+      }, [disegno]);
+      if (qui) {
+        corpo.appendChild(flat
+          ? h('span', { class: 'nv-path-razzo nv-path-razzo--flat' }, [icon('rocket', ICO.MD)])
+          : h('img', { class: 'nv-path-razzo', src: IMMAGINI + 'razzo-navida.webp', alt: '', decoding: 'async' }));
+      }
       if (s.stato === 'da-fare') corpo.appendChild(h('span', { class: 'nv-path-astro__bollino' }, [icon('lock', ICO.SM)]));
       if (s.stato === 'fatto') corpo.appendChild(h('span', { class: 'nv-path-astro__bollino nv-path-astro__bollino--ok' }, [icon('check', ICO.SM)]));
       corpi[i] = corpo;
@@ -485,8 +547,11 @@
       h('span', { text: 'Parti da' }),
       h('strong', { text: p.partenza })
     ]);
-    cielo.appendChild(h('div', { class: 'nv-path-terra' }, [
-      h('img', { class: 'nv-path-terra__img', src: IMMAGINI + 'terra-partenza.webp', alt: '', decoding: 'async' }),
+    /* la Terra: illustrata, oppure un grande arco a tinta unita */
+    cielo.appendChild(h('div', { class: 'nv-path-terra' + (stile === 'illustrato' ? '' : ' nv-path-terra--piatta') }, [
+      stile === 'illustrato'
+        ? h('img', { class: 'nv-path-terra__img', src: IMMAGINI + 'terra-partenza.webp', alt: '', decoding: 'async' })
+        : h('span', { class: 'nv-path-terra__arco', 'aria-hidden': 'true' }),
       h('div', { class: 'nv-path-terra__testi' }, [
         partenza,
         h('span', { class: 'nv-path-terra__dati' }, [
@@ -516,7 +581,7 @@
       svg.querySelector('.nv-path-scia__futuro').setAttribute('d', futuro || 'M0 0');
     }
 
-    var pagina = NV.pagina('nv-page--piena nv-path nv-path--pianeti' + (anteprima ? ' nv-path--anteprima' : ''), [cielo]);
+    var pagina = NV.pagina('nv-page--piena nv-path nv-path--pianeti nv-path--pianeti-' + stile + (anteprima ? ' nv-path--anteprima' : ''), [cielo]);
 
     quandoPronto(cielo, function () {
       disegna();
@@ -533,9 +598,11 @@
     });
 
     return [
-      barra(anteprima, { titolo: screen.title || 'La tua linea di carriera', classe: 'nv-path-barra-notte' }),
-      pagina,
-      anteprima ? piede(screen, true) : null
+      barra(anteprima, {
+        titolo: screen.title || 'La tua linea di carriera',
+        classe: 'nv-path-barra-notte' + (flat ? ' nv-path-barra-notte--chiara' : '')
+      }),
+      pagina
     ];
   }
 
@@ -628,7 +695,7 @@
         ]),
         h('span', { class: 'nv-path-carta__dati' }, dati),
         h('span', { class: 'nv-path-apri' }, [
-          h('span', { text: anteprima ? 'Vedi i dettagli' : 'Apri lo step' }),
+          h('span', { text: 'Apri lo step' }),
           icon('chevron-right', ICO.SM)
         ]),
         qui ? NV.mascotte('salutare', 'nv-path-carta__mascotte') : null
@@ -676,7 +743,7 @@
       carosello,
       riepilogo()
     ]);
-    return [pagina, anteprima ? piede(screen) : null];
+    return [pagina];
   }
 
   /* ==================================================================
@@ -684,19 +751,13 @@
      ================================================================== */
   function disegnaVista(screen, anteprima) {
     var v = NV.variante(screen.id);
-    if (v === 'pianeti') return vistaPianeti(screen, anteprima);
+    if (v === 'sentieroCard') return vistaSentiero(screen, anteprima, true);
+    if (v === 'pianeti') return vistaPianeti(screen, anteprima, 'illustrato');
+    if (v === 'pianetiSoft') return vistaPianeti(screen, anteprima, 'leggero');
+    if (v === 'pianetiFlat') return vistaPianeti(screen, anteprima, 'flat');
     if (v === 'tappe') return vistaTappe(screen, anteprima);
     return vistaSentiero(screen, anteprima);
   }
-
-  /* Per le prove: ?screen=preview&foglio=1 apre subito il pannello della
-     tappa 1 (vale solo nell'anteprima, dove le tappe aprono un pannello). */
-  var foglioDiProva = (function () {
-    try {
-      var n = parseInt(new URLSearchParams(window.location.search).get('foglio'), 10);
-      return isNaN(n) ? null : n - 1;
-    } catch (e) { return null; }
-  })();
 
   /* Nell'app */
   R.screens.nvPercorso = function (screen) {
@@ -706,12 +767,6 @@
   /* Alla fine del questionario: prende il posto del vecchio disegno di
      js/render.js. */
   R.screens.preview = function (screen) {
-    var out = disegnaVista(screen, true);
-    if (foglioDiProva != null) {
-      var i = foglioDiProva;
-      foglioDiProva = null;
-      setTimeout(function () { foglioTappa(Math.max(0, Math.min(NV.steps().length - 1, i))); }, 0);
-    }
-    return out;
+    return disegnaVista(screen, true);
   };
 })();

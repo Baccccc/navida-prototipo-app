@@ -44,6 +44,9 @@
     'bell-ring': '<path d="M10.268 21a2 2 0 0 0 3.464 0"/><path d="M22 8c0-2.3-.8-4.3-2-6"/><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"/><path d="M4 2C2.8 3.7 2 5.7 2 8"/>'
   });
 
+  /* L'icona persona dentro l'avatar grande da 96. */
+  var ICONA_GRANDE = 40;
+
   /* L'avatar di partenza: "Rimuovi foto" torna a questo. */
   var AVATAR_PREDEFINITO = U.avatar;
 
@@ -96,7 +99,7 @@
   /** Avatar tondo. opts: dim (px), anello (0-100), camera (fn) */
   function avatar(opts) {
     opts = opts || {};
-    var foto = h('img', { class: 'nv-pro-avatar__img', src: U.avatar, alt: '' });
+    var foto = NV.fotoProfilo(opts.classe === 'nv-pro-avatar--sm' ? ICO.LG : ICONA_GRANDE);
     var box = h('div', {
       class: 'nv-pro-avatar' + (opts.anello != null ? ' nv-pro-avatar--anello' : '') + (opts.classe ? ' ' + opts.classe : ''),
       style: (opts.anello != null ? '--nv-pro-anello:' + opts.anello + '%;' : '')
@@ -177,17 +180,10 @@
      PROFILO
      ================================================================== */
 
-  function profiloIdentita(screen) {
+  function profiloIdentita() {
     return h('section', { class: 'nv-pro-id' }, [
       h('div', { class: 'nv-pro-id__riga' }, [
-        avatar({ anello: U.completezza, camera: function () { NV.vai('fotoProfilo'); } }),
-        NV.pulsante('Modifica', {
-          variante: 'secondario',
-          icona: 'pencil-line',
-          piccolo: true,
-          classe: 'nv-btn--hug nv-pro-id__modifica',
-          onclick: function () { NV.vai('modificaProfilo'); }
-        })
+        avatar({ anello: U.completezza, camera: function () { NV.vai('fotoProfilo'); } })
       ]),
       h('div', { class: 'nv-pro-id__testi' }, [
         h('h1', { class: 'nv-title', text: nomeCompleto() }),
@@ -196,21 +192,25 @@
           h('span', { class: 'nv-pro-id__punto', 'aria-hidden': 'true' }),
           h('span', { text: U.citta })
         ])
-      ]),
-      h('button', {
-        class: 'nv-pro-completa nv-press',
-        type: 'button',
-        onclick: function () { NV.vai('curriculum'); }
-      }, [
-        h('span', { class: 'nv-pro-completa__testi' }, [
-          h('span', { class: 'nv-pro-completa__titolo' }, [
-            h('strong', { text: 'Profilo completo al ' + U.completezza + '%' })
-          ]),
-          NV.testo(screen, 'completaNota', 'Aggiungi il portfolio: i suggerimenti diventano più precisi.', 'span', 'nv-pro-completa__nota'),
-          NV.avanzamento(U.completezza, 100)
-        ]),
-        h('span', { class: 'nv-pro-tondo' }, [icon('chevron-right', ICO.MD)])
       ])
+    ]);
+  }
+
+  /* "Profilo completo": solo nella scheda Profilo. */
+  function profiloCompleta(screen) {
+    return h('button', {
+      class: 'nv-pro-completa nv-press',
+      type: 'button',
+      onclick: function () { NV.vai('curriculum'); }
+    }, [
+      h('span', { class: 'nv-pro-completa__testi' }, [
+        h('span', { class: 'nv-pro-completa__titolo' }, [
+          h('strong', { text: 'Profilo completo al ' + U.completezza + '%' })
+        ]),
+        NV.testo(screen, 'completaNota', 'Aggiungi il portfolio: i suggerimenti diventano più precisi.', 'span', 'nv-pro-completa__nota'),
+        NV.avanzamento(U.completezza, 100)
+      ]),
+      h('span', { class: 'nv-pro-tondo' }, [icon('chevron-right', ICO.MD)])
     ]);
   }
 
@@ -288,15 +288,7 @@
           ]),
           h('div', { class: 'nv-pro-pills' }, visibili.map(function (c) { return pastiglia(c); })
             .concat(altre > 0 ? [pastiglia('+' + altre, 'altre')] : []))
-        ]),
-        gruppo([
-          voce({ icona: 'sparkles', titolo: 'Genera il tuo CV', sotto: 'Pronto da scaricare in PDF', chev: true, onclick: function () {
-            NV.vai('curriculum', { proFoglio: { screen: 'curriculum', foglio: 'cv' } });
-          } }),
-          voce({ icona: 'file-up', titolo: 'Carica CV o portfolio', sotto: 'Compiliamo noi i campi', chev: true, onclick: function () {
-            NV.vai('curriculum');
-          } })
-        ], 'nv-pro-gruppo--dentro')
+        ])
       ])
     ], { azione: { label: 'Apri', onclick: function () { NV.vai('curriculum'); } } });
   }
@@ -324,11 +316,9 @@
   }
 
   function profiloImpostazioni() {
-    var nuove = (D.notifiche || []).filter(function (n) { return n.nuova; }).length;
     return NV.sezione('Impostazioni', [
       gruppo([
         voce({ icona: 'sliders-horizontal', titolo: 'Preferenze', sotto: 'Tema, notifiche, accessibilità', chev: true, onclick: function () { NV.vai('preferenze'); } }),
-        voce({ icona: 'bell', titolo: 'Notifiche', conteggio: nuove || null, chev: true, onclick: function () { NV.vai('notifiche'); } }),
         voce({ icona: 'shield-check', titolo: 'Privacy e dati', chev: true, onclick: function () { NV.vai('preferenze'); } }),
         voce({ icona: 'circle-help', titolo: 'Aiuto e assistenza', chev: true, onclick: function () { NV.avviso('Nel prototipo l’assistenza non è attiva'); } })
       ]),
@@ -338,22 +328,44 @@
     ]);
   }
 
+  /* Scheda aperta nel profilo: resta in memoria, cosi' tornando da
+     "Modifica profilo" o dalle preferenze ritrovi la stessa scheda.
+     Di prova: ?screen=profilo&scheda=impostazioni */
+  var schedaProfilo = (function () {
+    try { return new URLSearchParams(window.location.search).get('scheda') === 'impostazioni' ? 'impostazioni' : 'profilo'; }
+    catch (e) { return 'profilo'; }
+  })();
+
   screens.nvProfilo = function (screen) {
+    var contenuto = h('div', { class: 'nv-pro-schede' });
+
+    /* Cambiando scheda si ridisegna solo il contenuto: la testa non salta. */
+    function disegna(valore) {
+      schedaProfilo = valore;
+      var parti = valore === 'impostazioni'
+        ? [
+            profiloDati(),
+            profiloImpostazioni(),
+            h('p', { class: 'nv-pro-versione' }, [
+              h('span', { class: 'nv-pro-versione__logo', text: 'navida' }),
+              h('span', { text: 'Versione ' + VERSIONE })
+            ])
+          ]
+        : [profiloCompleta(screen), profiloPercorso(screen), profiloCurriculum()];
+      contenuto.replaceChildren.apply(contenuto, [
+        NV.segmenti([
+          { value: 'profilo', label: 'Profilo' },
+          { value: 'impostazioni', label: 'Impostazioni' }
+        ], valore, disegna, 'nv-seg--piena')
+      ].concat(parti));
+    }
+    disegna(schedaProfilo);
+
     return [
       NV.pagina('nv-pro', [
-        NV.barra({
-          indietro: 'dashboard',
-          azioni: [NV.iconBtn('settings', 'Preferenze', function () { NV.vai('preferenze'); })]
-        }),
-        profiloIdentita(screen),
-        profiloPercorso(screen),
-        profiloCurriculum(),
-        profiloDati(),
-        profiloImpostazioni(),
-        h('p', { class: 'nv-pro-versione' }, [
-          h('span', { class: 'nv-pro-versione__logo', text: 'navida' }),
-          h('span', { text: 'Versione ' + VERSIONE })
-        ])
+        NV.barra({ indietro: 'dashboard' }),
+        profiloIdentita(),
+        contenuto
       ])
     ];
   };
@@ -368,15 +380,17 @@
   screens.nvFotoProfilo = function (screen) {
     var sotto = screens.nvProfilo(schermataDa('profilo'));
 
-    var anteprima = h('img', { class: 'nv-pro-avatar__img', src: U.avatar, alt: '' });
+    var anteprima = h('span', { class: 'nv-pro-avatar__foto' }, [NV.fotoProfilo(ICONA_GRANDE)]);
     var griglia;
 
     function aggiornaAvatar(src, messaggio) {
       U.avatar = src;
-      anteprima.src = src;
-      /* anche l'avatar del profilo sotto al velo */
-      var dietro = document.querySelectorAll('#app .nv-pro-id .nv-pro-avatar__img');
-      Array.prototype.forEach.call(dietro, function (img) { img.src = src; });
+      /* l'anteprima e l'avatar del profilo sotto al velo: stessa foto (o icona) */
+      var cerchi = [anteprima].concat(Array.prototype.slice.call(document.querySelectorAll('#app .nv-pro-id .nv-pro-avatar__foto')));
+      cerchi.forEach(function (c) {
+        c.textContent = '';
+        c.appendChild(NV.fotoProfilo(ICONA_GRANDE));
+      });
       Array.prototype.forEach.call(griglia.children, function (b) {
         var on = b.getAttribute('data-src') === src;
         b.classList.toggle('is-scelto', on);
@@ -409,9 +423,7 @@
       ]),
       h('div', { class: 'nv-sheet__body' }, [
         h('div', { class: 'nv-pro-foto__cima' }, [
-          h('div', { class: 'nv-pro-avatar nv-pro-foto__anteprima' }, [
-            h('span', { class: 'nv-pro-avatar__foto' }, [anteprima])
-          ]),
+          h('div', { class: 'nv-pro-avatar nv-pro-foto__anteprima' }, [anteprima]),
           h('div', { class: 'nv-pro-foto__azioni' }, [
             NV.pulsante('Scatta una foto', { variante: 'soft', icona: 'camera', piccolo: true, onclick: function () {
               NV.avviso('Nel prototipo la fotocamera non si apre');
@@ -429,8 +441,8 @@
           class: 'nv-pro-foto__rimuovi',
           type: 'button',
           onclick: function () {
-            if (U.avatar === AVATAR_PREDEFINITO) NV.avviso('Stai già usando l’immagine predefinita');
-            else aggiornaAvatar(AVATAR_PREDEFINITO, 'Foto rimossa: torna l’immagine predefinita');
+            if (U.avatar === AVATAR_PREDEFINITO) NV.avviso('Non hai ancora scelto una foto');
+            else aggiornaAvatar(AVATAR_PREDEFINITO, 'Foto rimossa: torna l’icona');
           }
         }, [icon('trash-2', ICO.MD), h('span', { text: 'Rimuovi la foto' })])
       ]),
@@ -837,7 +849,7 @@
 
     var carta = h('div', { class: 'nv-cv-carta nv-cv-carta--' + modello }, [
       h('div', { class: 'nv-cv-carta__testa' }, [
-        h('img', { class: 'nv-cv-carta__foto', src: U.avatar, alt: '' }),
+        h('span', { class: 'nv-cv-carta__foto' }, [NV.fotoProfilo()]),
         h('div', { class: 'nv-cv-carta__nome' }, [
           h('strong', { text: nomeCompleto() }),
           h('span', { text: (D.percorso.obiettivo || U.obiettivo) + ' · ' + U.citta })
@@ -1475,7 +1487,7 @@
     var voci = screen.voci || [];
     return [
       NV.pagina('nv-soon', [
-        NV.barraHome(),
+        NV.barraHome({ screen: screen }),
         h('div', { class: 'nv-soon-scena' }, [
           h('span', { class: 'nv-soon-scena__tag' }, [icon('clock', ICO.SM), h('span', { text: 'In arrivo' })]),
           NV.mascotte(screen.posa || 'stretta-mano', 'nv-soon-scena__mascotte')

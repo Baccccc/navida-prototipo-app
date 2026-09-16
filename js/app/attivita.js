@@ -13,11 +13,13 @@
    L'interruttore Elenco | Mappa apre la schermata Mappa con lo stesso
    filtro: se stai guardando le scuole, la mappa mostra le scuole.
 
-   Tre versioni (pannello Versione):
-     base       Elenco per te   schede orizzontali pulite, la prima marcata
-     copertine  Copertine       schede grandi con copertina e affinità in vista
-     compatta   Compatta        righe raggruppate per distanza, prezzo e
-                                durata allineati a destra per confrontare
+   Una versione sola, a copertine (scelta di Bac il 2026-09-16):
+     - la testata del compito sta in una card, sempre con la sfumatura
+       di marca (mai la scritta "La tua prossima mossa")
+     - ogni opportunita': foto, logo, ente e nome, dove (solo la citta'
+       oppure "Da remoto"), durata, voto e il prezzo in evidenza in fondo
+     - niente frase "perche' te la consigliamo" nella scheda: la
+       descrizione sta solo nella scheda info
 
    Parametri di prova nell'indirizzo (valgono al primo disegno):
      &compito=diploma | ai | workshop | casestudy (nessuna opzione)
@@ -34,22 +36,6 @@
   var NV = window.NV;
   if (!NV) return;
   var h = NV.h, icon = NV.icon, ICO = NV.ICO;
-
-  window.NAVIDA_PAGE_VARIANTS = window.NAVIDA_PAGE_VARIANTS || {};
-  window.NAVIDA_PAGE_VARIANTS.attivita = {
-    etichetta: 'Versione della scheda attività',
-    predefinita: 'base',
-    options: [
-      { value: 'base', label: 'Elenco per te' },
-      { value: 'copertine', label: 'Copertine' },
-      { value: 'compatta', label: 'Compatta' }
-    ]
-  };
-
-  var VERSIONI = ['base', 'copertine', 'compatta'];
-
-  /* Entro quanti km un posto conta come "vicino a te" (versione compatta). */
-  var SOGLIA_VICINO = 10;
 
   /* ==================================================================
      STATO DEI FILTRI
@@ -145,12 +131,11 @@
   function eLibro(o) { return o.categoria === 'libri' || o.modalita === 'Libro'; }
   function eGratis(o) { return /gratis/i.test(o.prezzo || ''); }
 
-  /** Dove si fa: città e distanza, oppure Online, oppure Libro. */
+  /** Dove si fa: solo la città, oppure Da remoto, oppure Libro. */
   function luogo(o) {
     if (eLibro(o)) return { icona: 'book-open', testo: 'Libro' };
-    if (o.modalita === 'Online') return { icona: 'globe', testo: 'Online' };
-    var parti = [o.citta, o.distanza].filter(Boolean);
-    return { icona: 'map-pin', testo: parti.join(' · ') || o.modalita || '' };
+    if (o.modalita === 'Online' || !o.citta) return { icona: 'globe', testo: 'Da remoto' };
+    return { icona: 'map-pin', testo: o.citta };
   }
 
   /** Solo la prima parte della durata: "6 mesi, 10 ore a settimana" -> "6 mesi". */
@@ -165,11 +150,22 @@
     return { icona: eLibro(o) ? 'file-text' : 'clock', testo: durataBreve(o) };
   }
 
-  /** Prezzo stretto per la colonna allineata: "Rimborso € 800 / mese" -> "€ 800/mese". */
-  function prezzoCorto(p) {
-    if (!p) return '';
-    if (/gratis/i.test(p)) return 'Gratis';
-    return p.replace(/^rimborso\s+/i, '').replace(/\s*\/\s*/g, '/');
+  /**
+   * Il prezzo diviso in tre pezzi, per dare peso solo alla cifra:
+   *   "€ 6.900 / anno"        -> ""          "€ 6.900"  "/ anno"
+   *   "da € 900 / anno"       -> "da"        "€ 900"    "/ anno"
+   *   "Rimborso € 800 / mese" -> "Rimborso"  "€ 800"    "/ mese"
+   *   "Gratis, finanziato"    -> ""          "Gratis"   "finanziato"
+   */
+  function prezzoParti(p) {
+    p = String(p || '').trim();
+    if (!p) return null;
+    if (/^gratis/i.test(p)) {
+      return { prima: '', cifra: 'Gratis', dopo: p.replace(/^gratis[,\s]*/i, '') };
+    }
+    var m = p.match(/^(.*?)(€\s?[\d.,]+)\s*(.*)$/);
+    if (!m) return { prima: '', cifra: p, dopo: '' };
+    return { prima: m[1].trim(), cifra: m[2], dopo: m[3].trim() };
   }
 
   function categoriePresenti(lista) {
@@ -272,67 +268,25 @@
     return out;
   }
 
-  function perche(o) {
-    if (!o.perche) return null;
-    return h('p', { class: 'nv-att-perche' }, [icon('sparkles', ICO.SM), h('span', { text: o.perche })]);
-  }
-
-  /** Anello dell'affinità: disegno di dati, colori dalle variabili nel CSS. */
-  function anello(percento) {
-    var r = 8;
-    var giro = 2 * Math.PI * r;
-    var pieno = Math.max(0, Math.min(100, percento || 0)) / 100 * giro;
-    return h('span', {
-      class: 'nv-att-anello',
-      'aria-hidden': 'true',
-      html: '<svg viewBox="0 0 20 20" width="20" height="20">' +
-        '<circle class="nv-att-anello__traccia" cx="10" cy="10" r="' + r + '"/>' +
-        '<circle class="nv-att-anello__pieno" cx="10" cy="10" r="' + r + '" transform="rotate(-90 10 10)" ' +
-        'stroke-dasharray="' + pieno.toFixed(2) + ' ' + giro.toFixed(2) + '"/></svg>'
-    });
-  }
-
   function apri(o) { return function () { NV.apriScheda(o.id); }; }
 
   /* ==================================================================
-     VERSIONE BASE · schede orizzontali pulite
-     ================================================================== */
-  function schedaBase(o, migliore) {
-    var tags = etichette(o, migliore);
-    var dove = luogo(o);
-    var q = quando(o);
-    return h('button', {
-      class: 'nv-att-card nv-press' + (migliore ? ' is-migliore' : ''),
-      type: 'button',
-      onclick: apri(o)
-    }, [
-      tags.length ? h('div', { class: 'nv-att-tags' }, tags) : null,
-      h('div', { class: 'nv-att-card__main' }, [
-        NV.logo(o),
-        h('div', { class: 'nv-att-card__copy' }, [
-          h('strong', { class: 'nv-att-card__nome', text: o.nome }),
-          h('span', { class: 'nv-att-card__ente', text: o.ente }),
-          h('div', { class: 'nv-att-card__meta' }, [
-            NV.meta(dove.icona, dove.testo),
-            q ? NV.meta(q.icona, q.testo) : null
-          ]),
-          h('div', { class: 'nv-att-card__prezzo' }, [
-            o.prezzo ? h('strong', { text: o.prezzo }) : null,
-            o.rating ? NV.stelle(o.rating, o.recensioni) : null
-          ])
-        ])
-      ]),
-      perche(o)
-    ]);
-  }
-
-  /* ==================================================================
-     VERSIONE COPERTINE · schede grandi, affinità in vista
+     LA SCHEDA · copertina, logo, dati e prezzo
      ================================================================== */
   function pastiglia(nomeIcona, testo, classe) {
     return h('span', { class: 'nv-att-pill' + (classe ? ' ' + classe : '') }, [
       nomeIcona ? icon(nomeIcona, ICO.SM) : null,
       h('span', { text: testo })
+    ]);
+  }
+
+  function prezzo(o) {
+    var pp = prezzoParti(o.prezzo);
+    if (!pp) return null;
+    return h('p', { class: 'nv-att-prezzo' + (pp.cifra === 'Gratis' ? ' is-gratis' : '') }, [
+      pp.prima ? h('span', { class: 'nv-att-prezzo__prima', text: pp.prima }) : null,
+      h('strong', { text: pp.cifra }),
+      pp.dopo ? h('span', { text: pp.dopo }) : null
     ]);
   }
 
@@ -344,8 +298,6 @@
 
     var pills = [pastiglia(dove.icona, dove.testo)];
     if (q) pills.push(pastiglia(q.icona, q.testo));
-    if (o.prezzo) pills.push(pastiglia(null, o.prezzo, 'nv-att-pill--prezzo'));
-    if (o.rating) pills.push(pastiglia('star', NV.voto(o.rating) + ' (' + NV.numeroCorto(o.recensioni) + ')', 'nv-att-pill--voto'));
 
     /* tre disposizioni dei pianeti, sempre la stessa per la stessa scheda:
        cosi' cinque scuole di fila non sembrano cinque copie */
@@ -361,7 +313,6 @@
             ? h('span', { class: 'nv-att-data' }, [h('strong', { text: o.data.giorno }), h('span', { text: o.data.mese })])
             : h('span', { class: 'nv-att-cover__cat' }, [icon(cat.icona, ICO.SM), h('span', { text: cat.singolare })]),
           o.affinita != null ? h('span', { class: 'nv-att-match', title: 'Quanto è adatta a te' }, [
-            anello(o.affinita),
             h('strong', { text: o.affinita + '%' }),
             h('span', { text: 'per te' })
           ]) : null
@@ -376,111 +327,37 @@
           h('span', { class: 'nv-att-cop__ente', text: o.ente }),
           h('strong', { class: 'nv-att-cop__nome', text: o.nome })
         ]),
-        perche(o),
-        h('div', { class: 'nv-att-pills' }, pills)
+        h('div', { class: 'nv-att-pills' }, pills),
+        /* il prezzo e' il dato che si confronta: in fondo, grande, col voto accanto */
+        h('div', { class: 'nv-att-cop__piede' }, [
+          prezzo(o),
+          o.rating ? NV.stelle(o.rating, o.recensioni) : null
+        ])
       ])
     ]);
   }
 
   /* ==================================================================
-     VERSIONE COMPATTA · righe raggruppate da confrontare
-     ================================================================== */
-  function gruppoDi(o) {
-    if (eLibro(o)) return 'libri';
-    var d = km(o);
-    if (d == null) return 'online';
-    return d <= SOGLIA_VICINO ? 'vicino' : 'lontano';
-  }
-
-  function gruppi() {
-    var citta = (NV.dati.utente && NV.dati.utente.citta) || 'casa';
-    return [
-      { chiave: 'vicino', titolo: 'Vicino a te', sub: 'Entro ' + SOGLIA_VICINO + ' km da ' + citta, icona: 'map-pin' },
-      { chiave: 'online', titolo: 'Online', sub: 'Da dove vuoi, con i tuoi tempi', icona: 'globe' },
-      { chiave: 'libri', titolo: 'Da leggere', sub: 'Libri che restano sulla scrivania', icona: 'book-open' },
-      { chiave: 'lontano', titolo: 'Più lontano', sub: 'Oltre ' + SOGLIA_VICINO + ' km: da valutare', icona: 'route' }
-    ];
-  }
-
-  function rigaCompatta(o, migliore) {
-    var q = quando(o);
-    var d = km(o);
-    return h('button', { class: 'nv-att-riga nv-press', type: 'button', onclick: apri(o) }, [
-      NV.logo(o, 'sm'),
-      h('div', { class: 'nv-att-riga__testo' }, [
-        h('strong', { class: 'nv-att-riga__nome', text: o.nome }),
-        h('span', { class: 'nv-att-riga__ente', text: o.ente })
-      ]),
-      /* i numeri da confrontare stanno tutti nella colonna di destra */
-      h('div', { class: 'nv-att-riga__numeri' }, [
-        h('strong', { text: prezzoCorto(o.prezzo) }),
-        q ? h('span', { text: q.testo }) : null,
-        o.affinita != null ? h('span', { class: 'nv-att-affinita', text: o.affinita + '% per te' }) : null
-      ]),
-      h('div', { class: 'nv-att-riga__extra' }, etichette(o, migliore, true).concat([
-        o.rating ? NV.stelle(o.rating) : null,
-        d != null ? h('span', { class: 'nv-att-riga__km', text: o.distanza }) : null
-      ]))
-    ]);
-  }
-
-  function elencoRaggruppato(visibili, migliore) {
-    return h('div', { class: 'nv-att-gruppi' }, gruppi().map(function (g) {
-      var dentro = visibili.filter(function (o) { return gruppoDi(o) === g.chiave; });
-      if (!dentro.length) return null;
-      return h('section', { class: 'nv-att-gruppo' }, [
-        h('div', { class: 'nv-att-gruppo__head' }, [
-          h('div', { class: 'nv-att-gruppo__copy' }, [
-            h('h2', { class: 'nv-att-gruppo__titolo' }, [
-              h('span', { text: g.titolo }),
-              h('span', { class: 'nv-att-gruppo__n', text: String(dentro.length) })
-            ]),
-            h('span', { class: 'nv-att-gruppo__sub', text: g.sub })
-          ]),
-          h('span', { class: 'nv-att-gruppo__colonna', text: 'Costo e durata' })
-        ]),
-        h('div', { class: 'nv-att-gruppo__lista' }, dentro.map(function (o) {
-          return rigaCompatta(o, o === migliore);
-        }))
-      ]);
-    }));
-  }
-
-  /* ==================================================================
      TESTATA: da dove vieni e che cosa stai guardando
      ================================================================== */
-  function testata(info, v) {
+  function testata(info) {
+    /* la testata e' sempre sfumata: le etichette sono bianche velate, come nella dashboard */
     var tags = [];
     if (info.modo === 'compito') {
       var c = info.compito;
-      tags.push(NV.tag(c.obbligatoria));
+      tags.push(NV.etichetta(c.obbligatoria ? 'Necessaria' : 'Facoltativa', 'chiara'));
       var st = NV.STATI_COMPITO[c.stato];
-      if (st) tags.push(NV.etichetta(st.etichetta, c.stato === 'fatto' ? 'ok' : 'neutra', st.icona));
-      if (c.durata) tags.push(NV.etichetta(c.durata, 'neutra', 'clock'));
+      if (st) tags.push(NV.etichetta(st.etichetta, 'chiara', st.icona));
+      if (c.durata) tags.push(NV.etichetta(c.durata, 'chiara', 'clock'));
     } else {
-      tags.push(NV.etichetta('Per lo step ' + (info.stepIndice + 1) + ' e il prossimo', 'neutra', 'route'));
+      tags.push(NV.etichetta('Per lo step ' + (info.stepIndice + 1) + ' e il prossimo', 'chiara', 'route'));
     }
 
-    var descr = h('p', { class: 'nv-body nv-att-descr', text: info.descrizione });
-    var leggiTutto = null;
-    /* Nella compatta la spiegazione sta in due righe e si apre a richiesta.
-       Sotto i 110 caratteri ci sta gia' tutta: niente "Leggi tutto". */
-    if (v === 'compatta' && String(info.descrizione || '').length > 110) {
-      descr.classList.add('is-chiusa');
-      leggiTutto = h('button', { class: 'nv-link nv-att-leggi', type: 'button', 'aria-expanded': 'false' }, [h('span', { text: 'Leggi tutto' })]);
-      leggiTutto.addEventListener('click', function () {
-        var chiusa = descr.classList.toggle('is-chiusa');
-        leggiTutto.setAttribute('aria-expanded', chiusa ? 'false' : 'true');
-        leggiTutto.firstChild.textContent = chiusa ? 'Leggi tutto' : 'Mostra meno';
-      });
-    }
-
-    return h('div', { class: 'nv-att-testa' }, [
+    return h('div', { class: 'nv-att-testa nv-hero' }, [
       h('span', { class: 'nv-eyebrow', text: 'Step ' + (info.stepIndice + 1) + ' · ' + info.step.titolo }),
-      h('h1', { class: 'nv-title' + (v === 'compatta' ? ' nv-title--md' : ''), text: info.titolo }),
+      h('h1', { class: 'nv-title nv-title--md', text: info.titolo }),
       h('div', { class: 'nv-att-tags nv-att-testa__tags' }, tags),
-      descr,
-      leggiTutto,
+      h('p', { class: 'nv-body nv-att-descr', text: info.descrizione }),
       info.modo === 'compito' && info.compito.nota
         ? h('p', { class: 'nv-att-nota' }, [icon('calendar', ICO.SM), h('span', { text: info.compito.nota })])
         : null
@@ -747,9 +624,6 @@
      LA SCHERMATA
      ================================================================== */
   window.NavidaRender.screens.nvAttivita = function (screen) {
-    var v = NV.variante(screen.id);
-    if (VERSIONI.indexOf(v) === -1) v = 'base';
-
     var info = leggiContesto();
     var s = statoPer(info.chiave);
     if (s.categoria !== 'tutte' && categoriePresenti(info.tutte).indexOf(s.categoria) === -1) s.categoria = 'tutte';
@@ -783,17 +657,9 @@
       var migliore = piuAdatta(visibili);
       var parti = [];
 
-      if (v === 'copertine') {
-        /* Elenco | Mappa a tutta larghezza; i Filtri scendono accanto all'ordine */
-        parti.push(interruttoreVista(info, s, 'nv-seg--piena'));
-        parti.push(filaCategorie(info, s, ridisegna));
-      } else {
-        parti.push(h('div', { class: 'nv-att-controlli' + (v === 'compatta' ? ' nv-att-controlli--ferma' : '') }, [
-          interruttoreVista(info, s),
-          bottoneFiltri(s, suFiltri)
-        ]));
-        parti.push(filaCategorie(info, s, ridisegna));
-      }
+      /* Elenco | Mappa a tutta larghezza; i Filtri scendono accanto all'ordine */
+      parti.push(interruttoreVista(info, s, 'nv-seg--piena'));
+      parti.push(filaCategorie(info, s, ridisegna));
 
       parti.push(filtriAttivi(s, ridisegna, azzera));
 
@@ -802,15 +668,10 @@
         return parti;
       }
 
-      parti.push(riepilogo(visibili, s, suOrdina, v === 'copertine' ? bottoneFiltri(s, suFiltri, true) : null));
-
-      if (v === 'compatta') {
-        parti.push(elencoRaggruppato(visibili, migliore));
-      } else {
-        parti.push(h('div', { class: 'nv-att-lista' }, visibili.map(function (o) {
-          return v === 'copertine' ? schedaCopertina(o, o === migliore) : schedaBase(o, o === migliore);
-        })));
-      }
+      parti.push(riepilogo(visibili, s, suOrdina, bottoneFiltri(s, suFiltri, true)));
+      parti.push(h('div', { class: 'nv-att-lista' }, visibili.map(function (o) {
+        return schedaCopertina(o, o === migliore);
+      })));
       return parti;
     }
 
@@ -844,9 +705,9 @@
     }
 
     return [
-      NV.pagina('nv-att nv-att--' + v, [
+      NV.pagina('nv-att', [
         NV.barra({ indietro: info.ripiego }),
-        testata(info, v),
+        testata(info),
         ricerca,
         corpo
       ])

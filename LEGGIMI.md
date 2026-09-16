@@ -106,7 +106,8 @@ Cliccando **Testi**, **Ordine** o **Elemento** la modalità si attiva subito.
 In fondo al pannello ci sono due scorciatoie: **Inizio del questionario** e
 **Fine del questionario**. "Fine" compila da sola tutte le risposte e apre il
 viaggio nello spazio (`fineTest`). Finita l'animazione, arriva da sola alla
-linea di carriera. Da lì **Vai alla dashboard** (o la freccia destra) apre `fase3.html`.
+linea di carriera. Da lì, toccando una tappa, si entra nell’app vera (`fase3.html`),
+nella pagina di quello step. Non c’è più il pulsante **Vai alla dashboard**.
 
 ---
 
@@ -304,7 +305,7 @@ Sta in `fase3.html`. Il file vecchio `js/fase3-render.js` non si carica più.
 ### Il giro di un utente
 
 ```
-Dashboard ──(card dello step)──> Linea di carriera ──(tocco uno step)──> Dettaglio step
+Dashboard ──(promemoria step)──> Linea di carriera ──(tocco uno step)──> Dettaglio step
     │                                                                      │
     │ Formazione / Lavoro                                  (tocco un compito, es. "Prendi un diploma")
     ▼                                                                      ▼
@@ -315,7 +316,8 @@ Scheda info (corso, scuola, evento, libro, offerta)
 ```
 
 Barra in basso: **Dashboard · Mappa · Consulenza**. Profilo e notifiche si
-aprono dall'avatar e dalla campanella in alto.
+aprono dall'avatar e dalla campanella in alto. In dashboard la barra ha
+avatar e saluto a sinistra e la campanella a destra, senza logo.
 
 ### Dove sta cosa
 
@@ -334,16 +336,17 @@ Si scelgono dalla barra di modifica, scheda **Versione**.
 
 | Schermata | Versioni |
 |---|---|
-| Dashboard | Essenziale · Card eroe · Prossima mossa |
-| Linea di carriera | Sentiero · Pianeti · Tappe |
+| Linea di carriera | Sentiero · Sentiero a card · Pianeti · Pianeti leggeri · Pianeti flat · Tappe |
 | Dettaglio step | Lista chiara · Checklist · Carosello |
-| Scheda attività | Elenco per te · Copertine · Compatta |
+| Scheda attività | Una sola: Copertine (testata in card, sempre sfumata) |
 | Scheda info | tre versioni: copertina, schede a tab, scheda luogo |
 
 La **linea di carriera** alla fine del questionario (`index.html`, schermata
-`preview`) è la stessa vista dell'app, con le stesse tre versioni.
+`preview`) è la stessa vista dell’app, con le stesse versioni e senza pulsante in
+fondo. Toccando una tappa si apre `fase3.html?screen=step&step=n`.
 
-Mappa, consulenza, notifiche e profilo (con modifica, foto, curriculum,
+Dashboard (dal 16/09/2026: promemoria dello step, prossima mossa, in primo piano
+a schede, tessere Formazione e Lavoro), mappa, consulenza, notifiche e profilo (con modifica, foto, curriculum,
 preferenze ed esci) hanno una versione sola.
 
 ### Link diretti per provare
@@ -351,7 +354,7 @@ preferenze ed esci) hanno una versione sola.
 Aggiungi `&brand=maturo` per vederle nel kit giusto, `&cattura=1` per
 nascondere la barra di modifica.
 
-- `fase3.html?screen=dashboard&variant=eroe`
+- `fase3.html?screen=dashboard` · `&attuale=3` · `&filtro=eventi`
 - `fase3.html?screen=step&step=2`
 - `fase3.html?screen=attivita&compito=diploma` · `&ambito=lavoro`
 - `fase3.html?screen=scheda&opp=sid` · `&opp=googleux` · `&opp=workshopAi`
