@@ -21,7 +21,8 @@
   transform: translateX(0);
   transition: transform 240ms var(--ease);
 }
-#editor.is-closed { transform: translateX(calc(100% - 40px)); }
+/* chiusa: esce del tutto, resta fuori solo la linguetta */
+#editor.is-closed { transform: translateX(100%); box-shadow: none; }
 
 /* linguetta per chiudere/riaprire il pannello */
 .ed-handle {
@@ -36,7 +37,9 @@
   box-shadow: -8px 0 20px #00000038;
 }
 .ed-handle:hover { color: #fff; }
-#editor.is-closed .ed-handle { transform: translate(-100%, -50%) rotate(180deg); }
+/* chiusa: gira solo la freccina, la linguetta resta com'e' */
+.ed-handle > * { transition: transform 240ms var(--ease); }
+#editor.is-closed .ed-handle > * { transform: rotate(180deg); }
 
 /* --- intestazione --------------------------------------------------- */
 .ed-top {
@@ -268,6 +271,59 @@
   background: #1a1645;
 }
 
+/* i 4 salti rapidi: 2 per riga */
+.ed-vai {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+.ed-vai .ed-btn { justify-content: flex-start; }
+
+/* a pannello chiuso gli stessi 4 salti restano in basso a destra */
+#edvai {
+  position: fixed;
+  right: 16px; bottom: 16px;
+  z-index: 99;
+  width: 268px;
+  padding: 10px;
+  border-radius: 14px;
+  background: #1a1645;
+  box-shadow: 0 10px 30px #00000059;
+  font-family: var(--font);
+  color: #fff;
+  display: none;
+}
+#edvai.is-on { display: block; }
+
+/* "Vai a": una fase per riga, si apre e si chiude */
+.ed-fase {
+  width: 100%;
+  display: flex; align-items: center; gap: 6px;
+  margin-top: 6px;
+  padding: 9px 8px;
+  border-radius: 8px;
+  color: #ffffffb8;
+  font-size: 10px;
+  font-weight: var(--fw-bold);
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  text-align: left;
+}
+.ed-fase:first-child { margin-top: 10px; }
+.ed-fase:hover { background: #ffffff14; color: #fff; }
+.ed-fase.is-qui { color: #fff; }
+.ed-fase__freccia { display: grid; place-items: center; transition: transform 160ms var(--ease); }
+.ed-fase.is-aperta .ed-fase__freccia { transform: rotate(90deg); }
+.ed-fase__nome { flex: 1; }
+.ed-fase__n {
+  padding: 2px 7px;
+  border-radius: var(--r-full);
+  background: #ffffff14;
+  letter-spacing: 0;
+  font-weight: var(--fw-semibold);
+}
+.ed-fase + .ed-jump { margin: 2px 0 6px; }
+
 .ed-jump { display: flex; flex-direction: column; gap: 3px; }
 .ed-versioni { display: flex; flex-direction: column; gap: 3px; }
 .ed-jumpItem {
@@ -293,6 +349,11 @@
 
 #edburger,
 #edmode { display: none; }
+
+@media (max-width: 900px), (pointer: coarse) and (max-width: 1100px) {
+  /* sul telefono i salti stanno nella pagina dei comandi */
+  #edvai.is-on { display: none; }
+}
 
 /* --- su telefono la barra diventa una pagina ------------------------ */
 @media (max-width: 900px), (pointer: coarse) and (max-width: 1100px) {

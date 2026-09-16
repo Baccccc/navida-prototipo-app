@@ -69,7 +69,7 @@
   function interp(str) {
     if (typeof str !== 'string') return str;
     return str.replace(/\{(\w+)\}/g, function (m, key) {
-      var v = S.answers[key];
+      var v = S.valore(key);
       if (v == null || v === '') {
         var def = {
           nome: 'tu',
@@ -1285,8 +1285,9 @@
     });
 
     window.NavidaKeyboard.attach(input, ['Marco', 'Bac', 'Ciao']);
-    // apertura automatica della tastiera dopo 1 secondo (come da nota nel design)
-    setTimeout(function () { try { input.focus(); autoGrow(); } catch (e) {} }, 1000);
+    /* Il campo NON prende il fuoco da solo: su computer bloccava le
+       frecce per passare da una schermata all'altra. */
+    setTimeout(function () { try { autoGrow(); } catch (e) {} }, 1000);
 
     // i campi di testo stanno in alto, come tutte le altre schermate
     var body = h('div', { class: 'body' }, [
@@ -1837,7 +1838,7 @@
        e' quello che fa sembrare il messaggio scritto per lui e non
        una frase uguale per tutti. */
     function conParoleTue(testo) {
-      var mie = ['lavoroSogni', 'nome'].map(function (k) { return S.answer(k, ''); })
+      var mie = ['lavoroSogni', 'nome'].map(function (k) { return S.valore(k) || ''; })
         .filter(function (v) { return v && String(v).length > 2; });
       var out = h('span', {});
       var resto = String(testo);

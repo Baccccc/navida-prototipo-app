@@ -114,23 +114,11 @@
      * non c'è bisogno di rifare tutto il percorso ogni volta.
      */
     compilaTutto: function () {
-      S.answers = {
-        nome: 'Marco', cognome: 'Rossi', eta: '29', citta: 'Padova',
-        genere: 'Uomo',
-        email: 'marco.rossi@example.com',
-        motivazione: 'Sto lavorando, ma non mi riconosco in quello che faccio',
-        obiettivo: 'Capire come vorrei cambiare lavoro',
-        titoloStudio: 'Laurea triennale',
-        specializzazione: 'Nessuna',
-        situazione: 'occupato',
-        ultimaPosizione: 'Impiegato amministrativo',
-        lavoroSogni: 'UX/AI Designer',
+      /* stessi dati di riserva di js/state.js (Marco, 25 anni...) */
+      S.answers = Object.assign({}, S.RISERVA, {
         categoria: 'cat15',
-        mansioni: ['Front-end developer', 'Full-stack developer'],
-        livello: 'Livello avanzato',
-        trasferimento: 'Sì',
-        sognoGrande: 'Costruire prodotti digitali che usano milioni di persone.'
-      };
+        mansioni: ['Front-end developer', 'Full-stack developer']
+      });
       // ordinamenti e domande di personalità
       ['rankSicurezza', 'rankFlessibilita', 'rankCrescita'].forEach(function (k) {
         S.answers[k] = [0, 1, 2, 3, 4, 5];

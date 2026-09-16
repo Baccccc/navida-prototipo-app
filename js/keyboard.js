@@ -21,8 +21,13 @@
     campo: null,
     nodo: null,
 
+    /* Spenta: su computer copriva lo schermo e dava fastidio.
+       Per riaccenderla basta rimettere SPENTA a false. */
+    SPENTA: true,
+
     /** Aggancia la tastiera a un campo: sale al focus, scende al blur. */
     attach: function (input, suggerimenti) {
+      if (this.SPENTA) return;
       var K = this;
       input.addEventListener('focus', function () { K.show(input, suggerimenti); });
       input.addEventListener('blur', function () {

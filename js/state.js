@@ -276,6 +276,35 @@
        RISPOSTE
        ================================================================ */
 
+    /* Dati di riserva: si usano quando un campo resta vuoto (per esempio
+       se salti una schermata con le frecce). Non riempiono i campi, solo
+       i testi che li mostrano. Li usa anche App.compilaTutto. */
+    RISERVA: {
+      nome: 'Marco',
+      cognome: 'Rossi',
+      eta: '25',
+      citta: 'Padova',
+      genere: 'Uomo',
+      email: 'marco.rossi@example.com',
+      motivazione: 'Sto lavorando, ma non mi riconosco in quello che faccio',
+      obiettivo: 'Capire come vorrei cambiare lavoro',
+      titoloStudio: 'Laurea triennale',
+      specializzazione: 'Nessuna',
+      situazione: 'occupato',
+      ultimaPosizione: 'Impiegato amministrativo',
+      lavoroSogni: 'UX/AI Designer',
+      livello: 'Livello avanzato',
+      trasferimento: 'Sì',
+      sognoGrande: 'Costruire prodotti digitali che usano milioni di persone.'
+    },
+
+    /** La risposta, oppure il dato di riserva se il campo e' vuoto. */
+    valore: function (field) {
+      var v = this.answers[field];
+      var vuoto = v == null || (typeof v === 'string' && !v.trim()) || (Array.isArray(v) && !v.length);
+      return vuoto ? this.RISERVA[field] : v;
+    },
+
     answer: function (field, fallback) {
       if (!field) return fallback;
       return Object.prototype.hasOwnProperty.call(this.answers, field)

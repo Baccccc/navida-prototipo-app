@@ -11,9 +11,9 @@
      Versione   → alterna le versioni della schermata corrente
      Testi      → modifica in linea qualunque testo
      Colori     → cambia i colori del tema
-     Ordine     → riordina le risposte trascinandole
-     Elemento   → seleziona un elemento e scegli una variante di stile
-     Vai a      → salta a una schermata qualsiasi
+     Mascotte   → cambia la mascotte della schermata
+     Vai a      → salta a una schermata qualsiasi, divise per fase
+     Commenti   → note del team sulla schermata
    ========================================================================== */
 
 (function () {
@@ -48,8 +48,6 @@
     { id: 'testi',    label: 'Testi',    ico: 'type' },
     { id: 'colori',   label: 'Colori',   ico: 'palette' },
     { id: 'mascotte', label: 'Mascotte', ico: 'smile' },
-    { id: 'ordine',   label: 'Ordine',   ico: 'arrow-up-down' },
-    { id: 'elemento', label: 'Elemento', ico: 'mouse-pointer-click' },
     { id: 'vai',      label: 'Vai a',    ico: 'list' },
     { id: 'commenti', label: 'Commenti', ico: 'message-square' }
   ];
@@ -307,38 +305,55 @@
         ]));
       }
 
-      /* scorciatoie di navigazione, sempre in fondo al pannello.
-         "Inizio" porta alla primissima schermata. "Fine" porta al viaggio
-         nello spazio (fineTest): finita l'animazione arriva da solo alla
-         linea di carriera, e da li' si va alla dashboard. In fase3.html
-         fineTest non c'e': "Fine" porta all'ultima schermata. */
-      var prima = C.screens[0];
-      var ultima = C.screens.find(function (s) { return s.id === 'fineTest'; }) ||
-        C.screens[C.screens.length - 1];
+      /* I 4 salti rapidi: in fondo al pannello quando e' aperto,
+         in basso a destra quando e' chiuso. Sempre visibili. */
+      this.host.appendChild(h('div', { class: 'ed-foot' }, [this.saltiRapidi()]));
 
-      this.host.appendChild(h('div', { class: 'ed-foot' }, [
-        h('button', {
-          class: 'ed-btn',
-          title: 'Vai a: ' + prima.id,
-          onclick: function () {
-            window.NavidaApp.restart();
-            Editor.paint();
-          }
-        }, [icon('arrow-up', 13), 'Inizio (' + prima.id + ')']),
-        h('button', {
-          class: 'ed-btn',
-          title: 'Vai a: ' + ultima.id,
-          onclick: function () {
-            window.NavidaApp.compilaTutto();
-            window.NavidaApp.goTo(ultima.id);
-            Editor.paint();
-          }
-        }, [icon('arrow-down', 13), 'Fine (' + ultima.id + ')'])
-      ]));
+      if (!this.vaiChiuso) {
+        this.vaiChiuso = h('div', { id: 'edvai' });
+        document.body.appendChild(this.vaiChiuso);
+      }
+      this.vaiChiuso.innerHTML = '';
+      this.vaiChiuso.classList.toggle('is-on', !this.aperto);
+      if (!this.aperto) this.vaiChiuso.appendChild(this.saltiRapidi());
 
       this.paintMobile();
 
       if (window.lucide) window.lucide.createIcons();
+    },
+
+    /* ==================================================================
+       Salti rapidi: inizio questionario, lavoro dei sogni, fine
+       questionario, dashboard. Il questionario vive in index.html, la
+       dashboard in fase3.html: se la schermata non c'e' in questa pagina
+       si cambia pagina.
+       "Fine" porta al viaggio nello spazio (fineTest) con le risposte
+       gia' riempite: finita l'animazione si arriva alla linea di carriera.
+       ================================================================== */
+    saltiRapidi: function () {
+      function salto(ico, label, id, prima) {
+        return h('button', {
+          class: 'ed-btn',
+          type: 'button',
+          title: 'Vai a: ' + id,
+          onclick: function () {
+            if (!Editor.qui(id)) { Editor.cambiaPagina(id); return; }
+            if (prima) prima();
+            else window.NavidaApp.goTo(id);
+            Editor.paint();
+          }
+        }, [icon(ico, 13), label]);
+      }
+
+      return h('div', { class: 'ed-vai' }, [
+        salto('arrow-up', 'Inizio test', 'splash', function () { window.NavidaApp.restart(); }),
+        salto('sparkles', 'Lavoro sogni', 'lavoroSogni'),
+        salto('arrow-down', 'Fine test', 'fineTest', function () {
+          window.NavidaApp.compilaTutto();
+          window.NavidaApp.goTo('fineTest');
+        }),
+        salto('house', 'Dashboard', 'dashboard')
+      ]);
     },
 
     /* ================================================================== */
@@ -721,20 +736,73 @@
     },
 
     /* --- Vai a -------------------------------------------------------- */
-    panelVai: function (p, screen) {
-      var groups = {};
-      C.screens.forEach(function (s, i) {
-        (groups[s.chapter] = groups[s.chapter] || []).push({ s: s, i: i });
-      });
-      var nomi = { intro: 'Ingresso', scoperta: 'Fase 1 · Scoperta', auth: 'Accesso e risultato', test: 'Fase 2 · Questionario', fase3: 'Fase 3 · Dashboard' };
+    /** La schermata sta in questa pagina? */
+    qui: function (id) {
+      return C.screens.some(function (s) { return s.id === id; });
+    },
 
-      Object.keys(groups).forEach(function (ch) {
-        p.appendChild(h('div', { class: 'ed-label', text: nomi[ch] || ch }));
-        p.appendChild(h('div', { class: 'ed-jump' }, groups[ch].map(function (e) {
+    /** Questa pagina e' l'app (fase3.html) o il questionario (index.html)? */
+    siamoNellApp: function () { return this.qui('dashboard'); },
+
+    /** Apre una schermata che sta nell'altra pagina. */
+    cambiaPagina: function (id) {
+      window.location.href = (this.siamoNellApp() ? 'index.html' : 'fase3.html') + '?screen=' + id;
+    },
+
+    /* Fasi aperte nel "Vai a". All'inizio si apre solo quella in cui sei. */
+    fasiAperte: null,
+
+    panelVai: function (p, screen) {
+      var altre = (window.NAVIDA_ALTRA_PAGINA && window.NAVIDA_ALTRA_PAGINA.screens) || [];
+      /* prima il questionario, poi l'app: l'ordine vero del percorso */
+      var tutte = this.siamoNellApp() ? altre.concat(C.screens) : C.screens.concat(altre);
+
+      var fasi = [];
+      var perFase = {};
+      tutte.forEach(function (s) {
+        if (!perFase[s.chapter]) { perFase[s.chapter] = []; fasi.push(s.chapter); }
+        perFase[s.chapter].push(s);
+      });
+      var nomi = {
+        intro: 'Ingresso',
+        scoperta: 'Fase 1 · Scoperta',
+        auth: 'Accesso e risultato',
+        test: 'Fase 2 · Questionario',
+        fase3: 'Fase 3 · Dashboard',
+        fase4: 'Fase 4 · Profilo'
+      };
+
+      if (!this.fasiAperte) {
+        this.fasiAperte = {};
+        this.fasiAperte[screen.chapter] = true;
+      }
+      var aperte = this.fasiAperte;
+
+      fasi.forEach(function (ch) {
+        var aperta = !!aperte[ch];
+        var qui = ch === screen.chapter;
+        p.appendChild(h('button', {
+          class: 'ed-fase' + (aperta ? ' is-aperta' : '') + (qui ? ' is-qui' : ''),
+          type: 'button',
+          'aria-expanded': aperta ? 'true' : 'false',
+          onclick: function () { aperte[ch] = !aperta; Editor.paint(); }
+        }, [
+          h('span', { class: 'ed-fase__freccia' }, [icon('chevron-right', 13)]),
+          h('span', { class: 'ed-fase__nome', text: nomi[ch] || ch }),
+          h('span', { class: 'ed-fase__n', text: String(perFase[ch].length) })
+        ]));
+
+        if (!aperta) return;
+        p.appendChild(h('div', { class: 'ed-jump' }, perFase[ch].map(function (s) {
           return h('button', {
-            class: 'ed-jumpItem' + (e.s.id === screen.id ? ' is-active' : ''),
-            text: e.s.id + ' · ' + String(e.s.title || '').slice(0, 26),
-            onclick: function () { window.NavidaApp.goTo(e.s.id); Editor.paint(); }
+            class: 'ed-jumpItem' + (s.id === screen.id ? ' is-active' : ''),
+            type: 'button',
+            text: s.id + ' · ' + String(s.title || '').slice(0, 26),
+            onclick: function () {
+              if (!Editor.qui(s.id)) { Editor.cambiaPagina(s.id); return; }
+              window.NavidaApp.goTo(s.id);
+              Editor.paint();
+            }
           });
         })));
       });
